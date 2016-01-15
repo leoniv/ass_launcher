@@ -1,5 +1,5 @@
 require "ass_launcher/version"
 
 module AssLauncher
-  # Your code goes here...
+  require 'ass_launcher/support'
 end

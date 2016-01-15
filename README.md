@@ -25,17 +25,22 @@ For example:
 ```ruby
 require 'ass_launcher'
 
-disainer = AssLauncher::Disainer.new('8.3.5')
+maker = AssLauncher::IbMaker.new('8.2')
+maker.run(connection_string, arguments)
 
-disainer.start(connection_string)
+designer = AssLauncher::Designer.new('8.3.5')
+designer.run(connection_string, arguments)
 
-disainer.dump_config(connection_string, arguments)
-
-disainer.dump_db_config(connection_string, arguments)
+designer.batch(connection_string, arguments).run(butch_command)
 
 thin_client = AssLauncher::ThinClient.new('8.3.6')
+thin_client.run(connection_string, arguments)
 
-thin_client.start(connection_string, arguments)
+thick_client = AssLauncher::ThickClient.new('8.3.6')
+thick_client.run(connection_string, arguments)
+
+web_client = AssLauncher::WebClient.new()
+web_client.run(connection_string, arguments)
 
 # etc ... TODO describe actual interface
 ```
