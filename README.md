@@ -25,6 +25,8 @@ For example:
 ```ruby
 require 'ass_launcher'
 
+puts AssLauncher::IbMaker.help('8.2')
+
 maker = AssLauncher::IbMaker.new('8.2')
 maker.run(connection_string, arguments)
 
