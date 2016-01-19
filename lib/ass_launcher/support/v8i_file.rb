@@ -16,6 +16,7 @@ module AssLauncher
         res = []
         inifile = to_inifile(io.read)
           inifile.each_section do |caption|
+          fix_file_connect(inifile[caption])
           res << V8iSection.new(caption, inifile[caption])
         end
         res
@@ -52,6 +53,17 @@ module AssLauncher
       def self.to_inifile(content)
         content.gsub!(BOM, '')
         IniFile.new(content: "#{content}", comment: '')
+      end
+
+      #TODO Is bad fix duble backslash path like:
+      # \\bla\bla\bla parsing IniFile as \bla\bla\bla
+      def self.fix_file_connect(hash)
+        if hash['Connect'] =~ /File="\\(?=[^\\])/i
+          hash['Connect'].gsub!('File="\\', 'File="\\\\\\')
+        end
+        if hash['AdmConnect'] =~ /File="\\(?=[^\\])/i
+          hash['AdmConnect'].gsub!('File="\\', 'File="\\\\\\')
+        end
       end
     end
   end

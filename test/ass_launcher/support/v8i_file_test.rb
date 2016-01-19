@@ -30,14 +30,21 @@ class V8iTest < Minitest::Test
     s << 'Field2=Value of f2'+"\r\n"
     s << "\r\n"
     s << '[InfoBase2 caption]'+"\r\n"
-    s << 'Connect=Srvr="host.name";Ref="info_base2";'+"\r\n"
+    s << 'Connect=File="\\\\host.name\\path\\fuckin1C"'+"\r\n"
     s << 'Field1=Value of f1'+"\r\n"
     s << 'Field2=Value of f2'+"\r\n"
     s << ''+"\r\n"
   end
 
-  def section_fields(n)
+  def section_srv_fields(n)
     {'Connect' => "Srvr=\"host.name\";Ref=\"info_base#{n}\";",
+     'Field1' => 'Value of f1',
+     'Field2' => 'Value of f2',
+    }
+  end
+
+  def section_file_fields(n)
+    {'Connect' => 'File="\\\\host.name\\path\\fuckin1C"',
      'Field1' => 'Value of f1',
      'Field2' => 'Value of f2',
     }
@@ -52,8 +59,8 @@ class V8iTest < Minitest::Test
   end
 
   def test_read_good
-    AssLauncher::Support::V8iSection.expects(:new).with(caption(1),section_fields(1)).returns('fake1')
-    AssLauncher::Support::V8iSection.expects(:new).with(caption(2),section_fields(2)).returns('fake2')
+    AssLauncher::Support::V8iSection.expects(:new).with(caption(1),section_srv_fields(1)).returns('fake1')
+    AssLauncher::Support::V8iSection.expects(:new).with(caption(2),section_file_fields(2)).returns('fake2')
 
     sections = mod.read(StringIO.new(v8i_good))
     assert_instance_of Array, sections
