@@ -26,28 +26,23 @@ end
 class TestConnectionString < Minitest::Test
 
   class Server
-    include AssLauncher::Common::ConnectionString
+    def self.fields
+      []
+    end
+
+    def self.required_fields
+      []
+    end
+    include AssLauncher::Support::ConnectionString
   end
 
 
   def mod
-    AssLauncher::Common::ConnectionString
+    AssLauncher::Support::ConnectionString
   end
 
   def test_fail
     raise "FIXME"
-  end
-
-  def test_to_ole_s
-    skip
-  end
-
-  def test_to_cmd_s
-    skip
-  end
-
-  def test_to_v8i_s
-    skip
   end
 
   def test_set_property
@@ -65,8 +60,6 @@ class TestConnectionString < Minitest::Test
   def test_parse
     skip
   end
-
-  def test_required
 
   def test_file_string
     assert_instace_of AssLauncher::Common::ConnectionString::File, mod['File="C:\Bla\Bla"']

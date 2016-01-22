@@ -89,29 +89,24 @@ module AssLauncher
           set_property(key, value)
         end
       end
-      private_method :_set_properties
 
       def set_property(prop, value)
         send("#{prop.downcase}=".to_sym, value)
       end
-      private_method :set_property
 
       def get_property(prop)
         send(prop.downcase.to_sym)
       end
-      private_method :get_property
 
       def prop_to_s(prop)
         "#{prop}=\"#{get_property.gsub('"', '""')}\""
       end
-      private_method :prop_to_s
 
       def required_fields_passed?(passed_fields)
         (required_fields.map { |f| f.downcase.to_sym }\
           & passed_fields.keys.map { |k| k.downcase.to_sym }) == \
           required_fields.map { |f| f.downcase.to_sym }
       end
-      private_method :required_fields_passed?
 
       # Connection string for server infobases
       class Server
@@ -138,16 +133,20 @@ module AssLauncher
           end
         end
 
+        def self.fields
+          required_fields | COMMON_FIELDS | IB_MAKER_FIELDS
+        end
+
+        def self.required_fields
+          SERVER_FIELDS
+        end
+
         include ConnectionString
 
         def initialize(hash)
           fail ConnectionString::Error unless required_fields_passed?(hash)
           _set_properties(hash)
           @servers = ServerDescr.parce(@srvr)
-        end
-
-        def self.required_fields
-          SERVER_FIELDS
         end
 
         # @return [Array<ServerDescr>]
@@ -168,10 +167,6 @@ module AssLauncher
           @srvr
         end
 
-        def self.fields
-          required_fields | COMMON_FIELDS | IB_MAKER_FIELDS
-        end
-
         # (see DBMS_VALUES)
         def dbms=(value)
           fail ArgumentError, "Bad value #{value}" unless\
@@ -182,12 +177,6 @@ module AssLauncher
 
       # Connection string for file infobases
       class File
-        include ConnectionString
-        def initialize(hash)
-          fail ConnectionString::Error unless required_fields_passed?(hash)
-          _set_properties(hash)
-        end
-
         def self.required_fields
           FILE_FIELDS
         end
@@ -195,14 +184,22 @@ module AssLauncher
         def self.fields
           required_fields | COMMON_FIELDS
         end
+
+        include ConnectionString
+
+        def initialize(hash)
+          fail ConnectionString::Error unless required_fields_passed?(hash)
+          _set_properties(hash)
+        end
       end
 
       # Connection string for infobases published on http server
       class Http < File
-        include ConnectionString
         def self.required_fields
           HTTP_FIELDS
         end
+
+        include ConnectionString
 
         def uri
           URI(ws)
