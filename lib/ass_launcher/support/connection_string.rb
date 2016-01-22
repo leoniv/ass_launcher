@@ -84,12 +84,12 @@ module AssLauncher
 
       private
 
-      def set_properties(fields)
-        fields.each do |key, value|
+      def _set_properties(hash)
+        hash.each do |key, value|
           set_property(key, value)
         end
       end
-      private_method :set_properties
+      private_method :_set_properties
 
       def set_property(prop, value)
         send("#{prop.downcase}=".to_sym, value)
@@ -106,12 +106,12 @@ module AssLauncher
       end
       private_method :prop_to_s
 
-      def all_required?(fields)
+      def required_fields_passed?(passed_fields)
         (required_fields.map { |f| f.downcase.to_sym }\
-          & fields.keys.map { |k| k.downcase.to_sym }) == \
+          & passed_fields.keys.map { |k| k.downcase.to_sym }) == \
           required_fields.map { |f| f.downcase.to_sym }
       end
-      private_method :all_required?
+      private_method :required_fields_passed?
 
       # Connection string for server infobases
       class Server
@@ -140,9 +140,9 @@ module AssLauncher
 
         include ConnectionString
 
-        def initialize(fields)
-          fail ConnectionString::Error unless all_required?(fields)
-          set_properties(fields)
+        def initialize(hash)
+          fail ConnectionString::Error unless required_fields_passed?(hash)
+          _set_properties(hash)
           @servers = ServerDescr.parce(@srvr)
         end
 
@@ -183,9 +183,9 @@ module AssLauncher
       # Connection string for file infobases
       class File
         include ConnectionString
-        def initialize(fields)
-          fail ConnectionString::Error unless all_required?(fields)
-          set_properties(fields)
+        def initialize(hash)
+          fail ConnectionString::Error unless required_fields_passed?(hash)
+          _set_properties(hash)
         end
 
         def self.required_fields
