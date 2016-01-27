@@ -198,6 +198,26 @@ class TestConnectionStringServer < Minitest::Test
     assert_equal '1,2,3', mock.srvr
   end
 
+  def test_set_empty_srvr
+    mock = Class.new(cls) do
+      def initialize
+      end
+    end.new
+    assert_raises ArgumentError do
+      mock.srvr=''
+    end
+  end
+
+  def test_set_empty_ref
+    mock = Class.new(cls) do
+      def initialize
+      end
+    end.new
+    assert_raises ArgumentError do
+      mock.ref=''
+    end
+  end
+
   def test_dbms
     mock = Class.new(cls) do
       def initialize
@@ -236,6 +256,16 @@ class TestConnectionStringFile < Minitest::Test
       cls.new hash
     end
   end
+
+  def test_set_empty_file
+    mock = Class.new(cls) do
+      def initialize
+      end
+    end.new
+    assert_raises ArgumentError do
+      mock.file=''
+    end
+  end
 end
 
 class TestConnectionStringHttp < Minitest::Test
@@ -252,6 +282,16 @@ class TestConnectionStringHttp < Minitest::Test
     hash = {}
     assert_raises AssLauncher::Support::ConnectionString::Error do
       cls.new hash
+    end
+  end
+
+  def test_set_empty_ws
+    mock = Class.new(cls) do
+      def initialize
+      end
+    end.new
+    assert_raises ArgumentError do
+      mock.ws=''
     end
   end
 
