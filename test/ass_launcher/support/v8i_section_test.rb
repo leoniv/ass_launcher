@@ -19,7 +19,7 @@ class V8iSectionTest < Minitest::Test
     end
   end
 
-  def tets_fields_required
+  def test_fields_required
     assert_equal ['Connect'], cls.fields_required
   end
 
@@ -40,6 +40,7 @@ class V8iSectionTest < Minitest::Test
   def test_brackets
     section = cls.new('caption', {'Connect' => 'connect_str'})
     assert_equal 'connect_str', section['Connect']
+    assert_equal 'connect_str', section['connect'], 'should be not case insensitive'
   end
 
   def test_brackets=
@@ -48,6 +49,8 @@ class V8iSectionTest < Minitest::Test
     section['Field'] = 'field value'
     assert_equal({'Connect'=>'new_connect_str', 'Field'=>'field value'},
       section.fields)
+    section['fiEld'] = 'new field value'
+    assert_equal 'new field value', section['Field'], 'should be not case insensitive'
   end
 
   def test_key?
