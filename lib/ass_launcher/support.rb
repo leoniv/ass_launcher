@@ -3,5 +3,6 @@ module AssLauncher
     require 'ass_launcher/support/v8i_file'
     require 'ass_launcher/support/v8i_section'
     require 'ass_launcher/support/connection_string'
+    require 'ass_launcher/support/platforms'
   end
 end
