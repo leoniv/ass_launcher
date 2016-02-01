@@ -24,22 +24,54 @@ end
 module AssLauncher
   module Support
     # OS-specific things
+    # Mixin module help work with things as paths and env in other plases
+    # @example
+    #  include AssLauncher::Support::Platforms
+    #
+    #  if cigwin?
+    #    #do if run in Cygwin
+    #  end
+    #
+    #  # Find env value on regex
+    #  pf = platform.env[/program\s*files/i]
+    #  return if pf.size == 0
+    #
+    #  # Use #path
+    #  p = platform.path(pf[0])
+    #  p.exists?
+    #
+    #  # Use #path_class
+    #  platform.path_class.glob('C:/*').each do |path|
+    #    path.exists?
+    #  end
+    #
+    #  # Use #glob directly
+    #  platform.glob('C:/*').each do |path|
+    #    path.exists?
+    #  end
+    #
+    #
     module Platforms
+      # True if run in Cygwin
       def cygwin?
         FFI::Platform.cygwin?
       end
       module_function :cygwin?
 
+      # True if run in MinGW
       def windows?
         FFI::Platform.windows?
       end
       module_function :windows?
 
+      # True if run in Linux
       def linux?
         FFI::Platform.linux?
       end
       module_function :linux?
 
+      # Return module [Platforms] as helper
+      # @return [Platforms]
       def platform
         AssLauncher::Support::Platforms
       end
@@ -48,32 +80,50 @@ module AssLauncher
 
       # Return suitable class
       # @return [UnixPath | WinPath | CygPath]
-      def self.path
+      def self.path_class
         if cygwin?
-          CygPath
+          PathnameExt::CygPath
         elsif windows?
-          WinPath
+          PathnameExt::WinPath
         else
-          UnixPath
+          PathnameExt::UnixPath
         end
       end
 
-      # Parent for OS-specific *Path class
-      # Класс предназначен для унификации работы с путями ФС в различных ОС.
-      # ОС зависимые методы будут переопределены в классах потомках [UnixPath WinPath
-      # CygPath].
+      # Return suitable class instance
+      # @return [UnixPath | WinPath | CygPath]
+      def self.path(string)
+        path_class.new(string)
+      end
+
+      # (see PathnameExt.glob)
+      def self.glob(p1, *args)
+        path_class.glob(p1, *args)
+      end
+
+      # Parent for OS-specific *Path classes
+      # @todo TRANSLATE THIS:
       #
-      # Пути в ФС могут приходить из следующих источников:
-      # - из консоли - при этом в Cygwin путь вида '/cygdrive/c' бедт непонятен
-      #   за пределами Cygwin
-      # - из ENV - при этом путь \\host\share будет непонятен в Unix
+      # rubocop:disable AsciiComments
+      # @note
+      #  Класс предназначен для унификации работы с путями ФС в различных
+      #  ОС.
+      #  ОС зависимые методы будут переопределены в классах потомках
+      #  [UnixPath | WinPath | CygPath].
       #
-      # Общая мысль в следующем:
-      # - пути приводятся к mixed_path - /cygwin/c -> C:/, C:\ -> C:/,
-      #   \\host\share -> //host/share
-      # - переопределяется метод glob класса [Pathname] при этом метод в Cygwin
-      #   будет иметь свою реализацию т.к. в cygwin Dirname.glob('C:/') вернет
-      #   пустой массив, а Dirname.glob('/cygdrive/c') отработает правильно.
+      #  Пути могут приходить из следующих источников:
+      #  - из консоли - при этом в Cygwin путь вида '/cygdrive/c' будет
+      #    непонятен за пределами Cygwin
+      #  - из ENV - при этом путь \\\\host\\share будет непонятен в Unix
+      #
+      #  Общая мысль в следующем:
+      #  - пути приводятся к mixed_path - /cygwin/c -> C:/, C:\\ -> C:/,
+      #    \\\\host\\share -> //host/share
+      #  - переопределяется метод glob класса [Pathname] при этом метод в
+      #    Cygwin будет иметь свою реализацию т.к. в cygwin
+      #    Dirname.glob('C:/') вернет пустой массив,
+      #    а Dirname.glob('/cygdrive/c') отработает правильно.
+      # rubocop:enable AsciiComments
       class PathnameExt < Pathname
         # Override constructor for lead path to (#mixed_path)
         # @param string [String] - string of path
@@ -82,16 +132,7 @@ module AssLauncher
           super mixed_path(@raw)
         end
 
-        #
-        def join(*args)
-          self.class.new(super(*args).to_s)
-        end
-
-        def parent
-          self.class.new(super.to_s)
-        end
-
-        # TODO this is fix (bug or featere)? of [Pathname] method. Called in
+        # This is fix (bug or featere)? of [Pathname] method. Called in
         # chiled clesses returns not childe class instance but returns
         # [Pathname] instance
         def +(other)
@@ -103,40 +144,64 @@ module AssLauncher
         def mixed_path(string)
           string.tr('\\', '/')
         end
+        private :mixed_path
 
         # Return path suitable for windows apps. In Unix this method overridden
         # @return [String]
-        def win_string(string)
-          string.tr('/', '\\')
+        def win_string
+          to_s.tr('/', '\\')
         end
 
-        # Override [Pathname] method for correct work with windows paths like a
-        # '\\host\share', 'C:\' and Cygwin paths like a '/cygdrive/c'
+        # Override (Pathname.glob) method for correct work with windows paths
+        # like a '\\\\host\\share', 'C:\\' and Cygwin paths like a '/cygdrive/c'
         # @param (see Pathname.glob)
         # @return [Array<PathnameExt>]
         def self.glob(p1, *args)
-          super mixed_path(p1), *args
-        end
-      end
-
-      # Class for MinGW Ruby
-      class WinPath < PathnameExt; end
-
-      # Class for Unix Ruby
-      class UnixPath < PathnameExt
-        def win_string(string)
-          string
-        end
-      end
-
-      # Class for Cygwin Ruby
-      class CygPath < PathnameExt
-        def mixed_path(string)
-          `cygpath -m #{string.escape}`.strip
+          super p1.tr('\\', '/'), *args
         end
 
-        def self.glob(p1, *args)
-          super `cygpath -u #{p1.escape}`.chomp, *args
+        # Class for MinGW Ruby
+        class WinPath < PathnameExt; end
+
+        # Class for Unix Ruby
+        class UnixPath < PathnameExt
+          # (see PathnameExt#win_string)
+          def win_string
+            to_s
+          end
+        end
+
+        # Class for Cygwin Ruby
+        class CygPath < PathnameExt
+          # (cee PathnameExt#mixed_path)
+          def mixed_path(string)
+            cygpath(string, :m)
+          end
+
+          # (see PathnameExt.glob)
+          def self.glob(p1, *args)
+            super cygpath(p1, :u), *args
+          end
+
+          def self.cygpath(p1, flag)
+            fail ArgumentError, 'Only accepts :w | :m | :u flags'\
+              unless %i(w m u).include? flag
+            out = `cygpath -#{flag} #{p1.escape} 2>&1`.chomp
+            fail out unless exitstatus == 0
+            out
+          end
+
+          def self.exitstatus
+            # rubocop:disable all
+            return 0 if $?
+            $?.exitstatus
+            # rubocop:enable all
+          end
+          private_class_method :exitstatus
+
+          def cygpath(p1, flag)
+            self.class.cygpath(p1, flag)
+          end
         end
       end
 

@@ -33,7 +33,7 @@ module AssLauncher
       return [] if SEARCH_PATH.size = 0
       b = []
       SEARCH_PATHES.each do |path_str|
-        platform.path.glob('**',"{#{FIXME}}")
+        platform.glob('**',"{#{FIXME}}")
       end
       raise 'FIXME'
       b

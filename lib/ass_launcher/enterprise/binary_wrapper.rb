@@ -30,11 +30,9 @@ module AssLauncher
 
       def initialize(binpath)
         raise 'FIXME'
-        @path  = platform.path(binpath)
-        @version = exract_version(@path.realpath.to_s)
-        @arch    = extract_arch(@path.realpath.to_s)
-        @thin    = CLIENTS[:thin]
-        @thick   = CLIENTS[:thick]
+        @path  = platform.path(binpath).realpath
+        @version = exract_version(@path.to_s)
+        @arch    = extract_arch(@path.to_s)
       end
 
       def exract_version(realpath)
@@ -60,23 +58,13 @@ module AssLauncher
         self.version <=> other.version
       end
 
-      # Return path to thin client file
-      #@return [AssLauncher::Support::Platforms::Path]
-      def thin_client_path
-        @bindir.join(CLIENTS[:thin])
+      def is?
+        raise 'FIXME'
       end
 
-      # True if thin clent file exsists
-      def thin_exists?
-        thin_client.file?
-      end
-
-      def thick_client_path
-        @bindir.join(CLIENTS[:thick])
-      end
-
-      def thick_exists?
-        File.file? thick_client
+      # True if file exsists
+      def exists?
+        path.file?
       end
 
       def major_v
