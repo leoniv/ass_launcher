@@ -12,6 +12,10 @@ class PlatformsTest < Minitest::Test
   def test_ffi_platform
     assert_respond_to FFI::Platform, :cygwin?
     assert_equal FFI::Platform::IS_CYGWIN, FFI::Platform.cygwin?
+    assert_respond_to FFI::Platform, :windows?
+    assert_equal FFI::Platform::IS_WINDOWS, FFI::Platform.windows?
+    assert_respond_to FFI::Platform, :linux?
+    assert_equal FFI::Platform::IS_LINUX, FFI::Platform.linux?
   end
 
   def mod
@@ -159,12 +163,34 @@ class CygPathTest < Minitest::Test
   end
 
   def test_cls_cygpath
-    String.any_instance.expects(:escape).returns('path').times(3)
-    String.any_instance.expects(:chomp).returns('chomp path').times(3)
-   # NilClass.any_instance.expects(:exitstatus).returns(0).times(3)
     %i(m u w).each do |flag|
+      String.any_instance.expects(:escape).returns('path')
+      String.any_instance.expects(:chomp).returns('chomp path')
+      cls.expects(:exitstatus).returns(0)
       cls.expects(:"`").with("cygpath -#{flag} path 2>&1").returns("path")
       assert_equal 'chomp path', cls.cygpath('path', flag)
+    end
+  end
+
+  # TODO extract shell call into Shell module
+  def test_cls_cygpath_fail_with_shell_run_error
+    String.any_instance.expects(:escape).returns('path')
+    String.any_instance.expects(:chomp).returns('chomp path')
+    cls.expects(:exitstatus).returns(1)
+    cls.expects(:"`").returns('out')
+    assert_raises AssLauncher::Support::Shell::RunError do
+      cls.cygpath('path', :m)
+    end
+  end
+
+  # TODO extract shell call into Shell module
+  def test_cls_exitstatus_fail
+    skip 'TODO extract shell call into Shell module'
+  end
+
+  def test_cls_cygpath_fail_with_argument_error
+    assert_raises ArgumentError do
+      cls.cygpath('path', :bad_flag)
     end
   end
 
@@ -180,15 +206,8 @@ class CygPathTest < Minitest::Test
   def test_cygpath
     cls.any_instance.expects(:mixed_path).returns('fake path')
     inst = cls.new('')
-
     cls.expects(:cygpath).with('arg1', 'arg2')
     inst.cygpath('arg1', 'arg2')
-  end
-
-  def test_cygpath_fail
-    assert_raises ArgumentError do
-      cls.cygpath('path', :bad_flag)
-    end
   end
 
   def test_mixed_path

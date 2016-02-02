@@ -10,6 +10,10 @@ module FFI
     def self.cygwin?
       IS_CYGWIN
     end
+
+    def self.linux?
+      IS_LINUX
+    end
   end
 end
 
@@ -23,6 +27,13 @@ end
 
 module AssLauncher
   module Support
+    # TODO extract into 'support/shell.rb'
+    module Shell
+      # Raises when shell exitststus != 0
+      class RunError < StandardError; end
+      # Raises when other error given
+      class Error < StandardError; end
+    end
     # OS-specific things
     # Mixin module help work with things as paths and env in other plases
     # @example
@@ -186,14 +197,16 @@ module AssLauncher
           def self.cygpath(p1, flag)
             fail ArgumentError, 'Only accepts :w | :m | :u flags'\
               unless %i(w m u).include? flag
+          # TODO extract shell call into Shell module
             out = `cygpath -#{flag} #{p1.escape} 2>&1`.chomp
-            fail out unless exitstatus == 0
+            fail Shell::RunError, out unless exitstatus == 0
             out
           end
 
+          # TODO extract shell call into Shell module
           def self.exitstatus
             # rubocop:disable all
-            return 0 if $?
+            fail Shell::Error, 'Unexpected $?.nil?' if $?.nil?
             $?.exitstatus
             # rubocop:enable all
           end
