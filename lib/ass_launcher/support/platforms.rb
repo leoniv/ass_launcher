@@ -27,7 +27,7 @@ end
 
 module AssLauncher
   module Support
-    # TODO extract into 'support/shell.rb'
+    # TODO, extract into 'support/shell.rb'
     module Shell
       # Raises when shell exitststus != 0
       class RunError < StandardError; end
@@ -197,13 +197,13 @@ module AssLauncher
           def self.cygpath(p1, flag)
             fail ArgumentError, 'Only accepts :w | :m | :u flags'\
               unless %i(w m u).include? flag
-          # TODO extract shell call into Shell module
+            # TODO, extract shell call into Shell module
             out = `cygpath -#{flag} #{p1.escape} 2>&1`.chomp
             fail Shell::RunError, out unless exitstatus == 0
             out
           end
 
-          # TODO extract shell call into Shell module
+          # TODO, extract shell call into Shell module
           def self.exitstatus
             # rubocop:disable all
             fail Shell::Error, 'Unexpected $?.nil?' if $?.nil?

@@ -22,45 +22,59 @@ module AssLauncher
     # - H:\путь\содержит-тире - в win создаст базу H:\путь\содержит вывод 1С:
     #   `Создание информационной базы ("File=H:\genm\содержит;Locale = "ru_RU";") успешно завершено`
     #   в linux отработет корректно
+    # @abstract
     class BinaryWrapper
-
-      #'FIXME' Надо делать отдельный враппер для тонкого и толстого клиента
-
-      attr_reader :version, :path, :arch
+      include AssLauncher::Support::Platforms
+      attr_reader :path
 
       def initialize(binpath)
-        raise 'FIXME'
         @path  = platform.path(binpath).realpath
-        @version = exract_version(@path.to_s)
-        @arch    = extract_arch(@path.to_s)
+        fail ArgumentError, "Is not a file `#{binpath}'" unless @path.file?
+        fail ArgumentError, "Invalid binary #{@path.basename} for #{self.class}"\
+          unless @path.basename.to_s ===  /#{expects_basename}/i
+      end
+
+      def version
+        @version |= exract_version(@path.to_s)
+      end
+
+      def arch
+        @arch |= extract_arch(@path.to_s)
       end
 
       def exract_version(realpath)
-        if linux?
-          extracted = realpath.split('/')[-2]
+        if platform.linux?
+          extracted = realpath.to_s.split('/')[-3]
         else
-          extracted = realpath.split('/')[-2]
+          extracted = realpath.to_s.split('/')[-3]
         end
-        extracted =~ /(?<version>\d\.\d\.?\d?\.?\d?)/i
-        extracted = (extracted.split('.') + [0,0,0,0])[0,4].join('.')
-        begin
-          v = Support.ass_version(version)
-        rescue Exseptin => e
-          v = Support.ass_version
-        end
+        extracted =~ /(\d+\.\d+\.?\d*\.?\d*)/i
+        extracted = ($1.to_s.split('.') + [0,0,0,0])[0,4].join('.')
+        Gem::Version.new(extracted)
       end
       private :exract_version
 
-      # Compare wrappers on version
+      def extract_arch(realpath)
+        if platform.linux?
+          extracted = realpath.to_s.split('/')[-1]
+        else
+          extracted = 'i386'
+        end
+        extracted
+      end
+      private :extract_arch
+
+      # Compare wrappers on version for sortable
       # @param other [BinaryWrapper]
       # @return [Bollean]
       def <=>(other)
         self.version <=> other.version
       end
 
-      def is?
-        raise 'FIXME'
+      def expects_basename
+        Enterprise.binaries(self.class)
       end
+      private :expects_basename
 
       # True if file exsists
       def exists?
@@ -68,7 +82,52 @@ module AssLauncher
       end
 
       def major_v
-        version.redaction
+        version.to_s.split('.')[0,2].join('.')
+      end
+
+      def to_s
+        path.to_s
+      end
+
+      def to_cmd(command, connection_string)
+        cmd = "#{to_s.escape} #{command}"
+        if connection_string
+          cmd = "#{cmd} #{connection_string.to_cmd(self)}"
+        end
+        cmd
+      end
+    end
+
+    class ThinClient < BinaryWrapper
+      def enterprise(connectstr = nil)
+        Support::Shell::Command.new(to_cmd('ENTERPRISE', connectstr))
+      end
+    end
+
+    class ThickClient < ThinClient
+      def designer(connectstr = nil)
+        Support::Shell::Command.new(to_cmd('DESIGNER', connectstr))
+      end
+
+      def createinfobase(connectstr = nil)
+        Support::Shell::Command.new(to_cmd('CREATEINFOBASE', connectstr))
+      end
+    end
+
+    class WebClient < BinaryWrapper
+      def initialize(binpath)
+        super
+        @version = Gem::Version.new('')
+        @arch    = FFI::Platform::ARCH
+      end
+
+      def expects_basename
+        '(firefox|iexplore|chrome|safary)'
+      end
+
+      # Return forked shell command
+      def enterprise(connectstr = nil)
+        Support::Shell::Fork.new(to_cmd('', connectstr))
       end
     end
   end

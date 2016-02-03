@@ -238,6 +238,10 @@ class TestConnectionStringServer < Minitest::Test
       mock.dbms = 'Bad dbms'
     end
   end
+
+  def test_to_cmd
+    raise 'TODO implements #to_cmd(binary_wrapper)'
+  end
 end
 
 class TestConnectionStringFile < Minitest::Test
@@ -265,6 +269,10 @@ class TestConnectionStringFile < Minitest::Test
     assert_raises ArgumentError do
       mock.file=''
     end
+  end
+
+  def test_to_cmd
+    raise 'TODO implements #to_cmd(binary_wrapper)'
   end
 end
 
@@ -303,5 +311,9 @@ class TestConnectionStringHttp < Minitest::Test
     end.new
     mock.expects(:ws).returns('http://exaple.com')
     assert_kind_of ::URI, mock.uri
+  end
+
+  def test_to_cmd
+    raise 'TODO implements #to_cmd(binary_wrapper)'
   end
 end
