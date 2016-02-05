@@ -2,6 +2,12 @@
 
 module AssLauncher
   module Enterprise
+    # TODO: extract into web.rb
+    module Web
+    end
+    # TODO: extract into ole.rb
+    module OLE
+    end
     require 'ass_launcher/enterprise/binary_wrapper'
 
     extend AssLauncher::Support::Platforms
@@ -12,7 +18,7 @@ module AssLauncher
     LINUX_BINARIES = { ThinClient => '1cv8c',
                        ThickClient => '1cv8'
                      }
-    WEB_BROWSERS = %i(firefox iexplore chrome safary)
+    WEB_BROWSERS = [ :firefox, :iexplore, :chrome, :safary ]
     def self.windows_or_cygwin?
       platform.cygwin? || platform.windows?
     end

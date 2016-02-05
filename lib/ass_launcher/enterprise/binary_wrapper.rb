@@ -89,45 +89,36 @@ module AssLauncher
         path.to_s
       end
 
-      def to_cmd(command, connection_string)
-        cmd = "#{to_s.escape} #{command}"
-        if connection_string
-          cmd = "#{cmd} #{connection_string.to_cmd(self)}"
-        end
-        cmd
+      def to_cmd(run_mode)
+        fail ArgumentError, "Uncknown run_mode `#{run_mode}' for #{self.class}"\
+          unless run_modes.map(&:upcase).include? run_mode.to_s.upcase
+        "#{to_s.escape} #{run_mode}"
       end
     end
 
     class ThinClient < BinaryWrapper
-      def enterprise(connectstr = nil)
-        Support::Shell::Command.new(to_cmd('ENTERPRISE', connectstr))
+
+      def run_modes
+        %w(ENERPRAISE)
+      end
+
+      def enterprise
+        Enterprise::CliBuilder::CmdRunner.for :enterprise => self
       end
     end
 
     class ThickClient < ThinClient
+
+      def run_modes
+        %w(ENERPRAISE DESIGNER CREATEINFOBASE)
+      end
+
       def designer(connectstr = nil)
         Support::Shell::Command.new(to_cmd('DESIGNER', connectstr))
       end
 
       def createinfobase(connectstr = nil)
         Support::Shell::Command.new(to_cmd('CREATEINFOBASE', connectstr))
-      end
-    end
-
-    class WebClient < BinaryWrapper
-      def initialize(binpath)
-        super
-        @version = Gem::Version.new('')
-        @arch    = FFI::Platform::ARCH
-      end
-
-      def expects_basename
-        '(firefox|iexplore|chrome|safary)'
-      end
-
-      # Return forked shell command
-      def enterprise(connectstr = nil)
-        Support::Shell::Fork.new(to_cmd('', connectstr))
       end
     end
   end

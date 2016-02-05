@@ -196,7 +196,7 @@ module AssLauncher
 
           def self.cygpath(p1, flag)
             fail ArgumentError, 'Only accepts :w | :m | :u flags'\
-              unless %i(w m u).include? flag
+              unless %w(w m u).include? flag.to_s
             # TODO, extract shell call into Shell module
             out = `cygpath -#{flag} #{p1.escape} 2>&1`.chomp
             fail Shell::RunError, out unless exitstatus == 0

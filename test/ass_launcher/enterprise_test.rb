@@ -26,7 +26,7 @@ class EnterpriseTest < Minitest::Test
   end
 
   def test_search_paths
-    %i(windows_or_cygwin linux).each do |p|
+    %w(windows_or_cygwin linux).mat(&:to_sym).each do |p|
       mock_platform = mock()
       mock_env = mock()
       if p == :windows_or_cygwin

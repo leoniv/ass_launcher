@@ -29,14 +29,14 @@ class PlatformsTest < Minitest::Test
   end
 
   def test_class_include_mod_metods?
-    %i(cygwin? windows? linux?).each do |method|
+    %w(cygwin? windows? linux?).map(&:to_sym).each do |method|
       FFI::Platform.expects(method).returns('fake value')
       assert_equal 'fake value', cls_include_mod.send(method)
     end
   end
 
   def test_mod_metods?
-    %i(cygwin? windows? linux?).each do |method|
+    %w(cygwin? windows? linux?).map(&:to_sym).each do |method|
       FFI::Platform.expects(method).returns('fake value')
       assert_equal 'fake value', mod.send(method)
     end
@@ -163,7 +163,7 @@ class CygPathTest < Minitest::Test
   end
 
   def test_cls_cygpath
-    %i(m u w).each do |flag|
+    %w(m u w).map(&:to_sym).each do |flag|
       String.any_instance.expects(:escape).returns('path')
       String.any_instance.expects(:chomp).returns('chomp path')
       cls.expects(:exitstatus).returns(0)
