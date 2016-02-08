@@ -1,24 +1,21 @@
 # encoding: utf-8
 
 module AssLauncher
+  # 1C:Entrprise platform abstraction layer
   module Enterprise
-    # TODO: extract into web.rb
-    module Web
-    end
-    # TODO: extract into ole.rb
-    module OLE
-    end
     require 'ass_launcher/enterprise/binary_wrapper'
+    require 'ass_launcher/enterprise/run_modes'
+    require 'ass_launcher/enterprise/web_clients'
+    require 'ass_launcher/enterprise/ole'
 
     extend AssLauncher::Support::Platforms
 
-    WIN_BINARIES = { ThinClient => '1cv8c.exe',
-                     ThickClient => '1cv8.exe'
-                    }
-    LINUX_BINARIES = { ThinClient => '1cv8c',
-                       ThickClient => '1cv8'
-                     }
-    WEB_BROWSERS = [ :firefox, :iexplore, :chrome, :safary ]
+    WIN_BINARIES = { BinaryWrapper::ThinClient => '1cv8c.exe',
+                     BinaryWrapper::ThickClient => '1cv8.exe'
+    }.freeze
+    LINUX_BINARIES = { BinaryWrapper::ThinClient => '1cv8c',
+                       BinaryWrapper::ThickClient => '1cv8'
+    }.freeze
     def self.windows_or_cygwin?
       platform.cygwin? || platform.windows?
     end
@@ -29,17 +26,25 @@ module AssLauncher
     end
     private_class_method :linux?
 
+    # Return paths for searching instaled 1C platform
+    # @note
+    #  - For Windows return value of 'Program Files' env.
+    #  - For Linux return '/opt/1C'
+    #  - In both cases you can set 'ASSPATH' env and it will be added into
+    #    array
+    # @return [Array<String>
     def self.search_paths
       sp = []
       sp << platform.env[/ASSPATH/i]
       if windows_or_cygwin?
-        sp += platform.env[/\Aprogram\s*files.*/i].uniq.map{|pf| "#{pf}/1c*" }
+        sp += platform.env[/\Aprogram\s*files.*/i].uniq.map { |pf| "#{pf}/1c*" }
       elsif linux?
         sp += %w(/opt/1C /opt/1c)
       end
       sp.compact.uniq
     end
 
+    # @api private
     def self.binaries(klass)
       if windows_or_cygwin?
         WIN_BINARIES[klass]
@@ -61,23 +66,30 @@ module AssLauncher
     end
     private_class_method :requiremet?
 
+    # Return array of wrappers for 1C thin client executables
+    # found in {.search_paths}
+    # @param requiremet [String] - suitable for [Gem::Requirement] string.
+    #  Define requiremet version of 1C:Platform.
+    # @return [Array<BinaryWrapper::ThinClient>]
     def self.thin_clients(requiremet = '')
-      find_clients(ThinClient).map do |c|
+      find_clients(BinaryWrapper::ThinClient).map do |c|
         c if requiremet?(c, requiremet)
       end.compact
     end
 
+    # Return array of wrappers for 1C platform(thick client) executables
+    # found in {.search_paths}
+    # @param (see thin_clients)
+    # @return [Array<BinaryWrapper::ThickClient>]
     def self.thick_clients(requiremet = '')
-      find_clients(ThickClient).map do |c|
+      find_clients(BinaryWrapper::ThickClient).map do |c|
         c if requiremet?(c, requiremet)
       end.compact
     end
 
-    # @todo
-    #  TODO, implements #vebclients
-    # @return [Hash] - key is web browser name value is [WebClient]
-    def self.web_clients(browser = :iexplore)
-      fail 'Not implemented yet'
+    # (see WebClients.client)
+    def self.web_client(name)
+      WebClients.client(name)
     end
 
     # Find and return all 1C:Entrprise binaries

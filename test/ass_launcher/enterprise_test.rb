@@ -26,7 +26,7 @@ class EnterpriseTest < Minitest::Test
   end
 
   def test_search_paths
-    %w(windows_or_cygwin linux).mat(&:to_sym).each do |p|
+    %w(windows_or_cygwin linux).map(&:to_sym).each do |p|
       mock_platform = mock()
       mock_env = mock()
       if p == :windows_or_cygwin
@@ -79,28 +79,28 @@ class EnterpriseTest < Minitest::Test
   end
 
   def test_thin_clients
-    mod.expects(:find_clients).with(AssLauncher::Enterprise::ThinClient).returns(%w'fake_client_v1 fake_client_v2')
+    mod.expects(:find_clients).with(AssLauncher::Enterprise::BinaryWrapper::ThinClient).returns(%w'fake_client_v1 fake_client_v2')
     mod.expects(:requiremet?).returns(true).twice
     assert_equal %w'fake_client_v1 fake_client_v2', mod.thin_clients
   end
 
   def test_thick_clients
-    mod.expects(:find_clients).with(AssLauncher::Enterprise::ThickClient).returns(%w'fake_client_v1 fake_client_v2')
+    mod.expects(:find_clients).with(AssLauncher::Enterprise::BinaryWrapper::ThickClient).returns(%w'fake_client_v1 fake_client_v2')
     mod.expects(:requiremet?).returns(true).twice
     assert_equal %w'fake_client_v1 fake_client_v2', mod.thick_clients
   end
 
   def test_binaries_on_windows
-    { AssLauncher::Enterprise::ThinClient => '1cv8c.exe',
-      AssLauncher::Enterprise::ThickClient => '1cv8.exe' }.each do |klass, bin_name|
+    { AssLauncher::Enterprise::BinaryWrapper::ThinClient => '1cv8c.exe',
+      AssLauncher::Enterprise::BinaryWrapper::ThickClient => '1cv8.exe' }.each do |klass, bin_name|
       mod.expects(:windows_or_cygwin?).returns(true)
       assert_equal bin_name, mod.binaries(klass)
     end
   end
 
   def test_binaries_on_linux
-    { AssLauncher::Enterprise::ThinClient => '1cv8c',
-      AssLauncher::Enterprise::ThickClient => '1cv8' }.each do |klass, bin_name|
+    { AssLauncher::Enterprise::BinaryWrapper::ThinClient => '1cv8c',
+      AssLauncher::Enterprise::BinaryWrapper::ThickClient => '1cv8' }.each do |klass, bin_name|
       mod.expects(:windows_or_cygwin?).returns(false)
       mod.expects(:linux?).returns(true)
       assert_equal bin_name, mod.binaries(klass)
@@ -108,16 +108,16 @@ class EnterpriseTest < Minitest::Test
   end
 
   def test_binaries_on_other
-    { AssLauncher::Enterprise::ThinClient => nil,
-      AssLauncher::Enterprise::ThickClient => nil }.each do |klass, bin_name|
+    { AssLauncher::Enterprise::BinaryWrapper::ThinClient => nil,
+      AssLauncher::Enterprise::BinaryWrapper::ThickClient => nil }.each do |klass, bin_name|
       mod.expects(:windows_or_cygwin?).returns(false)
       mod.expects(:linux?).returns(false)
       assert_equal bin_name, mod.binaries(klass)
     end
   end
 
-  def test_web_clients
-    AssLauncher::Enterprise::WEB_BROWSERS
-    skip
+  def test_web_client
+    AssLauncher::Enterprise::WebClients.expects(:client).with(:fake_client).returns(:fake_class)
+    assert_equal :fake_class, mod.web_client(:fake_client)
   end
 end
