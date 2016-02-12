@@ -41,7 +41,7 @@ module AssLauncher
         @path  = platform.path(binpath).realpath
         fail ArgumentError, "Is not a file `#{binpath}'" unless @path.file?
         fail ArgumentError, "Invalid binary #{@path.basename} for #{self.class}"\
-          unless @path.basename.to_s ===  /#{expects_basename}/i
+          unless @path.basename.to_s.upcase ==  expects_basename.upcase
       end
 
       # Define version of 1C platform.
@@ -54,7 +54,7 @@ module AssLauncher
       # @api public
       # @return [Gem::Version]
       def version
-        @version |= extract_version(@path.to_s)
+        @version ||= extract_version(@path.to_s)
       end
 
       # Define arch on 1C platform.
@@ -62,7 +62,7 @@ module AssLauncher
       # @api public
       # @return [String]
       def arch
-        @arch |= extract_arch(@path.to_s)
+        @arch ||= extract_arch(@path.to_s)
       end
 
       # Extract version from path
@@ -129,7 +129,7 @@ module AssLauncher
       # Run the client in given run mode without validate arguments
       # @param args [String] cmd arguments for 1C executable
       def dirtyrun(args)
-        sh "#{to_cmd} #{args}"
+        sh! "#{to_cmd} #{args}"
       end
 
       # @param run_mode [Symbol]

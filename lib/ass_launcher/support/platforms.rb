@@ -17,23 +17,8 @@ module FFI
   end
 end
 
-# Monkey patch for [String]
-class String
-  require 'shellwords'
-  def escape
-    Shellwords.escape self
-  end
-end
-
 module AssLauncher
   module Support
-    # TODO, extract into 'support/shell.rb'
-    module Shell
-      # Raises when shell exitststus != 0
-      class RunError < StandardError; end
-      # Raises when other error given
-      class Error < StandardError; end
-    end
     # OS-specific things
     # Mixin module help work with things as paths and env in other plases
     # @example
