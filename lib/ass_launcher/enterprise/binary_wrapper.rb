@@ -34,7 +34,6 @@ module AssLauncher
     # @note (see #arch)
     class BinaryWrapper
       include AssLauncher::Support::Platforms
-      include AssLauncher::Support::Shell
       attr_reader :path
 
       def initialize(binpath)
@@ -126,11 +125,24 @@ module AssLauncher
         to_s.escape
       end
 
-      # Run the client in given run mode without validate arguments
+      # Run the client without validate arguments
       # @param args [String] cmd arguments for 1C executable
+      # @return [AssLauncher::Support::Shell::RunAssResult] - result of run 1C
+      # executable
       def dirtyrun(args)
-        sh! "#{to_cmd} #{args}"
+        shell.dirtyrun_ass "#{to_cmd} #{args}"
       end
+
+      # (see dirtyrun)
+      # @raise (see AssLauncher::Support::Shell::RunAssResult#verify!)
+      def dirtyrun!(args)
+        dirtyrun(args).verify!
+      end
+
+      def shell
+        AssLauncher::Support::Shell
+      end
+      private :shell
 
       # @param run_mode [Symbol]
       #  Valid values define in the {#run_modes}
