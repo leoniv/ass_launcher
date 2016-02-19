@@ -35,6 +35,7 @@ module AssLauncher
       @logger = l
     end
   end
+  # Loggining mixin
   module Loggining
     require 'logger'
 
@@ -56,6 +57,7 @@ module AssLauncher
     end
   end
   module Support
+    # Shell utils
     module Shell
       require 'methadone'
       require 'tempfile'
@@ -65,29 +67,42 @@ module AssLauncher
       # @note Fuckin 1C not work with stdout and stderr
       #  For out 1C use /OUT"file" parameter and write message into. Message
       #  encoding 'cp1251' for windows and 'utf-8' for Linux
-      # This method run 1C binaryes whit /OUT parameter, read message from /OUT
-      # and yeld exit status and readed message into block. Return exit code
-      # @param cmd (see dirtyrun)
+      # This method run 1C binaryes whit /DisableStartupDialogs,
+      # /DisableStartupMessages and /OUT parameter, read message from /OUT
+      # @param cmd (see #dirtyrun_ass)
       # @param options [Hash]
-      # @return (see dirtyrun_ass)
+      #  - :out_encoding - encoding expected for text in /OUT file
+      #  - :expected_assout [Regexp] - for validate /OUT text see
+      #  {RunAssResult#initialize}
+      # @return (see #dirtyrun_ass)
       def run_ass(cmd, options = {})
         of = AssOutFile.new(options[:out_encoding])
         cmd_ = "#{cmd} /OUT\"#{of}\" /DisableStartupDialogs "\
-          "/DisableStartupMessages"
+          '/DisableStartupMessages'
         result = dirtyrun_ass(cmd_)
         result.send(:expected_assout=, options[:expected_assout])
         result.send(:assout=, of.read)
-        if result.success?
-          logger.debug "ass output: #{result.assout}" unless result.assout.empty?
-        else
-          logger.error "Unexpected ass out" unless result.expected_assout?
-          logger.warn "expects ass output: '#{result.expected_assout}'"\
-            unless result.expected_assout?
-          logger.warn "ass output: #{result.assout}" unless result.assout.empty?
-        end
+        logginig_assout result
         result
       end
       module_function :run_ass
+
+      # rubocop:disable Metrics/AbcSize
+      def logginig_assout(result)
+        if result.expected_assout?
+          logger.debug "expects ass output: '#{result.expected_assout}'"\
+            unless result.expected_assout.nil?
+          logger.debug "ass output: #{result.assout}"\
+            unless result.assout.to_s.empty?
+        else
+          logger.error 'Unexpected ass out'
+          logger.warn "expects ass output: '#{result.expected_assout}'"
+          logger.warn "ass output: #{result.assout}"
+        end
+      end
+      # rubocop:enable Metrics/AbcSize
+      module_function :logginig_assout
+      private :logginig_assout
 
       # Run 1C platform.
       # @param cmd [String]
@@ -95,30 +110,59 @@ module AssLauncher
       def dirtyrun_ass(cmd)
         logger.debug("Executing ass '#{cmd}'")
         begin
-          stdout, stderr, status = execution_strategy.run_command(cmd)
+          _stdout, stderr, status = execution_strategy.run_command(cmd)
           result = RunAssResult.new(cmd, stderr, status.exitstatus)
         rescue *exception_meaning_command_not_found => e
           result = RunAssResult.new(cmd, e.message, 127)
         end
-        if result.success?
-          logger.debug "Executing ass success"
-        else
-          logger.error "Executing ass '#{cmd}'"
-          logger.warn "stderr output of '#{cmd}': #{result.out}"\
-            unless result.out.empty?
-        end
+        logginig_runass result
         result
       end
       module_function :dirtyrun_ass
+
+      def logginig_runass(result)
+        if result.success?
+          logger.debug 'Executing ass success'
+        else
+          logger.error "Executing ass '#{result.cmd}'"
+          logger.warn "stderr output of '#{result.cmd}': #{result.out}"\
+            unless result.out.empty?
+        end
+      end
+      module_function :logginig_runass
+      private :logginig_runass
+
+      def ass_cmd_arg_value(string)
+        AssCmdArgValue.new(string)
+      end
+      module_function :ass_cmd_arg_value
+
+      class AssCmdArgValue
+        attr_reader :string
+        def initialize(string)
+          @string = string.to_s
+        end
+
+        def to_s
+          if AssLauncher::Support::Platforms.windows?
+            string.escape
+          else
+            "\"#{string}\"".escape
+          end
+        end
+      end
 
       class RunAssResult
         class UnexpectedAssOut < StandardError; end
         class RunAssError < StandardError; end
         attr_reader :cmd, :out, :assout, :exitstatus, :expected_assout
+        attr_writer :assout
+        private :assout=
         def initialize(cmd, out, exitstatus)
           @cmd = cmd
           @out = out
           @exitstatus = exitstatus
+          @assout = ''
         end
 
         # Verivfy of result and raises unless {#success?}
@@ -132,19 +176,14 @@ module AssLauncher
         end
 
         def cut_assout
-          return @assout if @assout.size <= 80
-          "#{@assout[0,80]} ..."
+          return assout if assout.size <= 80
+          "#{assout[0, 80]}..."
         end
         private :cut_assout
 
         def success?
           exitstatus == 0 && expected_assout?
         end
-
-        def assout=(s)
-          @assout = s
-        end
-        private :assout=
 
         def expected_assout=(exp)
           return if exp.nil?
@@ -153,7 +192,7 @@ module AssLauncher
         end
         private :expected_assout=
 
-        # @note Sometimes 1С does what we not expects. For example, we ask
+        # @note Sometimes 1C does what we not expects. For example, we ask
         #  to create InfoBase File="tmp\tmp.ib" however 1C make files of
         #  infobase in root of 'tmp\' directory and exits with status 0. In this
         #  case we have to check assout for answer executed success? or not.
@@ -164,13 +203,14 @@ module AssLauncher
         def expected_assout?
           return true if expected_assout.nil?
           return true if exitstatus != 0
-          !! (expected_assout =~ assout)
+          ! (expected_assout =~ assout).nil?
         end
-
       end
 
+      # @api private
       class AssOutFile
         include Support::Platforms
+        attr_reader :file, :path, :encoding
         def initialize(encoding = nil)
           @file = Tempfile.new('ass_out')
           @file.close
@@ -186,15 +226,15 @@ module AssLauncher
           begin
             @file.open
             s = @file.read
-            s.encode! Encoding::UTF_8, @encoding unless linux?
+            s.encode! Encoding::UTF_8, encoding unless linux?
           ensure
             @file.close
+            @file.unlink
           end
           s.to_s
         end
 
         def finalize
-          @file.unlink
         end
       end
     end
