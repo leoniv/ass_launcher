@@ -3,12 +3,17 @@
 # Monkey patch for [String]
 class String
   require 'shellwords'
-  def escape
-    if AssLauncher::Support::Platforms.windows?
+  def to_cmd
+    if AssLauncher::Support::Platforms.windows?\
+        || AssLauncher::Support::Platforms.cygwin?
       "\"#{self}\""
     else
-      Shellwords.escape self
+      escape
     end
+  end
+
+  def escape
+    Shellwords.escape self
   end
 end
 
@@ -59,10 +64,13 @@ module AssLauncher
   module Support
     # Shell utils
     module Shell
+      # TODO delete it see todo in platform #cygpath func
+      class RunError < StandardError; end
       require 'methadone'
       require 'tempfile'
       include Loggining
       include Methadone::SH
+      extend Support::Platforms
 
       # @note Fuckin 1C not work with stdout and stderr
       #  For out 1C use /OUT"file" parameter and write message into. Message
@@ -108,9 +116,8 @@ module AssLauncher
       # @param cmd [String]
       # @return [RunAssResult]
       def dirtyrun_ass(cmd)
-        logger.debug("Executing ass '#{cmd}'")
         begin
-          _stdout, stderr, status = execution_strategy.run_command(cmd)
+          _stdout, stderr, status = cmd_string(cmd).execute
           result = RunAssResult.new(cmd, stderr, status.exitstatus)
         rescue *exception_meaning_command_not_found => e
           result = RunAssResult.new(cmd, e.message, 127)
@@ -125,12 +132,81 @@ module AssLauncher
           logger.debug 'Executing ass success'
         else
           logger.error "Executing ass '#{result.cmd}'"
-          logger.warn "stderr output of '#{result.cmd}': #{result.out}"\
+          logger.warn "stderr output: #{result.out}"\
             unless result.out.empty?
         end
       end
       module_function :logginig_runass
       private :logginig_runass
+
+      def cmd_string(cmd)
+        if windows? || cygwin?
+          CmdScript.new(cmd)
+        else
+          CmdString.new(cmd)
+        end
+      end
+      module_function :cmd_string
+      private :cmd_string
+
+      # @private
+      class CmdString
+        include AssLauncher::Loggining
+        attr_reader :run_ass_str, :command
+        def initialize(run_ass_str)
+          @run_ass_str = run_ass_str
+          @command = run_ass_str
+        end
+
+        def finalize; end
+
+        def execution_strategy
+          AssLauncher::Support::Shell.send(:execution_strategy)
+        end
+
+        def execute
+          logger.debug("Executing command: '#{command}'")
+          execution_strategy.run_command(command)
+        end
+
+        def to_s
+          command
+        end
+      end
+
+      # @private
+      class CmdScript < CmdString
+        include Support::Platforms
+        attr_reader :file, :path
+        def initialize(cmd)
+          super
+          @file = Tempfile.new(%w'run_ass_script .cmd')
+          @file.open
+          @file.write(cmd)
+          @file.close
+          @path = platform.path(@file.path)
+        end
+
+        def command
+          if cygwin? || windows?
+            "cmd /C \"#{path.win_string}\""
+          else
+            "sh #{path.to_s.escape}"
+          end
+        end
+
+        def execute
+          logger.debug("Executed script text: '#{run_ass_str}'")
+          out, err, status = super
+          if cygwin?
+            out.encode!('utf-8', 'cp866')
+            err.encode!('utf-8', 'cp866')
+          end
+          [out, err, status]
+        ensure
+          @file.unlink
+        end
+      end
 
       def ass_cmd_arg_value(string)
         AssCmdArgValue.new(string)
@@ -234,8 +310,6 @@ module AssLauncher
           s.to_s
         end
 
-        def finalize
-        end
       end
     end
   end

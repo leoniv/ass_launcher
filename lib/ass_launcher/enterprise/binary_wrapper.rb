@@ -122,7 +122,7 @@ module AssLauncher
       # @return [String]
       # @api public
       def to_cmd
-        to_s.escape
+        path.win_string.to_cmd
       end
 
       # Run the client without validate arguments
