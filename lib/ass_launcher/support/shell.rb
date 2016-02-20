@@ -100,8 +100,7 @@ module AssLauncher
         if result.expected_assout?
           logger.debug "expects ass output: '#{result.expected_assout}'"\
             unless result.expected_assout.nil?
-          logger.debug "ass output: #{result.assout}"\
-            unless result.assout.to_s.empty?
+          logginig_assout_output result
         else
           logger.error 'Unexpected ass out'
           logger.warn "expects ass output: '#{result.expected_assout}'"
@@ -111,6 +110,18 @@ module AssLauncher
       # rubocop:enable Metrics/AbcSize
       module_function :logginig_assout
       private :logginig_assout
+
+      def logginig_assout_output(result)
+        if result.success?
+          logger.debug "ass output: #{result.assout}"\
+            unless result.assout.to_s.empty?
+        else
+          logger.warn "ass output: #{result.assout}"\
+            unless result.assout.to_s.empty?
+        end
+      end
+      module_function :logginig_assout_output
+      private :logginig_assout_output
 
       # Run 1C platform.
       # @param cmd [String]
@@ -158,8 +169,6 @@ module AssLauncher
           @command = run_ass_str
         end
 
-        def finalize; end
-
         def execution_strategy
           AssLauncher::Support::Shell.send(:execution_strategy)
         end
@@ -205,26 +214,6 @@ module AssLauncher
           [out, err, status]
         ensure
           @file.unlink
-        end
-      end
-
-      def ass_cmd_arg_value(string)
-        AssCmdArgValue.new(string)
-      end
-      module_function :ass_cmd_arg_value
-
-      class AssCmdArgValue
-        attr_reader :string
-        def initialize(string)
-          @string = string.to_s
-        end
-
-        def to_s
-          if AssLauncher::Support::Platforms.windows?
-            string.escape
-          else
-            "\"#{string}\"".escape
-          end
         end
       end
 

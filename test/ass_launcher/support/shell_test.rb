@@ -2,15 +2,23 @@
 require 'test_helper'
 
 class StringTest < Minitest::Test
-  def test_escape_in_windows
-    AssLauncher::Support::Platforms.expects(:windows?).returns(true)
-    assert_equal '"string"', 'string'.escape
+  def test_escape
+    assert_equal 'str\\ ing', 'str ing'.escape
   end
 
-  def test_escape_in_unix_test
+  def test_to_cmd_in_linux
     AssLauncher::Support::Platforms.expects(:windows?).returns(false)
-    Shellwords.expects(:escape).with('string').returns('string')
-    assert_equal 'string', 'string'.escape
+    AssLauncher::Support::Platforms.expects(:cygwin?).returns(false)
+    str = 'str ing'
+    assert_equal 'str\\ ing', str.to_cmd
+  end
+
+  def test_to_cmd_in_windows_or_cygwin
+    AssLauncher::Support::Platforms.expects(:windows?).returns(false)
+    AssLauncher::Support::Platforms.expects(:cygwin?).returns(true)
+    str = 'string'
+    str.expects(:escape).never
+    assert_equal '"string"', str.to_cmd
   end
 end
 
@@ -130,6 +138,79 @@ class ShellTest < Minitest::Test
 
     mod.expects(:logger).returns(logger).times(3)
     mod.send(:logginig_assout, result)
+  end
+end
+
+class CmdStringTest < Minitest::Test
+
+  def setup
+    @inst = cls.new('')
+  end
+
+  def cls
+    AssLauncher::Support::Shell::CmdString
+  end
+
+  def test_initialize
+    inst = cls.new('run_ass_str_')
+    assert_equal 'run_ass_str_', inst.run_ass_str
+    assert_equal 'run_ass_str_', inst.command
+  end
+
+  def test_to_s
+    @inst.expects(:command)
+    @inst.to_s
+  end
+
+  def test_execute
+    cmd = 'command for run'
+    inst = cls.new(cmd)
+    logger = mock()
+    logger.expects(:debug).with("Executing command: '#{cmd}'")
+    execution_strategy = mock()
+    execution_strategy.expects(:run_command).with(cmd).returns(true)
+    inst.expects(:logger).returns(logger)
+    inst.expects(:execution_strategy).returns(execution_strategy)
+    assert inst.execute
+  end
+
+  def test_execution_strategy
+    assert_respond_to @inst.execution_strategy, :run_command
+  end
+end
+
+class CmdScriptTest < Minitest::Test
+  def cls
+    AssLauncher::Support::Shell::CmdScript
+  end
+
+  def test_initialize
+    cmd = 'string for run'
+    tempfile = mock()
+    tempfile.expects(:open)
+    tempfile.expects(:write).with(cmd)
+    tempfile.expects(:close)
+    tempfile.expects(:path).returns('.')
+    Tempfile.expects(:new).with(%w'run_ass_script .cmd').returns(tempfile)
+    inst = cls.new(cmd)
+    assert_equal tempfile, inst.file
+    assert_kind_of AssLauncher::Support::Platforms::PathnameExt, inst.path
+  end
+
+  def test_command_in_linux
+    skip
+  end
+
+  def test_command_in_windows_or_cygwin
+    skip
+  end
+
+  def test_execute_in_cygwin
+    skip
+  end
+
+  def test_execute_in_windows_or_linux
+    skip
   end
 end
 
