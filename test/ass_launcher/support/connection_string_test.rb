@@ -278,7 +278,7 @@ class TestConnectionStringHttp < Minitest::Test
     assert_equal 'http://example.com', cls.new(hash).ws
   end
 
-  def initialize_fail
+  def test_initialize_fail
     hash = {}
     assert_raises AssLauncher::Support::ConnectionString::Error do
       cls.new hash

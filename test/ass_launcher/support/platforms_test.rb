@@ -1,13 +1,5 @@
 require 'test_helper'
 
-class StringTest < Minitest::Test
-  def test_escape
-    string = 'string'
-    Shellwords.expects(:escape).with(string).returns(string)
-    assert_equal 'string', string.escape
-  end
-end
-
 class PlatformsTest < Minitest::Test
   def test_ffi_platform
     assert_respond_to FFI::Platform, :cygwin?
