@@ -191,9 +191,17 @@ module AssLauncher
           super
           @file = Tempfile.new(%w( run_ass_script .cmd ))
           @file.open
-          @file.write(cmd)
+          @file.write(encode_cmd(cmd))
           @file.close
           @path = platform.path(@file.path)
+        end
+
+        def encode_cmd(cmd)
+          if cygwin? || windows?
+            # TODO:have to detect current win cmd encoding. cp866 - may be wrong
+            return cmd.encode('cp866', 'utf-8')
+          end
+          cmd
         end
 
         def command
@@ -208,6 +216,7 @@ module AssLauncher
           logger.debug("Executed script text: '#{run_ass_str}'")
           out, err, status = super
           if cygwin?
+            # TODO:have to detect current win cmd encoding. cp866 - may be wrong
             out.encode!('utf-8', 'cp866')
             err.encode!('utf-8', 'cp866')
           end
