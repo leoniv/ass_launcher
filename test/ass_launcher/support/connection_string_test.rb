@@ -138,25 +138,25 @@ class TestConnectionString < Minitest::Test
      'File="//Bla/Bla"'].each do |str|
       AssLauncher::Support::ConnectionString.expects(:parse)
       AssLauncher::Support::ConnectionString::File.expects(:new).returns('FakeFile')
-      assert_equal 'FakeFile', mod[str]
+      assert_equal 'FakeFile', mod.new(str)
     end
   end
 
   def test_build_server_string
     AssLauncher::Support::ConnectionString.expects(:parse)
     AssLauncher::Support::ConnectionString::Server.expects(:new).returns('FakeServer')
-    assert_equal 'FakeServer' , mod['Srvr="host:port, host:port";Ref="IbName";']
+    assert_equal 'FakeServer' , mod.new('Srvr="host:port, host:port";Ref="IbName";')
   end
 
   def test_build_http_string
     AssLauncher::Support::ConnectionString.expects(:parse)
     AssLauncher::Support::ConnectionString::Http.expects(:new).returns('FakeHttp')
-    assert_equal 'FakeHttp', mod['Ws="http://example.org";']
+    assert_equal 'FakeHttp', mod.new('Ws="http://example.org";')
   end
 
   def test_fail_bild_string
     assert_raises AssLauncher::Support::ConnectionString::ParseError do
-      mod['BadString="']
+      mod.new('BadString="')
     end
   end
 

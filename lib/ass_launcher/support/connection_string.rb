@@ -25,7 +25,7 @@ module AssLauncher
       # Analyzes connect string and build suitable class
       # @param connstr (see parse)
       # @return [Server | File | Http] instanse
-      def self.[](connstr)
+      def self.new(connstr)
         case connstr
         when /(\W|\A)File\s*=\s*"/i then File.new(parse(connstr))
         when /(\W|\A)Srvr\s*=\s*"/i then Server.new(parse(connstr))
@@ -186,8 +186,14 @@ module AssLauncher
         end
 
         def srvr=(str)
+          fail ArgumentError if str.empty?
           @servers = ServerDescr.parse(str)
           @srvr = str
+        end
+
+        def ref=(str)
+          fail ArgumentError if str.empty?
+          @ref = str
         end
 
         def srvr
@@ -222,6 +228,11 @@ module AssLauncher
           fail ConnectionString::Error unless required_fields_received?(hash)
           _set_properties(hash)
         end
+
+        def file=(str)
+          fail ArgumentError if str.empty?
+          @file = str
+        end
       end
 
       # Connection string for infobases published on http server
@@ -239,6 +250,11 @@ module AssLauncher
         def initialize(hash)
           fail ConnectionString::Error unless required_fields_received?(hash)
           _set_properties(hash)
+        end
+
+        def ws=(str)
+          fail ArgumentError if str.empty?
+          @ws = str
         end
 
         def uri
