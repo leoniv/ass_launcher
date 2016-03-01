@@ -1,6 +1,11 @@
 # encoding: utf-8
 
 module AssLauncher
+  #
+  class Configuration
+    # Path for search 1C binaries
+    attr_accessor :search_path
+  end
   # 1C:Entrprise platform abstraction layer
   module Enterprise
     require 'ass_launcher/enterprise/binary_wrapper'
@@ -30,12 +35,12 @@ module AssLauncher
     # @note
     #  - For Windows return value of 'Program Files' env.
     #  - For Linux return '/opt/1C'
-    #  - In both cases you can set 'ASSPATH' env and it will be added into
-    #    array
+    #  - In both cases you can set {AssLauncher::Configuration#search_path} and
+    #    it will be added into array
     # @return [Array<String>
     def self.search_paths
       sp = []
-      sp << platform.env[/ASSPATH/i]
+      sp << AssLauncher.config.search_path
       if windows_or_cygwin?
         sp += platform.env[/\Aprogram\s*files.*/i].uniq.map { |pf| "#{pf}/1c*" }
       elsif linux?

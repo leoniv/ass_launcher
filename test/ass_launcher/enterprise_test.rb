@@ -1,5 +1,12 @@
 require 'test_helper'
 
+class ConfigurationTest < Minitest::Test
+  def test_search_path
+    assert_respond_to AssLauncher.config, :search_path
+    assert_respond_to AssLauncher.config, :search_path=
+  end
+end
+
 class EnterpriseTest < Minitest::Test
   def mod
     AssLauncher::Enterprise
@@ -25,28 +32,22 @@ class EnterpriseTest < Minitest::Test
     assert mod.send(:linux?)
   end
 
-  def test_search_paths
-    %w(windows_or_cygwin linux).map(&:to_sym).each do |p|
-      mock_platform = mock()
-      mock_env = mock()
-      if p == :windows_or_cygwin
-        mod.expects(:platform).returns(mock_platform)
-        mock_platform.expects(:env).returns(mock_env)
-        mock_env.expects(:"[]").with(/ASSPATH/i).returns('asspath')
-        mod.expects(:windows_or_cygwin?).returns(p == :windows_or_cygwin)
-        mod.expects(:platform).returns(mock_platform)
-        mock_platform.expects(:env).returns(mock_env)
-        mock_env.expects(:"[]").with(/\Aprogram\s*files.*/i).returns(%w'path1 path2')
-        assert_equal %w'asspath path1/1c* path2/1c*', mod.search_paths
-      else
-        mod.expects(:platform).returns(mock_platform)
-        mock_platform.expects(:env).returns(mock_env)
-        mod.expects(:windows_or_cygwin?).returns(p == :windows_or_cygwin)
-        mod.expects(:linux?).returns(p == :linux)
-        mock_env.expects(:"[]").with(/ASSPATH/i).returns('asspath')
-        assert_equal %w'asspath /opt/1C /opt/1c', mod.search_paths
-      end
-    end
+  def test_search_paths_in_windows_or_cygwin
+    mock_env = mock()
+    mock_platform = mock()
+    mock_platform.expects(:env).returns(mock_env)
+    AssLauncher.config.expects(:search_path).returns('asspath')
+    mod.expects(:windows_or_cygwin?).returns(true)
+    mod.expects(:platform).returns(mock_platform)
+    mock_env.expects(:"[]").with(/\Aprogram\s*files.*/i).returns(%w'path1 path2')
+    assert_equal %w'asspath path1/1c* path2/1c*', mod.search_paths
+  end
+
+  def test_search_paths_in_linux
+    AssLauncher.config.expects(:search_path).returns('asspath')
+    mod.expects(:windows_or_cygwin?).returns(false)
+    mod.expects(:linux?).returns(true)
+    assert_equal %w'asspath /opt/1C /opt/1c', mod.search_paths
   end
 
   def test_find_clients
