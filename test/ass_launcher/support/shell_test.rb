@@ -71,25 +71,23 @@ class ShellTest < Minitest::Test
 
   def test_dirtyrun_ass_sucsess
     cmd = 'cmd string'
-    mock_logger = mock()
-    mock_logger.expects(:debug).with("Executing ass '#{cmd}'")
-    mock_logger.expects(:debug).with('Executing ass success')
-    mod.expects(:logger).returns(mock_logger).twice
+    mod.expects(:logger).never
+    mock_cmd_string = mock()
     mock_exitstat = mock()
     mock_exitstat.expects(:exitstatus).returns(0)
-    mock_exec_strat = mock
-    mock_exec_strat.expects(:run_command).with('cmd string').returns(['stdout','stderr',mock_exitstat])
-    mod.expects(:execution_strategy).returns(mock_exec_strat)
+    mock_cmd_string.expects(:execute).returns([:out, :err, mock_exitstat])
+    mod.expects(:cmd_string).with(cmd).returns(mock_cmd_string)
+    mod.expects(:loggining_runass).with() {|result| result.is_a? AssLauncher::Support::Shell::RunAssResult}
     assert mod.dirtyrun_ass(cmd).success?
   end
 
   def test_dirtyrun_ass_fail
     cmd = 'kiking_ass'
-    mock_logger = mock()
-    mock_logger.expects(:debug).with("Executing ass '#{cmd}'")
-    mock_logger.expects(:error).with("Executing ass '#{cmd}'")
-    mock_logger.expects(:warn)
-    mod.expects(:logger).returns(mock_logger).times(3)
+    mod.expects(:loggining_runass).with() {|result| result.is_a? AssLauncher::Support::Shell::RunAssResult}
+    mock_cmd_string = mock
+    mock_cmd_string.expects(:execute).\
+      raises(*mod.send(:exception_meaning_command_not_found))
+    mod.expects(:cmd_string).with(cmd).returns(mock_cmd_string)
     refute mod.dirtyrun_ass(cmd).success?
   end
 
@@ -106,26 +104,25 @@ class ShellTest < Minitest::Test
     mock_assrunresult.expects(:send).with(:expected_assout=,/expected_assout/)
     mock_assrunresult.expects(:send).with(:assout=,'ass out text')
     mod.expects(:dirtyrun_ass).with("#{cmd} /OUT\"out_file\" /DisableStartupDialogs /DisableStartupMessages").returns(mock_assrunresult)
-    mod.expects(:logginig_assout).with(mock_assrunresult)
+    mod.expects(:loggining_assout).with(mock_assrunresult)
 
     assert_equal mock_assrunresult, mod.run_ass(cmd, options)
   end
 
-  def test_logginig_assout_success
+  def test_loggining_assout_success
     result = AssLauncher::Support::Shell::RunAssResult.new(:cmd, :out, 0)
     result.expects(:expected_assout?).returns(true)
     result.expects(:expected_assout).returns('expected_assout').twice
-    result.expects(:assout).returns('assout').twice
 
     logger = mock()
     logger.expects(:debug).with("expects ass output: 'expected_assout'")
-    logger.expects(:debug).with("ass output: assout")
 
-    mod.expects(:logger).returns(logger).twice
-    mod.send(:logginig_assout, result)
+    mod.expects(:logger).returns(logger)
+    mod.expects(:loggining_assout_output).with(result)
+    mod.send(:loggining_assout, result)
   end
 
-  def test_logginig_assout_fail
+  def test_loggining_assout_fail
     result = AssLauncher::Support::Shell::RunAssResult.new(:cmd, :out, 0)
     result.expects(:expected_assout?).returns(false)
     result.expects(:expected_assout).returns('expected_assout')
@@ -137,7 +134,72 @@ class ShellTest < Minitest::Test
     logger.expects(:warn).with("ass output: assout")
 
     mod.expects(:logger).returns(logger).times(3)
-    mod.send(:logginig_assout, result)
+    mod.send(:loggining_assout, result)
+  end
+
+  def test_loggining_assout_output_saccess
+    result = mock
+    result.expects(:success?).returns(true)
+    result.expects(:assout).returns(:ass_out).twice
+    mock_logger = mock
+    mock_logger.expects(:debug).with(){|arg| arg == 'ass output: ass_out'}
+    mod.expects(:logger).returns(mock_logger)
+    mod.send(:loggining_assout_output,result)
+  end
+
+  def test_loggining_assout_output_not_succsess
+    result = mock
+    result.expects(:success?).returns(false)
+    result.expects(:assout).returns(:ass_out).twice
+    mock_logger = mock
+    mock_logger.expects(:warn).with(){|arg| arg == 'ass output: ass_out'}
+    mod.expects(:logger).returns(mock_logger)
+    mod.send(:loggining_assout_output,result)
+  end
+
+  def test_logginig_runass_saccsess
+    result = mock
+    result.expects(:success?).returns(true)
+    mock_logger = mock
+    mock_logger.expects(:debug).with('Executing ass success')
+    mod.expects(:logger).returns(mock_logger)
+    mod.send(:loggining_runass,result)
+  end
+
+  def test_logginig_runass_not_saccsess
+    result = mock
+    result.expects(:success?).returns(false)
+    result.expects(:cmd).returns('cmd string')
+    result.expects(:out).returns('out string').twice
+    mock_logger = mock
+    mock_logger.expects(:error).with('Executing ass \'cmd string\'')
+    mock_logger.expects(:warn).with('stderr output: out string')
+    mod.expects(:logger).returns(mock_logger).twice
+    mod.send(:loggining_runass,result)
+  end
+
+  def test_cmd_string_in_win
+    mod.expects(:windows?).returns(:true)
+    mod.expects(:cygwin?).never
+    mock_cmd_s = mock
+    AssLauncher::Support::Shell::CmdScript.expects(:new).returns(mock_cmd_s)
+    assert_equal mock_cmd_s, mod.cmd_string('')
+  end
+
+  def test_cmd_string_in_cygwin
+    mod.expects(:windows?).returns(false)
+    mod.expects(:cygwin?).returns(true)
+    mock_cmd_s = mock
+    AssLauncher::Support::Shell::CmdScript.expects(:new).returns(mock_cmd_s)
+    assert_equal mock_cmd_s, mod.cmd_string('')
+  end
+
+  def test_cmd_string_in_linux
+    mod.expects(:windows?).returns(false)
+    mod.expects(:cygwin?).returns(false)
+    mock_cmd_s = mock
+    AssLauncher::Support::Shell::CmdString.expects(:new).returns(mock_cmd_s)
+    assert_equal mock_cmd_s, mod.cmd_string('')
   end
 end
 
@@ -198,19 +260,86 @@ class CmdScriptTest < Minitest::Test
   end
 
   def test_command_in_linux
-    skip
+    cmd = 'cmd string'
+    tempfile = mock()
+    tempfile.expects(:open)
+    tempfile.expects(:write).with(cmd)
+    tempfile.expects(:close)
+    tempfile.expects(:path).returns('.')
+    Tempfile.expects(:new).with(%w'run_ass_script .cmd').returns(tempfile)
+    inst = cls.new(cmd)
+    inst.expects(:windows? => false, :cygwin? => false)
+    assert_equal "sh #{inst.path.win_string}", inst.command
   end
 
-  def test_command_in_windows_or_cygwin
-    skip
+  def test_command_in_windows
+    cmd = 'cmd string'
+    tempfile = mock()
+    tempfile.expects(:open)
+    tempfile.expects(:write).with(cmd)
+    tempfile.expects(:close)
+    tempfile.expects(:path).returns('.')
+    Tempfile.expects(:new).with(%w'run_ass_script .cmd').returns(tempfile)
+    inst = cls.new(cmd)
+    inst.expects(:windows? => true, :cygwin? => false)
+    assert_equal "cmd /C \"#{inst.path.win_string}\"", inst.command
+  end
+
+  def test_command_in_cygwin
+    cmd = 'cmd string'
+    tempfile = mock()
+    tempfile.expects(:open)
+    tempfile.expects(:write).with(cmd)
+    tempfile.expects(:close)
+    tempfile.expects(:path).returns('.')
+    Tempfile.expects(:new).with(%w'run_ass_script .cmd').returns(tempfile)
+    inst = cls.new(cmd)
+    inst.expects(:cygwin? => true)
+    assert_equal "cmd /C \"#{inst.path.win_string}\"", inst.command
   end
 
   def test_execute_in_cygwin
-    skip
+    cmd = 'cmd string'
+    mock_logger = mock
+    mock_logger.expects(:debug)
+    tempfile = mock()
+    tempfile.expects(:open)
+    tempfile.expects(:write).with(cmd)
+    tempfile.expects(:close)
+    tempfile.expects(:path).returns('.')
+    tempfile.expects(:unlink)
+    Tempfile.expects(:new).with(%w'run_ass_script .cmd').returns(tempfile)
+    inst = cls.new(cmd)
+    inst.expects(:logger).returns(mock_logger)
+    inst.expects(:cygwin?).returns(true)
+    out = mock; out.expects(:encode!).with('utf-8', 'cp866')
+    err = mock; err.expects(:encode!).with('utf-8', 'cp866')
+    AssLauncher::Support::Shell::CmdString.any_instance\
+      .expects(:execute).returns([out, err, :status])
+    Tempfile.unstub(:new)
+    assert_equal [out,err,:status], inst.execute
   end
 
   def test_execute_in_windows_or_linux
-    skip
+    cmd = 'cmd string'
+    mock_logger = mock
+    mock_logger.expects(:debug)
+    tempfile = mock()
+    tempfile.expects(:open)
+    tempfile.expects(:write).with(cmd)
+    tempfile.expects(:close)
+    tempfile.expects(:path).returns('.')
+    tempfile.expects(:unlink)
+    Tempfile.expects(:new).with(%w'run_ass_script .cmd').returns(tempfile)
+    inst = cls.new(cmd)
+    inst.expects(:logger).returns(mock_logger)
+    inst.expects(:cygwin?).returns(false)
+    out = mock; out.expects(:encode!).never
+    err = mock; err.expects(:encode!).never
+    AssLauncher::Support::Shell::CmdString.any_instance\
+      .expects(:execute).returns([out, err, :status])
+    Tempfile.unstub(:new)
+    assert_equal [out,err,:status], inst.execute
   end
 end
 

@@ -64,7 +64,7 @@ module AssLauncher
   module Support
     # Shell utils
     module Shell
-      # TODO delete it see todo in platform #cygpath func
+      # TODO: delete it see todo in platform #cygpath func
       class RunError < StandardError; end
       require 'methadone'
       require 'tempfile'
@@ -90,17 +90,17 @@ module AssLauncher
         result = dirtyrun_ass(cmd_)
         result.send(:expected_assout=, options[:expected_assout])
         result.send(:assout=, of.read)
-        logginig_assout result
+        loggining_assout result
         result
       end
       module_function :run_ass
 
       # rubocop:disable Metrics/AbcSize
-      def logginig_assout(result)
+      def loggining_assout(result)
         if result.expected_assout?
           logger.debug "expects ass output: '#{result.expected_assout}'"\
             unless result.expected_assout.nil?
-          logginig_assout_output result
+          loggining_assout_output result
         else
           logger.error 'Unexpected ass out'
           logger.warn "expects ass output: '#{result.expected_assout}'"
@@ -108,10 +108,10 @@ module AssLauncher
         end
       end
       # rubocop:enable Metrics/AbcSize
-      module_function :logginig_assout
-      private :logginig_assout
+      module_function :loggining_assout
+      private :loggining_assout
 
-      def logginig_assout_output(result)
+      def loggining_assout_output(result)
         if result.success?
           logger.debug "ass output: #{result.assout}"\
             unless result.assout.to_s.empty?
@@ -120,8 +120,8 @@ module AssLauncher
             unless result.assout.to_s.empty?
         end
       end
-      module_function :logginig_assout_output
-      private :logginig_assout_output
+      module_function :loggining_assout_output
+      private :loggining_assout_output
 
       # Run 1C platform.
       # @param cmd [String]
@@ -133,12 +133,12 @@ module AssLauncher
         rescue *exception_meaning_command_not_found => e
           result = RunAssResult.new(cmd, e.message, 127)
         end
-        logginig_runass result
+        loggining_runass result
         result
       end
       module_function :dirtyrun_ass
 
-      def logginig_runass(result)
+      def loggining_runass(result)
         if result.success?
           logger.debug 'Executing ass success'
         else
@@ -147,8 +147,8 @@ module AssLauncher
             unless result.out.empty?
         end
       end
-      module_function :logginig_runass
-      private :logginig_runass
+      module_function :loggining_runass
+      private :loggining_runass
 
       def cmd_string(cmd)
         if windows? || cygwin?
@@ -189,7 +189,7 @@ module AssLauncher
         attr_reader :file, :path
         def initialize(cmd)
           super
-          @file = Tempfile.new(%w'run_ass_script .cmd')
+          @file = Tempfile.new(%w( run_ass_script .cmd ))
           @file.open
           @file.write(cmd)
           @file.close
@@ -298,7 +298,6 @@ module AssLauncher
           end
           s.to_s
         end
-
       end
     end
   end
