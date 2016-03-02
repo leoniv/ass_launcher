@@ -341,6 +341,52 @@ class CmdScriptTest < Minitest::Test
     Tempfile.unstub(:new)
     assert_equal [out,err,:status], inst.execute
   end
+
+  def test_encode_cmd_in_linux
+    cmd = 'cmd string'
+    cmd.expects(:encode).never
+    inst = Class.new(cls) do
+      def initialize
+
+      end
+    end.new
+    inst.expects(:windows?).returns(false)
+    inst.expects(:cygwin?).returns(false)
+    assert_equal cmd, inst.encode_cmd(cmd)
+  end
+
+  def test_encode_cmd_in_winwos_or_cygwin
+    cmd = 'cmd string'
+    cmd.expects(:encode).with('cp866', 'utf-8').returns(cmd)
+    inst = Class.new(cls) do
+      def initialize
+
+      end
+    end.new
+    inst.expects(:windows?).returns(true)
+    inst.expects(:cygwin?).returns(false)
+    assert_equal cmd, inst.encode_cmd(cmd)
+  end
+
+  def test_encode_cmd_in_winwos_or_cygwin_fail
+    cmd = 'cmd string'
+    cmd.expects(:encode).with('cp866', 'utf-8').raises(Exception)
+    inst = Class.new(cls) do
+      def initialize
+
+      end
+    end.new
+    inst.expects(:windows?).returns(true)
+    inst.expects(:cygwin?).returns(false)
+    logger = mock
+    logger.expects(:error)
+    logger.expects(:warn)
+    inst.expects(:logger).returns(logger).twice
+
+    assert_raises Exception do
+      inst.encode_cmd(cmd)
+    end
+  end
 end
 
 class RunAssResultTest < Minitest::Test

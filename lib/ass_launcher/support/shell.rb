@@ -199,7 +199,13 @@ module AssLauncher
         def encode_cmd(cmd)
           if cygwin? || windows?
             # TODO:have to detect current win cmd encoding. cp866 - may be wrong
-            return cmd.encode('cp866', 'utf-8')
+            begin
+              return cmd.encode('cp866', 'utf-8')
+            rescue Exception => e
+              logger.error "Encode cmd #{e.class}: #{e.message}"
+              logger.warn "cmd: #{cmd}"
+              raise e
+            end
           end
           cmd
         end
@@ -217,8 +223,12 @@ module AssLauncher
           out, err, status = super
           if cygwin?
             # TODO:have to detect current win cmd encoding. cp866 - may be wrong
-            out.encode!('utf-8', 'cp866')
-            err.encode!('utf-8', 'cp866')
+            begin
+              out.encode!('utf-8', 'cp866')
+              err.encode!('utf-8', 'cp866')
+            rescue Exception => e
+              logger.error "Encode out #{e.class}: #{e.message}"
+            end
           end
           [out, err, status]
         ensure
