@@ -2,6 +2,18 @@ module AssLauncher
   module Support
     # Implement 1C connection string
     # Mixin for connection string classes
+    # @note All connection string class have methods for get and set values
+    #  of defined fields. Methods have name as fields but in downcase
+    #  All fields defined for connection string class retutn {#fields}
+    # @example
+    #  cs =  AssLauncher::Support::\
+    #    ConnectionString.new('File="\\fileserver\accounting.ib"')
+    #  cs.is #-> :file
+    #  cs.is? :file #-> true
+    #  cs.usr = 'username'
+    #  cs.pwd = 'password'
+    #  cmd = "1civ8.exe enterprise #{cs.to_cmd}"
+    #  run_result = AssLauncher::Support::Shell.run_ass(cmd)
     module ConnectionString
       class Error < StandardError; end
       class ParseError < StandardError; end
@@ -13,8 +25,24 @@ module AssLauncher
       FILE_FIELDS = %w(File)
       # Fields for infobase published on http server
       HTTP_FIELDS = %w(Ws)
+      HTTP_WEB_AUTH_FIELDS = %w(Wsn Wsp)
+      # Rule for {#to_cmd}
+      FIELDS_TO_CMD = { Usr: lambda { " /N\"#{usr}\" " },
+                        Pwd: lambda { " /P\"#{pwd}\" " },
+                        prmod: lambda { ' /UsePrivilegedMode ' },
+                        Locale: lambda { " /L\"#{locale}\" " },
+                        Srvr: lambda { " /S\"#{srvr}/#{ref}\" " },
+                        File: lambda do
+                          " /F\"#{AssLauncher::Support::\
+                                      Platforms.path(file).win_string}\" "
+                        end,
+                        Ws: lambda { " /WS\"#{ws}\" " },
+                        Wsn: lambda { " /WSN\"#{wsn}\" " },
+                        Wsp: lambda { " /WSP\"#{wsp}\" " }
+      }
+      FIELDS_TO_CMD.freeze
       # Proxy fields for accsess to infobase published on http server via proxy
-      PROXY_FIELDS = %w(Wsn Wsp WspAuto WspSrv WspPort WspUser WspPwd)
+      PROXY_FIELDS = %w(WspAuto WspSrv WspPort WspUser WspPwd)
       # Fields for makes server-infobase
       IB_MAKER_FIELDS = %w(DBMS DBSrvr DB
                            DBUID DBPwd SQLYOffs
@@ -60,10 +88,21 @@ module AssLauncher
       end
       private_class_method :parse_key_value
 
+      # Return type of connection string
+      # :file, :server, :http
+      # @return [Symbol]
       def is
         self.class.name.split('::').last.downcase.to_sym
       end
 
+      # Check connection string for type :file, :server, :http
+      # @param symbol [Symvol]
+      # @example
+      #  if cs.is? :file
+      #    #do for connect to the file infobase
+      #  else
+      #    raise "#{cs.is} unsupport
+      #  end
       def is?(symbol)
         is == symbol
       end
@@ -85,10 +124,45 @@ module AssLauncher
         result
       end
 
+      # Convert connection string to 1C:Enterprise launch parameters
+      # like /N"usr" /P"pwd" etc
+      # see {FIELDS_TO_CMD} and {#proxy_cmd}
+      # @return [String]
+      def to_cmd
+        r = ''
+        fields.each do |f|
+          r += "#{prop_to_cmd(f)} " unless get_property(f).to_s.empty?
+        end
+        r += proxy_cmd
+      end
+
+      def prop_to_cmd(f)
+        instance_exec &FIELDS_TO_CMD[f.to_sym] if FIELDS_TO_CMD.key? f.to_sym
+      end
+      private :prop_to_cmd
+
+      # @api private
+      # Convert proxy fields to 1C:Enterprise launch parameter /Proxy
+      # see {PROXY_FIELDS}
+      # @return [String]
+      def proxy_cmd
+        return '' unless is? :http
+        return '' if wspauto
+        return " /Proxy -PSrv\"#{wspsrv}\""\
+               " -PPort\"#{wspport}\""\
+               " -PUser\"#{wspuser}\""\
+               " -PPwd\"#{wsppwd}\" "\
+               if wspsrv
+        ''
+      end
+
+      # @api private
+      # Fields required for new instance of connection string
       def required_fields
         self.class.required_fields
       end
 
+      # All fields defined for connection string
       def fields
         self.class.fields
       end
@@ -135,6 +209,7 @@ module AssLauncher
       end
 
       # Connection string for server-infobases
+      # @note (see ConnectionString)
       class Server
         # Simple class host:port
         class ServerDescr
@@ -213,6 +288,7 @@ module AssLauncher
       end
 
       # Connection string for file-infobases
+      # @note (see ConnectionString)
       class File
         def self.required_fields
           FILE_FIELDS
@@ -236,13 +312,14 @@ module AssLauncher
       end
 
       # Connection string for infobases published on http server
+      # @note (see ConnectionString)
       class Http
         def self.required_fields
           HTTP_FIELDS
         end
 
         def self.fields
-          required_fields | COMMON_FIELDS | PROXY_FIELDS
+          required_fields | COMMON_FIELDS | HTTP_WEB_AUTH_FIELDS | PROXY_FIELDS
         end
 
         include ConnectionString

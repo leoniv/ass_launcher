@@ -167,6 +167,39 @@ class TestConnectionString < Minitest::Test
   def test_is?
     assert FakeConnStr.new.is? :fakeconnstr
   end
+
+  def test_prop_to_cmd
+    cs = FakeConnStr.new
+    cs.expects(:file).returns('.')
+    assert_equal ' /F"." ', cs.send(:prop_to_cmd, 'File')
+    cs.expects(:srvr).returns('Srvr_value')
+    cs.expects(:ref).returns('Ref_value')
+    assert_equal ' /S"Srvr_value/Ref_value" ', cs.send(:prop_to_cmd, 'Srvr')
+    assert_equal ' /UsePrivilegedMode ', cs.send(:prop_to_cmd, 'prmod')
+    fields = {"Usr" => ' /N"Usr_value" ',
+              "Pwd" => ' /P"Pwd_value" ',
+              "Locale" => ' /L"Locale_value" ',
+              "Ws" => ' /WS"Ws_value" ',
+              "Wsn" => ' /WSN"Wsn_value" ',
+              "Wsp" => ' /WSP"Wsp_value" '
+    }
+    fields.each do |f, cmd|
+      cs.expects(f.downcase.to_sym).returns("#{f}_value")
+      assert_equal cmd, cs.send(:prop_to_cmd, f)
+    end
+  end
+
+  def test_to_cmd
+    cs = FakeConnStr.new
+    fields = %w(Usr Pwd)
+    cs.expects(:fields).returns(fields)
+    fields.each do |f|
+      cs.expects(:prop_to_cmd).with(f).returns("#{f}_value")
+      cs.expects(:get_property).with(f).returns("#{f}_value")
+    end
+    cs.expects(:proxy_cmd).returns('proxy_cmd')
+    assert_equal 'Usr_value Pwd_value proxy_cmd', cs.to_cmd
+  end
 end
 
 class TestConnectionStringServer < Minitest::Test
@@ -303,5 +336,28 @@ class TestConnectionStringHttp < Minitest::Test
     end.new
     mock.expects(:ws).returns('http://exaple.com')
     assert_kind_of ::URI, mock.uri
+  end
+
+  def test_proxy_cmd_auto
+    inst = cls.new({ws:'http://example.com', WspAuto:'yes'})
+    assert_equal '', inst.send(:proxy_cmd)
+  end
+
+  def test_proxy_cmd_unset_wspsrv
+    inst = cls.new({ws:'http://example.com'})
+    assert_equal '', inst.send(:proxy_cmd)
+  end
+
+  def test_proxy_cmd_set_wspsrv
+    inst = cls.new({ws:'http://example.com',
+                    wspsrv:'proxy address',
+                    wspport: :port,
+                    wspuser: :user,
+                    wsppwd: :password}
+    )
+    assert_equal " /Proxy -PSrv\"proxy address\""\
+                 " -PPort\"port\""\
+                 " -PUser\"user\""\
+                 " -PPwd\"password\" ", inst.send(:proxy_cmd)
   end
 end
