@@ -91,4 +91,17 @@ class V8iTest < Minitest::Test
     end
     mod.save(tmp_file('some.v8i'), :sections)
   end
+
+  def test_escape_content
+    content = 'Connect=File="\\\\path\\r\\n\\t\\0";'
+    expected = 'Connect=File="\\\\\\path\\\\r\\\\n\\\\t\\\\0";'
+    assert_equal expected, mod.send(:escape_content, content)
+  end
+
+  def test_to_inifile_with_escapen_chars
+    content = 'Connect=File="\\\\path\\r\\n\\t\\0";'
+    expected = content.dup
+    inf = mod.send(:to_inifile, content)
+    assert_equal expected.gsub('Connect=',''), inf['global']['Connect']
+  end
 end
