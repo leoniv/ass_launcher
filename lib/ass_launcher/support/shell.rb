@@ -68,6 +68,7 @@ module AssLauncher
       class RunError < StandardError; end
       require 'methadone'
       require 'tempfile'
+      require 'ass_launcher/support/shell/process_holder'
       include Loggining
       include Methadone::SH
       extend Support::Platforms
@@ -129,9 +130,9 @@ module AssLauncher
       def dirtyrun_ass(cmd)
         begin
           _stdout, stderr, status = cmd_string(cmd).execute
-          result = RunAssResult.new(cmd, stderr, status.exitstatus)
+          result = RunAssResult.new(cmd, [], stderr, status.exitstatus, '')
         rescue *exception_meaning_command_not_found => e
-          result = RunAssResult.new(cmd, e.message, 127)
+          result = RunAssResult.new(cmd, [], e.message, 127, '')
         end
         loggining_runass result
         result
@@ -160,93 +161,174 @@ module AssLauncher
       module_function :cmd_string
       private :cmd_string
 
-      # @private
-      class CmdString
-        include AssLauncher::Loggining
-        attr_reader :run_ass_str, :command
-        def initialize(run_ass_str)
-          @run_ass_str = run_ass_str
-          @command = run_ass_str
+      class Command
+        attr_reader :cmd, :args
+        def initialize(cmd, args = [], options = {})
+          @cmd = cmd
+          @args = args
+          @ass_out_file = _ass_out_file(options)
         end
 
-        def execution_strategy
-          AssLauncher::Support::Shell.send(:execution_strategy)
+        def _ass_out_file(optios)
+          if options[:capture_assout]
+            @ass_out_file = AssOutFile.new(options[:assout_encoding])
+            args += ['/OUT', @ass_out_file.to_s]
+          else
+            @ass_out_file = StringIO.new
+          end
         end
-
-        def execute
-          logger.debug("Executing command: '#{command}'")
-          execution_strategy.run_command(command)
-        end
+        private :_ass_out_file
 
         def to_s
-          command
+          "#{@cmd} #{@args.join(' ')}"
+        end
+
+        def exit_handling(exitstatus, out, err)
+          RunAssResult.new(exitstatus, out, err, @ass_out_file.read)
+        end
+
+        # FIXME:
+      end
+
+      class Script < Command
+        include Support::Platforms
+        def initialize(cmd, options = {})
+          super cmd, [], options
+        end
+
+        def make_script
+          file = Tempfile.new(%w( run_ass_script .cmd ))
+          file.open
+          file.write(encode)
+          file.close
+          platform.path(@file.path)
+        end
+        private :make_script
+
+        def _ass_out_file(optios)
+          if options[:capture_assout]
+            @ass_out_file = AssOutFile.new(options[:assout_encoding])
+            cmd += " /OUT \"#{@ass_out_file.to_s}\" "
+          else
+            @ass_out_file = StringIO.new
+          end
+        end
+        private :_ass_out_file
+
+        def encode
+          if cygwin? || windows?
+            # TODO:have to detect current win cmd encoding. cp866 - may be wrong
+            return to_s.encode('cp866', 'utf-8')
+          end
+          to_s
+        end
+        private :encode
+
+        def cmd
+          if cygwin? || windows?
+            "cmd.exe"
+          else
+            "sh"
+          end
+        end
+
+        def args
+          if cygwin? || windows?
+            ["/C", make_script.win_string]
+          else
+            [make_script.to_s]
+          end.freeze
         end
       end
 
-      # @private
+#      # @private
+      class CmdString
+#        include AssLauncher::Loggining
+#        attr_reader :run_ass_str, :command
+#        def initialize(run_ass_str)
+#          @run_ass_str = run_ass_str
+#          @command = run_ass_str
+#        end
+#
+#        def execution_strategy
+#          AssLauncher::Support::Shell.send(:execution_strategy)
+#        end
+#
+#        def execute
+#          logger.debug("Executing command: '#{command}'")
+#          execution_strategy.run_command(command)
+#        end
+#
+#        def to_s
+#          command
+#        end
+      end
+
+#      # @private
       class CmdScript < CmdString
-        include Support::Platforms
-        attr_reader :file, :path
-        def initialize(cmd)
-          super
-          @file = Tempfile.new(%w( run_ass_script .cmd ))
-          @file.open
-          @file.write(encode_cmd(cmd))
-          @file.close
-          @path = platform.path(@file.path)
-        end
-
-        def encode_cmd(cmd)
-          if cygwin? || windows?
-            # TODO:have to detect current win cmd encoding. cp866 - may be wrong
-            begin
-              return cmd.encode('cp866', 'utf-8')
-            rescue Exception => e
-              logger.error "Encode cmd #{e.class}: #{e.message}"
-              logger.warn "cmd: #{cmd}"
-              raise e
-            end
-          end
-          cmd
-        end
-
-        def command
-          if cygwin? || windows?
-            "cmd /C \"#{path.win_string}\""
-          else
-            "sh #{path.to_s.escape}"
-          end
-        end
-
-        def execute
-          logger.debug("Executed script text: '#{run_ass_str}'")
-          out, err, status = super
-          if cygwin?
-            # TODO:have to detect current win cmd encoding. cp866 - may be wrong
-            begin
-              out.encode!('utf-8', 'cp866')
-              err.encode!('utf-8', 'cp866')
-            rescue Exception => e
-              logger.error "Encode out #{e.class}: #{e.message}"
-            end
-          end
-          [out, err, status]
-        ensure
-          @file.unlink
-        end
+#        include Support::Platforms
+#        attr_reader :file, :path
+#        def initialize(cmd)
+#          super
+#          @file = Tempfile.new(%w( run_ass_script .cmd ))
+#          @file.open
+#          @file.write(encode_cmd(cmd))
+#          @file.close
+#          @path = platform.path(@file.path)
+#        end
+#
+#        def encode_cmd(cmd)
+#          if cygwin? || windows?
+#            # TODO:have to detect current win cmd encoding. cp866 - may be wrong
+#            begin
+#              return cmd.encode('cp866', 'utf-8')
+#            rescue Exception => e
+#              logger.error "Encode cmd #{e.class}: #{e.message}"
+#              logger.warn "cmd: #{cmd}"
+#              raise e
+#            end
+#          end
+#          cmd
+#        end
+#
+#        def command
+#          if cygwin? || windows?
+#            "cmd /C \"#{path.win_string}\""
+#          else
+#            "sh #{path.to_s.escape}"
+#          end
+#        end
+#
+#        def execute
+#          logger.debug("Executed script text: '#{run_ass_str}'")
+#          out, err, status = super
+#          if cygwin?
+#            # TODO:have to detect current win cmd encoding. cp866 - may be wrong
+#            begin
+#              out.encode!('utf-8', 'cp866')
+#              err.encode!('utf-8', 'cp866')
+#            rescue Exception => e
+#              logger.error "Encode out #{e.class}: #{e.message}"
+#            end
+#          end
+#          [out, err, status]
+#        ensure
+#          @file.unlink
+#        end
       end
 
       class RunAssResult
         class UnexpectedAssOut < StandardError; end
         class RunAssError < StandardError; end
-        attr_reader :cmd, :out, :assout, :exitstatus, :expected_assout
+        attr_reader :cmd, :args, :out, :assout, :exitstatus, :expected_assout
         attr_writer :assout
         private :assout=
-        def initialize(cmd, out, exitstatus)
+        def initialize(cmd, args, out, exitstatus, assout)
           @cmd = cmd
+          @args = args
           @out = out
           @exitstatus = exitstatus
-          @assout = ''
+          @assout = assout
         end
 
         # Verivfy of result and raises unless {#success?}

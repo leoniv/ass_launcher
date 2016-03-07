@@ -158,7 +158,7 @@ module AssLauncher
       class ThinClient < BinaryWrapper
         # Define run modes of thin client
         def run_modes
-          { :enerpraise => RunModes::Enterprise }
+          { :etnerpraise => RunModes::Enterprise }
         end
 
         def accepted_connstr
@@ -176,10 +176,10 @@ module AssLauncher
       class ThickClient < ThinClient
         # (see ThinClient)
         def run_modes
-          { :enerpraise => RunModes::Enterprise,
-            :designer => RunModes::Designer,
-            :createinfobase => RunModes::CreateInfoBase
-          }
+          super.merge(
+            { :designer => RunModes::Designer,
+              :createinfobase => RunModes::CreateInfoBase
+          })
         end
 
         def accepted_connstr
