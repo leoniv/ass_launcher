@@ -169,7 +169,7 @@ module AssLauncher
           @ass_out_file = _ass_out_file(options)
         end
 
-        def _ass_out_file(optios)
+        def _ass_out_file(options)
           if options[:capture_assout]
             @ass_out_file = AssOutFile.new(options[:assout_encoding])
             args += ['/OUT', @ass_out_file.to_s]
@@ -320,12 +320,10 @@ module AssLauncher
       class RunAssResult
         class UnexpectedAssOut < StandardError; end
         class RunAssError < StandardError; end
-        attr_reader :cmd, :args, :out, :assout, :exitstatus, :expected_assout
-        attr_writer :assout
-        private :assout=
-        def initialize(cmd, args, out, exitstatus, assout)
-          @cmd = cmd
-          @args = args
+        attr_reader :out, :assout, :exitstatus, :err
+        attr_accessor :expected_assout
+        def initialize(exitstatus, out, err, assout)
+          @err = err
           @out = out
           @exitstatus = exitstatus
           @assout = assout

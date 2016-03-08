@@ -36,11 +36,14 @@ module AssLauncher
         require 'open3'
         require 'ass_launcher/support/platforms'
         extend Support::Platforms
+        include AssLauncher::Loggining
         class KillProcessError < StandardError; end
         class RunProcessError < StandardError; end
         attr_reader :pid, :result, :command
         attr_accessor :thread
         private :thread=
+
+        Thread.abort_on_exception = true
 
         # Hold of created thrades
         # @return [Arry<Thread>]
@@ -90,6 +93,8 @@ module AssLauncher
             begin
               run_and_wait_process command, options, h
             rescue StandardError => e
+              logger.warn "Handling error #{e.class} #{e.message} process "\
+                "#{h.pid} command #{command}"
               h.exit_handling(1, '', "#{e.class} #{e.message}")
             end
           end
@@ -100,15 +105,20 @@ module AssLauncher
 
         def self.run_and_wait_process(command, options, h)
           h.before_start_handling(command)
-          pid, stdout, stderr = run_process(command, options, h)
+          logger.debug "Running process with command #{command}"
+          pid, stdout, stderr = run_process(command, options)
+          logger.debug "Process run! Pid: #{pid}, command: #{command}"
           h.after_start_handling(pid)
+          logger.debug "Waiting process #{pid} command #{command}"
           Process.wait pid
+          logger.debug "Exit process #{pid} command #{command}"
           h.exit_handling(exitstatus, stdout.read, stderr.read)
         end
         private_class_method :run_and_wait_process
 
         def self.exitstatus
-          $?.exitstatus
+          $?.exitstatus unless $?.nil?
+          Signal.list['KILL']
         end
         private_class_method :exitstatus
 

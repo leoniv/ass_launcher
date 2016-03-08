@@ -89,7 +89,7 @@ class ProcessHolderTest < Minitest::Test
     holder = mock.responds_like_instance_of(cls)
     holder.expects(:before_start_handling).with(:command)
     holder.expects(:after_start_handling).with(:pid)
-    cls.expects(:run_process).with(:command, :options, holder).\
+    cls.expects(:run_process).with(:command, :options).\
       returns([:pid, StringIO.new('stdout'), StringIO.\
                new('stderr')])
     Process.expects(:wait).with(:pid)
