@@ -35,21 +35,13 @@ module AssLauncher
       class ProcessHolder
         require 'open3'
         require 'ass_launcher/support/platforms'
-        extend Support::Platforms
+        include Support::Platforms
         include AssLauncher::Loggining
         class KillProcessError < StandardError; end
         class RunProcessError < StandardError; end
-        attr_reader :pid, :result, :command
-        attr_accessor :thread
-        private :thread=
+        attr_reader :pid, :result, :command, :options, :thread, :popen3_thread
 
         Thread.abort_on_exception = true
-
-        # Hold of created thrades
-        # @return [Arry<Thread>]
-        def self.threads_list
-          @@threads_list ||= []
-        end
 
         # Hold of created instaces
         # @return [Arry<ProcessHolder>]
@@ -81,70 +73,52 @@ module AssLauncher
         def self.run(command, options = {})
           fail RunProcessError, 'Forbidden run cmd.exe with /K key'\
             if cmd_exe_with_k? command
-          h = ProcessHolder.new
-          h.send(:thread=, run_thread(command, options, h))
+          h = ProcessHolder.new(command, options)
           process_list << h
-          h
+          h.run
         end
 
-        # Run new thread
-        def self.run_thread(command, options, h)
-          tr = Thread.new do
+        # @api private
+        def initialize(command, options = {})
+          @command = command
+          @options = options
+          options[:new_pgroup] = true if windows?
+        end
+
+        # @api private
+        def run
+          @popen3_thread, stdout, stderr = run_process
+          @pid = @popen3_thread.pid
+          @thread = wait_process_in_thread(stdout, stderr)
+          self
+        end
+
+        def wait_process_in_thread(stdout, stderr)
+          Thread.new do
+            popen3_thread.join
             begin
-              run_and_wait_process command, options, h
+              @result = command.exit_handling(exitstatus,\
+                                              stdout.read,\
+                                              stderr.read)
             rescue StandardError => e
-              logger.warn "Handling error #{e.class} #{e.message} process "\
-                "#{h.pid} command #{command}"
-              h.exit_handling(1, '', "#{e.class} #{e.message}")
+              @result = e
             end
           end
-          threads_list << tr
-          tr
         end
-        private_class_method :run_thread
+        private :wait_process_in_thread
 
-        def self.run_and_wait_process(command, options, h)
-          h.before_start_handling(command)
-          logger.debug "Running process with command #{command}"
-          pid, stdout, stderr = run_process(command, options)
-          logger.debug "Process run! Pid: #{pid}, command: #{command}"
-          h.after_start_handling(pid)
-          logger.debug "Waiting process #{pid} command #{command}"
-          Process.wait pid
-          logger.debug "Exit process #{pid} command #{command}"
-          h.exit_handling(exitstatus, stdout.read, stderr.read)
+        def exitstatus
+          popen3_thread.value.to_i
         end
-        private_class_method :run_and_wait_process
-
-        def self.exitstatus
-          $?.exitstatus unless $?.nil?
-          Signal.list['KILL']
-        end
-        private_class_method :exitstatus
+        private :exitstatus
 
         # Run new process
-        def self.run_process(command, options = {})
+        def run_process
           command.args << '' if command.args.size == 0
-          options[:new_pgroup] = true if windows?
-          _r1, r2, r3, pw = Open3.popen3 command.cmd, *command.args, options
-          [pw.pid, r2, r3]
+          _r1, r2, r3, thread = Open3.popen3 command.cmd, *command.args, options
+          [thread, r2, r3]
         end
-        private_class_method :run_process
-
-        # @api private
-        def before_start_handling(command)
-          @command = command
-        end
-
-        # @api private
-        def after_start_handling(pid)
-          @pid = pid
-        end
-
-        # @api private
-        def exit_handling(exitstatus, out, err)
-          @result = command.exit_handling(exitstatus, out, err)
-        end
+        private :run_process
 
         # Kill the process
         # @return [ProcessHolder] - self
@@ -157,7 +131,7 @@ module AssLauncher
           fail KillProcessError, 'Can\'t kill subprocess runned in cmd.exe '\
             'on the windows machine' if self.class.cmd_exe_with_c? command
           Process.kill('KILL', pid)
-          self
+          wait
         end
 
         # Wait for thread exit

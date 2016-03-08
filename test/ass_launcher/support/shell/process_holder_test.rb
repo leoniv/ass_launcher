@@ -7,23 +7,14 @@ class ProcessHolderTest < Minitest::Test
   end
 
   def setup
-    cls.threads_list.clear
     cls.process_list.clear
   end
 
-  def assert_list(list)
-    assert cls.send(list).is_a? Array
-    assert_equal 0, cls.send(list).size
-    cls.send(list) << :thread
-    assert_equal 1, cls.send(list).size
-  end
-
-  def test_threads_list
-    assert_list :threads_list
-  end
-
   def test_process_list
-    assert_list :process_list
+    assert cls.process_list.is_a? Array
+    assert_equal 0, cls.process_list.size
+    cls.process_list << :thread
+    assert_equal 1, cls.process_list.size
   end
 
   def mock_command(cmd, args)
@@ -51,11 +42,9 @@ class ProcessHolderTest < Minitest::Test
     command = mock
     cls.expects(:cmd_exe_with_k?).with(command).returns(false)
     mock_holder = mock
-    cls.expects(:new).returns(mock_holder)
-    thread_mock = mock
-    cls.expects(:run_thread).with(command, :options, mock_holder).returns(thread_mock)
-    mock_holder.expects(:thread=).with(thread_mock)
-    assert_equal mock_holder, cls.run(command, :options)
+    mock_holder.expects(:run).returns(mock_holder)
+    cls.expects(:new).with(command, {}).returns(mock_holder)
+    assert_equal mock_holder, cls.run(command, {})
     assert_equal mock_holder, cls.process_list.last
   end
 
@@ -67,99 +56,99 @@ class ProcessHolderTest < Minitest::Test
     end
   end
 
-  def test_run_thread
-    holder = mock
-    cls.expects(:run_and_wait_process).with(:command, :options, holder)
-    tr = cls.send(:run_thread, :command, :options, holder)
-    tr.join
-    assert_instance_of Thread, tr
-    assert_equal 1, cls.threads_list.size
-    assert_instance_of Thread, cls.threads_list.last
+  def test_initialize
+    cls.any_instance.expects(:windows?).returns(false)
+    inst = cls.new(:command, :options)
+    assert_equal :command, inst.command
+    assert_equal :options, inst.options
   end
 
-  def test_run_thread_fail
-    holder = mock
-    holder.expects(:exit_handling).with(1, '', 'StandardError message')
-    cls.expects(:run_and_wait_process).with(:command, :options, holder).raises(StandardError, 'message')
-    tr = cls.send(:run_thread, :command, :options, holder)
-    tr.join
+  def test_initialize_in_windows
+    cls.any_instance.expects(:windows?).returns(true)
+    inst = cls.new(:command)
+    assert_equal :command, inst.command
+    assert inst.options[:new_pgroup]
   end
 
-  def test_run_and_wait_process
-    holder = mock.responds_like_instance_of(cls)
-    holder.expects(:before_start_handling).with(:command)
-    holder.expects(:after_start_handling).with(:pid)
-    cls.expects(:run_process).with(:command, :options).\
-      returns([:pid, StringIO.new('stdout'), StringIO.\
-               new('stderr')])
-    Process.expects(:wait).with(:pid)
-    cls.expects(:exitstatus).returns(:exitstatus)
-    holder.expects(:exit_handling).with(:exitstatus, 'stdout', 'stderr')
-
-    cls.send(:run_and_wait_process, :command, :options, holder)
-    Process.unstub
+  def test_inst_run
+    popen3_thread = mock
+    popen3_thread.expects(:pid).returns(:pid)
+    inst = cls.new(:command)
+    out = StringIO.new
+    err = StringIO.new
+    inst.expects(:run_process).returns([popen3_thread, out, err])
+    inst.expects(:wait_process_in_thread).with(out, err).\
+      returns(:thread)
+    assert_equal inst, inst.run
+    assert_equal popen3_thread, inst.popen3_thread
+    assert_equal :pid, inst.pid
+    assert_equal :thread, inst.thread
   end
+
+  def test_wait_process_in_thread
+    out = StringIO.new('out')
+    err = StringIO.new('err')
+    command = mock
+    command.expects(:exit_handling).with(:exitstatus, 'out', 'err').returns(:result)
+    popen3_thread = mock
+    popen3_thread.expects(:join)
+
+    inst = cls.new(command)
+    inst.expects(:popen3_thread).returns(popen3_thread)
+    inst.expects(:exitstatus).returns(:exitstatus)
+    assert_instance_of Thread, inst.send(:wait_process_in_thread, out, err).join
+    assert_equal :result, inst.result
+  end
+
+  def test_wait_process_in_thread_fail
+    out = StringIO.new('out')
+    err = StringIO.new('err')
+    command = mock
+    command.expects(:exit_handling).with(:exitstatus, 'out', 'err').\
+      raises(StandardError)
+    popen3_thread = mock
+    popen3_thread.expects(:join)
+
+    inst = cls.new(command)
+    inst.expects(:popen3_thread).returns(popen3_thread)
+    inst.expects(:exitstatus).returns(:exitstatus)
+    assert_instance_of Thread, inst.send(:wait_process_in_thread, out, err).join
+    assert_instance_of StandardError, inst.result
+  end
+
 
   def test_exitststus
-    `echo`
-    assert_equal 0, cls.send(:exitstatus)
+    popen3_thread = mock
+    popen3_thread.expects(:value).returns('100')
+
+    inst = cls.new(:command)
+    inst.expects(:popen3_thread).returns(popen3_thread)
+    assert_equal 100, inst.send(:exitstatus)
   end
 
   def test_run_process_in_windows
     command = mock.responds_like_instance_of(AssLauncher::Support::Shell::Command)
     command.expects(:cmd).returns(:cmd)
     command.expects(:args).returns([]).times(3)
-    process_waiter = mock
-    cls.expects(:windows?).returns(true)
-    process_waiter.expects(:pid).returns(:pid)
-    Open3.expects(:popen3).with(:cmd, '', {new_pgroup: true}).returns [:r1, :r2, :r3, process_waiter]
-    assert_equal [:pid, :r2, :r3], cls.send(:run_process, command, {})
-  end
-
-  def test_run_process_in_linux_or_cygwin
-    command = mock.responds_like_instance_of(AssLauncher::Support::Shell::Command)
-    command.expects(:cmd).returns(:cmd)
-    command.expects(:args).returns([]).times(3)
-    process_waiter = mock
-    cls.expects(:windows?).returns(false)
-    process_waiter.expects(:pid).returns(:pid)
-    Open3.expects(:popen3).with(:cmd, '', {}).returns [:r1, :r2, :r3, process_waiter]
-    assert_equal [:pid, :r2, :r3], cls.send(:run_process, command, {})
-  end
-
-  def test_before_start_handling
-    inst = cls.new
-    inst.before_start_handling(:command)
-    assert_equal :command, inst.command
-  end
-
-  def test_after_start_handling
-    inst = cls.new
-    inst.after_start_handling(:pid)
-    assert_equal :pid, inst.pid
-  end
-
-  def test_exit_handling
-    command = mock.responds_like_instance_of(AssLauncher::Support::Shell::Command)
-    command.expects(:exit_handling).with(:exitstatus, :out, :err).returns(:result)
-    inst = cls.new
-    inst.expects(:command).returns(command)
-    inst.exit_handling(:exitstatus, :out, :err)
-    assert_equal :result, inst.result
+    Open3.expects(:popen3).with(:cmd, '', :options).returns [:r1, :r2, :r3, :popen3_thread]
+    inst = cls.new(command)
+    inst.expects(:options).returns(:options)
+    assert_equal [:popen3_thread, :r2, :r3], inst.send(:run_process)
   end
 
   def test_kill_alive
-    inst = cls.new
+    inst = cls.new(:command)
     inst.expects(:alive?).returns(true)
     cls.expects(:cmd_exe_with_c?).returns(false)
     Process.expects(:kill).with('KILL',:pid)
     inst.expects(:pid).returns(:pid)
+    inst.expects(:wait).returns(inst)
     assert_equal inst, inst.kill
     Process.unstub(:kill)
   end
 
   def test_kill_alive_fail
-    inst = cls.new
+    inst = cls.new(:command)
     inst.expects(:alive?).returns(true)
     cls.expects(:cmd_exe_with_c?).returns(true)
     assert_raises AssLauncher::Support::Shell::ProcessHolder::KillProcessError do
@@ -169,7 +158,7 @@ class ProcessHolderTest < Minitest::Test
 
   def test_kill_dead
     Process.expects(:kill).never
-    inst = cls.new
+    inst = cls.new(:command)
     inst.expects(:alive?).returns(false)
     assert_equal inst, inst.kill
   end
@@ -177,14 +166,14 @@ class ProcessHolderTest < Minitest::Test
   def test_wait_alive
     thread = mock
     thread.expects(:join)
-    inst = cls.new
+    inst = cls.new(:command)
     inst.expects(:alive?).returns(true)
     inst.expects(:thread).returns(thread)
     assert_equal inst, inst.wait
   end
 
   def test_wait_dead
-    inst = cls.new
+    inst = cls.new(:command)
     inst.expects(:alive?).returns(false)
     inst.expects(:thread).never
     assert_equal inst, inst.wait
@@ -193,9 +182,8 @@ class ProcessHolderTest < Minitest::Test
   def test_alive?
     thread = mock
     thread.expects(:alive?).returns(true)
-    inst = cls.new
+    inst = cls.new(:command)
     inst.expects(:thread).returns(thread)
     assert inst.alive?
   end
-
 end
