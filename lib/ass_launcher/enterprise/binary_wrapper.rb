@@ -34,6 +34,7 @@ module AssLauncher
     # @note (see #arch)
     class BinaryWrapper
       include AssLauncher::Support::Platforms
+      include AssLauncher::Loggining
       attr_reader :path
 
       def initialize(binpath)
@@ -144,7 +145,7 @@ module AssLauncher
       # @option options (see AssLauncher::Support::Shell::Command#initialize)
       # @return [AssLauncher::Support::Shell::Command]
       def to_command(args = [], options = {})
-        FIXME
+        AssLauncher::Support::Shell::Command.new(path.to_s, args, options)
       end
 
       # Convert to {AssLauncher::Support::Shell::Script} instance
@@ -153,31 +154,35 @@ module AssLauncher
       # @option options (see AssLauncher::Support::Shell::Script#initialize}
       # @return [AssLauncher::Support::Shell::Script]
       def to_script(args = '', options = {})
-        FIXME
-      end
-#
-      # @api public
-      # @param args (see to_script)
-      # @return (see AssLauncher::Support::Shell::run_script)
-      def run_as_script(args = '', script_options = {}, run_options = {})
-        FIXME
+        AssLauncher::Support::Shell::Script.\
+          new("#{path.win_string} #{args}", options)
       end
 
-      # Use for run 1C binary only
-      # @param [Script] script for running
-      # @param options (see ProcessHolder::run)
-      # @return (see ProcessHolder::run)
-      # @api private
-      def run_script(script, options = {})
+      # Run 1C binary as script with script +args+ and wait until prosess
+      # runned
+      # @param (see to_script)
+      # @option (see to_script)
+      # @return [Launcher::Support::Shell::ProcessHolder] object for
+      #  execute 1C controling
+      # @api public
+      def run_as_script(args = '', options = {})
+        script = to_script(args, options)
         logger.debug "Run script: #{script.cmd} #{script.args}"
         logger.debug "Script: #{script}"
-        ProcessHolder.run(script, options)
+        AssLauncher::Support::Shell::ProcessHolder.run(script).wait
       end
 
-      # Use for run 1C binary only
-      def run_command(command, options = {})
+      # Run 1C binary as command with command +args+ and return object for
+      # process executing control
+      # @param (see to_command)
+      # @option (see to_command)
+      # @return [AssLauncher::Support::Shell::ProcessHolder] object for
+      #  execute 1C controling
+      # @api public
+      def run_as_command(args = [], options = {})
+        command = to_command(args, options)
         logger.debug "Run command: #{command.cmd} #{command.args}"
-        ProcessHolder.run(command, options)
+        AssLauncher::Support::Shell::ProcessHolder.run(command)
       end
 
       # @param run_mode [Symbol]

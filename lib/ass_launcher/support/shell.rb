@@ -150,8 +150,14 @@ module AssLauncher
         end
 
         def exit_handling(exitstatus, out, err)
-          RunAssResult.new(exitstatus, out, err, ass_out_file.read)
+          RunAssResult.new(exitstatus, encode_out(out),
+                           encode_out(err), ass_out_file.read)
         end
+
+        def encode_out(out)
+          out
+        end
+        private :encode_out
       end
 
       # class {Script} wraping cmd string in to script tempfile and  running as:
@@ -231,6 +237,17 @@ module AssLauncher
             [make_script.to_s]
           end.freeze
         end
+
+        def encode_out(out)
+          # TODO: need to detect current win cmd encoding cp866 - may be wrong
+          begin
+            out.encode!('utf-8', 'cp866') if cygwin_or_windows?
+          rescue EncodingError => e
+            return "#{e.class}: #{out}"
+          end
+          out
+        end
+        private :encode_out
       end
 
       # Contain result for execute 1C binary
@@ -255,7 +272,7 @@ module AssLauncher
         # @api public
         def verify!
           fail UnexpectedAssOut, cut_assout unless expected_assout?
-          fail RunAssError, "#{out}#{cut_assout}" unless success?
+          fail RunAssError, "#{err}#{cut_assout}" unless success?
           self
         end
 

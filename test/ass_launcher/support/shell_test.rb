@@ -165,7 +165,7 @@ class RunAssResultTest < Minitest::Test
     inst.expects(:expected_assout?).returns(true)
     inst.expects(:success?).returns(false)
     inst.expects(:cut_assout).returns('ass out')
-    inst.expects(:out).returns('out')
+    inst.expects(:err).returns('err')
     assert_raises AssLauncher::Support::Shell::RunAssResult::RunAssError do
       inst.verify!
     end
@@ -459,5 +459,28 @@ class TestScript < Minitest::Test
     p = AssLauncher::Support::Platforms
     assert_equal (p.cygwin? || p.windows?),
       inst.send(:cygwin_or_windows?)
+  end
+
+  def test_encode_out
+    inst = Class.new(cls) do
+      def initialize
+      end
+    end.new
+    inst.expects(:cygwin_or_windows?).returns(true)
+    out = mock
+    out.expects(:encode!).with('utf-8', 'cp866')
+    assert_equal out, inst.send(:encode_out, out)
+  end
+
+  def test_encode_out_fail
+    inst = Class.new(cls) do
+      def initialize
+      end
+    end.new
+    inst.expects(:cygwin_or_windows?).returns(true)
+    out = mock
+    out.expects(:to_s).returns('out')
+    out.expects(:encode!).with('utf-8', 'cp866').raises(EncodingError)
+    assert_equal 'EncodingError: out', inst.send(:encode_out, out)
   end
 end
