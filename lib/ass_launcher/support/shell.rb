@@ -75,21 +75,6 @@ module AssLauncher
       include Methadone::SH
       extend Support::Platforms
 
-      # Use for run 1C binary only
-      def run_script(script, options = {})
-        logger.debug "Run script: #{script.cmd} #{script.args}"
-        logger.debug "Script: #{script}"
-        ProcessHolder.run(script, options)
-      end
-      module_function :run_script
-
-      # Use for run 1C binary only
-      def run_command(command, options = {})
-        logger.debug "Run command: #{command.cmd} #{command.args}"
-        ProcessHolder.run(command, options)
-      end
-      module_function :run_command
-
       # Command running directly as:
       # popen3(command.cmd, *command.args, options)
       #

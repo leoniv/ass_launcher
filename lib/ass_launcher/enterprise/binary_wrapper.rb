@@ -113,36 +113,72 @@ module AssLauncher
         version.to_s.split('.')[0,2].join('.')
       end
 
+#      # @api public
+#      def to_s
+#        path.to_s
+#      end
+#
+#      # Return escaped string suitable for run 1C platform in given run_mode
+#      # @return [String]
+#      # @api public
+#      def to_cmd
+#        path.win_string.to_cmd
+#      end
+#
+#      # Run the client without validate arguments
+#      # @param args [String] cmd arguments for 1C executable
+#      # @return [AssLauncher::Support::Shell::RunAssResult] - result of run 1C
+#      # executable
+#      def dirtyrun(args)
+#        shell.dirtyrun_ass "#{to_cmd} #{args}"
+#      end
+#
+#      # (see dirtyrun)
+#      # @raise (see AssLauncher::Support::Shell::RunAssResult#verify!)
+#      def dirtyrun!(args)
+#        dirtyrun(args).verify!
+#      end
+
+      # Convert to {AssLauncher::Support::Shell::Command} instance
+      # @param args (see AssLauncher::Support::Shell::Command#initialize)
+      # @option options (see AssLauncher::Support::Shell::Command#initialize)
+      # @return [AssLauncher::Support::Shell::Command]
+      def to_command(args = [], options = {})
+        FIXME
+      end
+
+      # Convert to {AssLauncher::Support::Shell::Script} instance
+      # @param [String] args string arguments for run 1C binary wrapped in
+      #  +cmd.exe+ or +sh+ script like as: +'/Arg1 "Value" /Arg2 "value"'+
+      # @option options (see AssLauncher::Support::Shell::Script#initialize}
+      # @return [AssLauncher::Support::Shell::Script]
+      def to_script(args = '', options = {})
+        FIXME
+      end
+#
       # @api public
-      def to_s
-        path.to_s
+      # @param args (see to_script)
+      # @return (see AssLauncher::Support::Shell::run_script)
+      def run_as_script(args = '', script_options = {}, run_options = {})
+        FIXME
       end
 
-      # Return escaped string suitable for run 1C platform in given run_mode
-      # @return [String]
-      # @api public
-      def to_cmd
-        path.win_string.to_cmd
+      # Use for run 1C binary only
+      # @param [Script] script for running
+      # @param options (see ProcessHolder::run)
+      # @return (see ProcessHolder::run)
+      # @api private
+      def run_script(script, options = {})
+        logger.debug "Run script: #{script.cmd} #{script.args}"
+        logger.debug "Script: #{script}"
+        ProcessHolder.run(script, options)
       end
 
-      # Run the client without validate arguments
-      # @param args [String] cmd arguments for 1C executable
-      # @return [AssLauncher::Support::Shell::RunAssResult] - result of run 1C
-      # executable
-      def dirtyrun(args)
-        shell.dirtyrun_ass "#{to_cmd} #{args}"
+      # Use for run 1C binary only
+      def run_command(command, options = {})
+        logger.debug "Run command: #{command.cmd} #{command.args}"
+        ProcessHolder.run(command, options)
       end
-
-      # (see dirtyrun)
-      # @raise (see AssLauncher::Support::Shell::RunAssResult#verify!)
-      def dirtyrun!(args)
-        dirtyrun(args).verify!
-      end
-
-      def shell
-        AssLauncher::Support::Shell
-      end
-      private :shell
 
       # @param run_mode [Symbol]
       #  Valid values define in the {#run_modes}
