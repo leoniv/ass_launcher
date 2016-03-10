@@ -35,7 +35,7 @@ class PlatformsTest < Minitest::Test
   end
 
   def test_platform
-    assert_equal mod, cls_include_mod.platform
+    assert_equal mod, cls_include_mod.send(:platform)
   end
 
   def test_path_class

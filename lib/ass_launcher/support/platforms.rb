@@ -71,6 +71,7 @@ module AssLauncher
       def platform
         AssLauncher::Support::Platforms
       end
+      private :platform
 
       require 'pathname'
 

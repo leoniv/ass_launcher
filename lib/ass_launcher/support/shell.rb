@@ -17,6 +17,7 @@ class String
   end
 end
 
+#
 module AssLauncher
   class << self
     def config
@@ -28,6 +29,7 @@ module AssLauncher
     yield(config)
   end
 
+  # Configuration for {AssLauncher}
   class Configuration
     attr_accessor :logger
 
@@ -62,7 +64,7 @@ module AssLauncher
     end
   end
   module Support
-    # Shell utils
+    # Shell utils for run 1C:Enterprise binary
     module Shell
       # TODO: delete it see todo in platform #cygpath func
       class RunError < StandardError; end
@@ -73,250 +75,182 @@ module AssLauncher
       include Methadone::SH
       extend Support::Platforms
 
-      # @note Fuckin 1C not work with stdout and stderr
-      #  For out 1C use /OUT"file" parameter and write message into. Message
-      #  encoding 'cp1251' for windows and 'utf-8' for Linux
-      # This method run 1C binaryes whit /DisableStartupDialogs,
-      # /DisableStartupMessages and /OUT parameter, read message from /OUT
-      # @param cmd (see #dirtyrun_ass)
-      # @param options [Hash]
-      #  - :out_encoding - encoding expected for text in /OUT file
-      #  - :expected_assout [Regexp] - for validate /OUT text see
-      #  {RunAssResult#initialize}
-      # @return (see #dirtyrun_ass)
-      def run_ass(cmd, options = {})
-        of = AssOutFile.new(options[:out_encoding])
-        cmd_ = "#{cmd} /OUT\"#{of}\" /DisableStartupDialogs "\
-          '/DisableStartupMessages'
-        result = dirtyrun_ass(cmd_)
-        result.send(:expected_assout=, options[:expected_assout])
-        result.send(:assout=, of.read)
-        loggining_assout result
-        result
+      # Use for run 1C binary only
+      def run_script(script, options = {})
+        logger.debug "Run script: #{script.cmd} #{script.args}"
+        logger.debug "Script: #{script}"
+        ProcessHolder.run(script, options)
       end
-      module_function :run_ass
+      module_function :run_script
 
-      # rubocop:disable Metrics/AbcSize
-      def loggining_assout(result)
-        if result.expected_assout?
-          logger.debug "expects ass output: '#{result.expected_assout}'"\
-            unless result.expected_assout.nil?
-          loggining_assout_output result
-        else
-          logger.error 'Unexpected ass out'
-          logger.warn "expects ass output: '#{result.expected_assout}'"
-          logger.warn "ass output: #{result.assout}"
-        end
+      # Use for run 1C binary only
+      def run_command(command, options = {})
+        logger.debug "Run command: #{command.cmd} #{command.args}"
+        ProcessHolder.run(command, options)
       end
-      # rubocop:enable Metrics/AbcSize
-      module_function :loggining_assout
-      private :loggining_assout
+      module_function :run_command
 
-      def loggining_assout_output(result)
-        if result.success?
-          logger.debug "ass output: #{result.assout}"\
-            unless result.assout.to_s.empty?
-        else
-          logger.warn "ass output: #{result.assout}"\
-            unless result.assout.to_s.empty?
-        end
-      end
-      module_function :loggining_assout_output
-      private :loggining_assout_output
-
-      # Run 1C platform.
-      # @param cmd [String]
-      # @return [RunAssResult]
-      def dirtyrun_ass(cmd)
-        begin
-          _stdout, stderr, status = cmd_string(cmd).execute
-          result = RunAssResult.new(cmd, [], stderr, status.exitstatus, '')
-        rescue *exception_meaning_command_not_found => e
-          result = RunAssResult.new(cmd, [], e.message, 127, '')
-        end
-        loggining_runass result
-        result
-      end
-      module_function :dirtyrun_ass
-
-      def loggining_runass(result)
-        if result.success?
-          logger.debug 'Executing ass success'
-        else
-          logger.error "Executing ass '#{result.cmd}'"
-          logger.warn "stderr output: #{result.out}"\
-            unless result.out.empty?
-        end
-      end
-      module_function :loggining_runass
-      private :loggining_runass
-
-      def cmd_string(cmd)
-        if windows? || cygwin?
-          CmdScript.new(cmd)
-        else
-          CmdString.new(cmd)
-        end
-      end
-      module_function :cmd_string
-      private :cmd_string
-
+      # Command running directly as:
+      # popen3(command.cmd, *command.args, options)
+      #
+      # @note What reason for it? Reason for it:
+      #
+      #  Fucking 1C binary often unexpected parse cmd arguments if run in
+      #  shell like `1c.exe arguments`. For correction this invented two way run
+      #  1C binary: as command see {Shell::Command} or as script
+      #  see {Shell::Script}. If run 1C as command we can control executing
+      #  process wait exit or kill 1C binary process. If run 1C as script 1C
+      #  more correctly parse arguments but we can't kill subprosess runned
+      #  in cmd.exe
+      #
+      # @note On default use silient execute 1C binary whit
+      #  /DisableStartupDialogs,
+      #  /DisableStartupMessages parameters and capture 1C output /OUT
+      #  parameter. Read  message from /OUT when 1C binary process exit and
+      #  build instnce of RunAssResult.
+      #
+      # @note (see AssOutFile)
+      # @api private
       class Command
-        attr_reader :cmd, :args
+        attr_reader :cmd, :args, :ass_out_file, :options
+        private :ass_out_file
+        DEFAULT_OPTIONS = { silent_mode: true,
+                            capture_assout: true
+        }
+        # @param cmd [String] path to 1C binary
+        # @param args [Array] arguments for 1C binary
+        # @option options [String] :assout_encoding encoding for assoutput file.
+        #  Default 'cp1251'
+        # @option options [Boolean] :capture_assout capture assoutput.
+        #  Default true
+        # @option options [Boolean]:silent_mode run 1C with
+        #  /DisableStartupDialogs and /DisableStartupMessages parameters.
+        #  Default true
         def initialize(cmd, args = [], options = {})
+          @options = DEFAULT_OPTIONS.merge(options).freeze
           @cmd = cmd
           @args = args
-          @ass_out_file = _ass_out_file(options)
+          @args += _silent_mode
+          @ass_out_file = _ass_out_file
         end
 
-        def _ass_out_file(options)
-          if options[:capture_assout]
-            @ass_out_file = AssOutFile.new(options[:assout_encoding])
-            args += ['/OUT', @ass_out_file.to_s]
+        def _silent_mode
+          if options[:silent_mode]
+            ['/DisableStartupDialogs', '',
+             '/DisableStartupMessages', '']
           else
-            @ass_out_file = StringIO.new
+            []
+          end
+        end
+        private :_silent_mode
+
+        def _out_ass_argument(out_file)
+          @args += ['/OUT', out_file.to_s]
+          out_file
+        end
+        private :_out_ass_argument
+
+        def _ass_out_file
+          if options[:capture_assout]
+            out_file = AssOutFile.new(options[:assout_encoding])
+            _out_ass_argument out_file
+          else
+            StringIO.new
           end
         end
         private :_ass_out_file
 
         def to_s
-          "#{@cmd} #{@args.join(' ')}"
+          "#{cmd} #{args.join(' ')}"
         end
 
         def exit_handling(exitstatus, out, err)
-          RunAssResult.new(exitstatus, out, err, @ass_out_file.read)
+          RunAssResult.new(exitstatus, out, err, ass_out_file.read)
         end
-
-        # FIXME:
       end
 
+      # class {Script} wraping cmd string in to script tempfile and  running as:
+      # popen3('cmd.exe', '/C', 'tempfile' in cygwin or windows
+      # or popen3('sh', 'tempfile') in linux
+      #
+      # @note (see Command)
+      # @api private
       class Script < Command
         include Support::Platforms
+        # @param cmd [String] cmd string for executing as cmd.exe or sh script
+        # @option (see Command#initialize)
         def initialize(cmd, options = {})
           super cmd, [], options
         end
 
         def make_script
-          file = Tempfile.new(%w( run_ass_script .cmd ))
-          file.open
-          file.write(encode)
-          file.close
+          @file = Tempfile.new(%w( run_ass_script .cmd ))
+          @file.open
+          @file.write(encode)
+          @file.close
           platform.path(@file.path)
         end
         private :make_script
 
-        def _ass_out_file(optios)
-          if options[:capture_assout]
-            @ass_out_file = AssOutFile.new(options[:assout_encoding])
-            cmd += " /OUT \"#{@ass_out_file.to_s}\" "
-          else
-            @ass_out_file = StringIO.new
-          end
+        # @note used @args variable for reason!
+        #  In class {Script} methods {Script#cmd} and
+        #  {Script#args} returns command and args for run
+        #  script in sh or cmd.exe but @rgs varible use in {#to_s} for
+        #  generate script content
+        #  script
+        def _out_ass_argument(out_file)
+          @args += ['/OUT', "\"#{out_file}\""]
+          out_file
         end
-        private :_ass_out_file
+        private :_out_ass_argument
 
         def encode
-          if cygwin? || windows?
-            # TODO:have to detect current win cmd encoding. cp866 - may be wrong
+          if cygwin_or_windows?
+            # TODO: need to detect current win cmd encoding cp866 - may be wrong
             return to_s.encode('cp866', 'utf-8')
           end
           to_s
         end
         private :encode
 
+        # @note used @cmd and @args variable for reason!
+        #  In class {Script} methods {Script#cmd} and
+        #  {Script#args} returns command and args for run
+        #  script in sh or cmd.exe but {#to_s} return content for
+        #  script
+        def to_s
+          "#{@cmd} #{@args.join(' ')}"
+        end
+
+        def cygwin_or_windows?
+          cygwin? || windows?
+        end
+        private :cygwin_or_windows?
+
+        # Returm shell binary 'cmd.exe' or 'sh'
+        # @return [String]
         def cmd
-          if cygwin? || windows?
-            "cmd.exe"
+          if cygwin_or_windows?
+            'cmd.exe'
           else
-            "sh"
+            'sh'
           end
         end
 
+        # Return args for run shell script
+        # @return [Array]
         def args
-          if cygwin? || windows?
-            ["/C", make_script.win_string]
+          if cygwin_or_windows?
+            ['/C', make_script.win_string]
           else
             [make_script.to_s]
           end.freeze
         end
       end
 
-#      # @private
-      class CmdString
-#        include AssLauncher::Loggining
-#        attr_reader :run_ass_str, :command
-#        def initialize(run_ass_str)
-#          @run_ass_str = run_ass_str
-#          @command = run_ass_str
-#        end
-#
-#        def execution_strategy
-#          AssLauncher::Support::Shell.send(:execution_strategy)
-#        end
-#
-#        def execute
-#          logger.debug("Executing command: '#{command}'")
-#          execution_strategy.run_command(command)
-#        end
-#
-#        def to_s
-#          command
-#        end
-      end
-
-#      # @private
-      class CmdScript < CmdString
-#        include Support::Platforms
-#        attr_reader :file, :path
-#        def initialize(cmd)
-#          super
-#          @file = Tempfile.new(%w( run_ass_script .cmd ))
-#          @file.open
-#          @file.write(encode_cmd(cmd))
-#          @file.close
-#          @path = platform.path(@file.path)
-#        end
-#
-#        def encode_cmd(cmd)
-#          if cygwin? || windows?
-#            # TODO:have to detect current win cmd encoding. cp866 - may be wrong
-#            begin
-#              return cmd.encode('cp866', 'utf-8')
-#            rescue Exception => e
-#              logger.error "Encode cmd #{e.class}: #{e.message}"
-#              logger.warn "cmd: #{cmd}"
-#              raise e
-#            end
-#          end
-#          cmd
-#        end
-#
-#        def command
-#          if cygwin? || windows?
-#            "cmd /C \"#{path.win_string}\""
-#          else
-#            "sh #{path.to_s.escape}"
-#          end
-#        end
-#
-#        def execute
-#          logger.debug("Executed script text: '#{run_ass_str}'")
-#          out, err, status = super
-#          if cygwin?
-#            # TODO:have to detect current win cmd encoding. cp866 - may be wrong
-#            begin
-#              out.encode!('utf-8', 'cp866')
-#              err.encode!('utf-8', 'cp866')
-#            rescue Exception => e
-#              logger.error "Encode out #{e.class}: #{e.message}"
-#            end
-#          end
-#          [out, err, status]
-#        ensure
-#          @file.unlink
-#        end
-      end
-
+      # Contain result for execute 1C binary
+      # see {ProcessHolder#result}
+      # @api private
       class RunAssResult
         class UnexpectedAssOut < StandardError; end
         class RunAssError < StandardError; end
@@ -333,6 +267,7 @@ module AssLauncher
         # @raise [UnexpectedAssOut] - exitstatus == 0 but taken unexpected
         #  assout {!#expected_assout?}
         # @raise [RunAssError] - if other errors taken
+        # @api public
         def verify!
           fail UnexpectedAssOut, cut_assout unless expected_assout?
           fail RunAssError, "#{out}#{cut_assout}" unless success?
@@ -345,16 +280,21 @@ module AssLauncher
         end
         private :cut_assout
 
+        # @api public
         def success?
           exitstatus == 0 && expected_assout?
         end
 
+        # Set regex for verify assout
+        # @note (see #expected_assout?)
+        # @param exp [nil, Regexp]
+        # @raise [ArgumentError] when bad expresion given
+        # @api public
         def expected_assout=(exp)
           return if exp.nil?
           fail ArgumentError unless exp.is_a? Regexp
           @expected_assout = exp
         end
-        private :expected_assout=
 
         # @note Sometimes 1C does what we not expects. For example, we ask
         #  to create InfoBase File="tmp\tmp.ib" however 1C make files of
@@ -364,6 +304,7 @@ module AssLauncher
         # If existstatus != 0 checking assout value skiped and return true
         # It work when exitstatus == 0 but taken unexpected assout
         # @return [Boolean]
+        # @api public
         def expected_assout?
           return true if expected_assout.nil?
           return true if exitstatus != 0
@@ -371,6 +312,11 @@ module AssLauncher
         end
       end
 
+      # Hold, read and encode 1C output
+      #
+      # @note Fucking 1C not work with stdout and stderr
+      #  For out 1C use /OUT"file" parameter and write message into. Message
+      #  encoding 'cp1251' for windows and 'utf-8' for Linux
       # @api private
       class AssOutFile
         include Support::Platforms
