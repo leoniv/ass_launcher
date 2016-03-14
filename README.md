@@ -23,7 +23,9 @@ Or install it yourself as:
 For example:
 
 ```ruby
-require 'ass_launcher/api'
+require 'ass_launcher'
+
+include AssLauncher::API
 
 #
 # Get 1C:Enterprise v8.3.7 binary wrapper

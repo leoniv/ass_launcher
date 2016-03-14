@@ -209,7 +209,7 @@ module AssLauncher
       #
       #  puts ph.result.assout #=> 'Ass listen: Hello World'
       #
-      def build_command(run_mode, args = [], options = {}, &block)
+      def command(run_mode, args = [], options = {}, &block)
         _args = args.dup
         _args.unshift mode(run_mode)
         _args += build_args if block_given?
@@ -227,7 +227,7 @@ module AssLauncher
       # ph.result.expected_assout = /\("File=new.ib;.*"\) успешно завершено/
       # ph.result.verify!
       #
-      def build_script(run_mode, args = '', options = {})
+      def script(run_mode, args = '', options = {})
         _args = "#{mode(run_mode)} #{args}"
         to_script(args, options)
       end
