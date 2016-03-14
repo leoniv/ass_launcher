@@ -85,7 +85,7 @@ module AssLauncher
       #  1C binary: as command see {Shell::Command} or as script
       #  see {Shell::Script}. If run 1C as command we can control executing
       #  process wait exit or kill 1C binary process. If run 1C as script 1C
-      #  more correctly parse arguments but we can't kill subprosess runned
+      #  more correctly parse arguments but we can't kill subprosess running
       #  in cmd.exe
       #
       # @note On default use silient execute 1C binary whit
@@ -98,6 +98,8 @@ module AssLauncher
       # @api private
       class Command
         attr_reader :cmd, :args, :ass_out_file, :options
+        attr_accessor :process_holder
+        private :process_holder=
         private :ass_out_file
         DEFAULT_OPTIONS = { silent_mode: true,
                             capture_assout: true
@@ -117,6 +119,19 @@ module AssLauncher
           @args = args
           @args += _silent_mode
           @ass_out_file = _ass_out_file
+        end
+
+        # @return [true] if command was already running
+        def running?
+          ! process_holder.nil?
+        end
+
+        # Run command
+        # @param options [Hash] options for Process.spawn
+        # @return [ProcessHolder]
+        def run(options)
+          return process_holder if running?
+          ProcessHolder.run(self, options)
         end
 
         def _silent_mode
@@ -248,6 +263,14 @@ module AssLauncher
           out
         end
         private :encode_out
+
+        # Run script. Script wait process exit
+        # @param options [Hash] options for Process.spawn
+        # @return [ProcessHolder]
+        def run(options)
+          ph = super
+          ph.wait
+        end
       end
 
       # Contain result for execute 1C binary

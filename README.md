@@ -23,28 +23,55 @@ Or install it yourself as:
 For example:
 
 ```ruby
-require 'ass_launcher'
+require 'ass_launcher/api'
 
-puts AssLauncher::IbMaker.help('8.2')
+#
+# Get 1C:Enterprise v8.3.7 binary wrapper
+#
 
-maker = AssLauncher::IbMaker.new('8.2')
-maker.run(connection_string, arguments)
+cl = thick_clients('~> 8.3.7').last
 
-designer = AssLauncher::Designer.new('8.3.5')
-designer.run(connection_string, arguments)
+raise '1C:Enterprise v8.3.7 not found' if cl.nil?
 
-designer.batch(connection_string, arguments).run(butch_command)
+#
+# create new infobase
+#
 
-thin_client = AssLauncher::ThinClient.new('8.3.6')
-thin_client.run(connection_string, arguments)
+conn_str = connection_string 'File=./new.ib'
 
-thick_client = AssLauncher::ThickClient.new('8.3.6')
-thick_client.run(connection_string, arguments)
+ph = cl.command(:createinfobase) do
+  connection_string conn_str
+  _AddInList
+end.run.wait
 
-web_client = AssLauncher::WebClient.new()
-web_client.run(connection_string, arguments)
+raise 'Error while create infobase' if ph.result.success?
 
-# etc ... TODO describe actual interface
+#
+# dump infobase
+#
+
+command = cl.command(:designer) do
+  connection_string 'File="./new.ib"'
+  _DumpIB './new.ib.dt'
+end
+
+ph = command.run
+ph.wait
+
+ph.result.verify! # raised error unless executing success
+
+#
+# run designer for development
+#
+
+ph = cl.command(:designer) do
+  connection_string 'File="./new.ib"'
+end.run
+
+# .... do in designer
+
+ph.kill # kill designer
+
 ```
 
 ## Development

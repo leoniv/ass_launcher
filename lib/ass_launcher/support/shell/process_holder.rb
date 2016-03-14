@@ -48,6 +48,7 @@ module AssLauncher
         include Support::Platforms
         class KillProcessError < StandardError; end
         class RunProcessError < StandardError; end
+        class ProcessNotRunning < StandardError; end
         # @api public
         # @return [Fixnum] pid of runned process
         attr_reader :pid
@@ -76,6 +77,16 @@ module AssLauncher
           @@process_slist ||= []
         end
 
+        def self.unreg_process(h)
+          process_list.delete(h)
+        end
+        private_class_method :unreg_process
+
+        def self.reg_process(h)
+          process_list << h
+        end
+        private_class_method :reg_process
+
         # @note 'cmd /K command` not exit when exit command. Thread hangup
         # @api private
         def self.cmd_exe_with_k?(command)
@@ -101,27 +112,37 @@ module AssLauncher
         # @raise [RunProcessError] if command is cmd.exe with /K key see
         #  {cmd_exe_with_k?}
         # @api public
+        # @raise (see initialize)
         def self.run(command, options = {})
           fail RunProcessError, 'Forbidden run cmd.exe with /K key'\
             if cmd_exe_with_k? command
-          h = ProcessHolder.new(command, options)
-          process_list << h
+          h = new(command, options)
+          reg_process h
           h.run
         end
 
         # @param (see run)
+        # @raise [ArgumentError] if command was already running
         def initialize(command, options = {})
+          fail ArgumentError, 'Command was already running' if command.running?
           @command = command
+          command.send(:process_holder=, self)
           @options = options
           options[:new_pgroup] = true if windows?
         end
 
         # @return [self]
+        # @rise [RunProcessError] if process was already running
         def run
+          fail RunProcessError, "Process was run. Pid: #{pid}" if running?
           @popen3_thread, stdout, stderr = run_process
           @pid = @popen3_thread.pid
           @thread = wait_process_in_thread(stdout, stderr)
           self
+        end
+
+        def running?
+          ! pid.nil?
         end
 
         def wait_process_in_thread(stdout, stderr)
@@ -134,6 +155,7 @@ module AssLauncher
             rescue StandardError => e
               @result = e
             end
+            self.class.send(:unreg_process, self)
           end
         end
         private :wait_process_in_thread
@@ -158,6 +180,7 @@ module AssLauncher
         # @raise [KillProcessError] if command is cmd.exe with /C key see
         #  {cmd_exe_with_c?}
         # @api public
+        # @raise (see alive?)
         def kill
           return self unless alive?
           fail KillProcessError, 'Can\'t kill subprocess runned in cmd.exe '\
@@ -169,6 +192,7 @@ module AssLauncher
         # Wait for thread exit
         # @return [self]
         # @api public
+        # @raise (see alive?)
         def wait
           return self unless alive?
           thread.join
@@ -177,7 +201,9 @@ module AssLauncher
 
         # True if thread alive
         # @api public
+        # @raise [ProcessNotRunning] unless process running
         def alive?
+          fail ProcessNotRunning unless running?
           thread.alive?
         end
       end # ProcessHolder

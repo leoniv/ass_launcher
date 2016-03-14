@@ -24,7 +24,6 @@ module AssLauncher
     #   `Создание информационной базы ("File=H:\genm\содержит;Locale = "ru_RU";") успешно завершено`
     #   в linux отработет корректно
 
-
     # Class for wrapping 1C platform binary executables suach as 1cv8.exe and
     # 1cv8c.exe. Class makes it easy to juggle the different versions of 1C
     #
@@ -114,32 +113,6 @@ module AssLauncher
         version.to_s.split('.')[0,2].join('.')
       end
 
-#      # @api public
-#      def to_s
-#        path.to_s
-#      end
-#
-#      # Return escaped string suitable for run 1C platform in given run_mode
-#      # @return [String]
-#      # @api public
-#      def to_cmd
-#        path.win_string.to_cmd
-#      end
-#
-#      # Run the client without validate arguments
-#      # @param args [String] cmd arguments for 1C executable
-#      # @return [AssLauncher::Support::Shell::RunAssResult] - result of run 1C
-#      # executable
-#      def dirtyrun(args)
-#        shell.dirtyrun_ass "#{to_cmd} #{args}"
-#      end
-#
-#      # (see dirtyrun)
-#      # @raise (see AssLauncher::Support::Shell::RunAssResult#verify!)
-#      def dirtyrun!(args)
-#        dirtyrun(args).verify!
-#      end
-
       # Convert to {AssLauncher::Support::Shell::Command} instance
       # @param args (see AssLauncher::Support::Shell::Command#initialize)
       # @option options (see AssLauncher::Support::Shell::Command#initialize)
@@ -147,6 +120,7 @@ module AssLauncher
       def to_command(args = [], options = {})
         AssLauncher::Support::Shell::Command.new(path.to_s, args, options)
       end
+      private :to_command
 
       # Convert to {AssLauncher::Support::Shell::Script} instance
       # @param [String] args string arguments for run 1C binary wrapped in
@@ -155,90 +129,176 @@ module AssLauncher
       # @return [AssLauncher::Support::Shell::Script]
       def to_script(args = '', options = {})
         AssLauncher::Support::Shell::Script.\
-          new("#{path.win_string} #{args}", options)
+          new("#{path.win_string.to_cmd} #{args}", options)
       end
-
-      # Run 1C binary as script with script +args+ and wait until prosess
-      # runned
-      # @param (see to_script)
-      # @option (see to_script)
-      # @return [Launcher::Support::Shell::ProcessHolder] object for
-      #  execute 1C controling
-      # @api public
-      def run_as_script(args = '', options = {})
-        script = to_script(args, options)
-        logger.debug "Run script: #{script.cmd} #{script.args}"
-        logger.debug "Script: #{script}"
-        AssLauncher::Support::Shell::ProcessHolder.run(script).wait
-      end
-
-      # Run 1C binary as command with command +args+ and return object for
-      # process executing control
-      # @param (see to_command)
-      # @option (see to_command)
-      # @return [AssLauncher::Support::Shell::ProcessHolder] object for
-      #  execute 1C controling
-      # @api public
-      def run_as_command(args = [], options = {})
-        command = to_command(args, options)
-        logger.debug "Run command: #{command.cmd} #{command.args}"
-        AssLauncher::Support::Shell::ProcessHolder.run(command)
-      end
+      private :to_script
 
       # @param run_mode [Symbol]
       #  Valid values define in the {#run_modes}
       # @raise [ArgumentError]
+      # @return [String] run mode for run 1C binary
       def mode(run_mode)
         fail ArgumentError, "Invalid run_mode `#{run_mode}' for #{self.class}"\
           unless run_modes.include? run_mode
-        run_modes[run_mode]
+            run_mode.to_s.upcase
       end
       private :mode
+
+      def build_args(run_mode, &block)
+        arguments_builder = AssArgumentsBuilder.new(self, run_mode)
+        arguments_builder.instance_eval &block
+        arguments_builder.builded_args.to_array
+      end
+      private :build_args
+
+      # @example
+      #  cl = AssLauncher::Enterprise.thick_clients('~> 8.3.6').last
+      #  raise 'Can't find 1C binary' if cl.nil?
+      #
+      #  # Dump infobase
+      #
+      #  conn_str = AssLauncher::Support::ConnectionString.\
+      #    new('File="//host/infobase"')
+      #
+      #  command = cl.build_command(:designer, conn_str.to_args) do
+      #    connection_string conn_str
+      #    DumpIB './infobase.dt'
+      #  end
+      #  ph = command.run.wait
+      #
+      #  ph.result.verify!
+      #
+      #  # Crete info base
+      #
+      #  ph = cl.build_command(:createinfobase) do
+      #    connection_string "File='//host/new.ib';"
+      #    _UseTemplate './application.cf'
+      #    _AddInList
+      #  end.run.wait
+      #
+      #  ph.result.verify!
+      #
+      #  # Check configuration
+      #
+      #  ph = cl.build_command(:designer) do
+      #    CheckConfig do
+      #      _ConfigLogIntegrity
+      #      _IncorrectReferences
+      #      _Extension :all
+      #    end
+      #  end.run.wait
+      #
+      #  ph.result.verify!
+      #
+      #  # Run enterprise Hello World
+      #
+      #  # Prepare external data processor 'processor.epf'
+      #  # Make OnOpen form handler for main form of processor:
+      #  # procedure OnOpen(Cansel)
+      #  #   message("Ass listen:  "+LaunchParameter)
+      #  #   exit()
+      #  # endprocedure
+      #
+      #  ph = cl.build_command(:enterprise) do
+      #    connection_string 'File="./infobase"'
+      #    _Execute './processor.epf'
+      #    _C 'Hello World'
+      #  end.run.wait
+      #
+      #  ph.result.verify!
+      #
+      #  puts ph.result.assout #=> 'Ass listen: Hello World'
+      #
+      def build_command(run_mode, args = [], options = {}, &block)
+        _args = args.dup
+        _args.unshift mode(run_mode)
+        _args += build_args if block_given?
+        to_command(_args, options)
+      end
+
+      # Ruan as script. It waiting for script executed.
+      # Not use arguments_builder and not given block
+      # Argumets string make as you want
+      #
+      # @example
+      #
+      # script = cl.build_script(:makeinfobase, 'File="new.ib"')
+      # ph = script.run # this waiting until process executing
+      # ph.result.expected_assout = /\("File=new.ib;.*"\) успешно завершено/
+      # ph.result.verify!
+      #
+      def build_script(run_mode, args = '', options = {})
+        _args = "#{mode(run_mode)} #{args}"
+        to_script(args, options)
+      end
+
+#      # Run 1C binary as script with script +args+ and wait until prosess
+#      # runned
+#      # @param (see to_script)
+#      # @option (see to_script)
+#      # @return [Launcher::Support::Shell::ProcessHolder] object for
+#      #  execute 1C controling
+#      # @api public
+#      def run_as_script(args = '', options = {})
+#        script = to_script(args, options)
+#        logger.debug "Run script: #{script.cmd} #{script.args}"
+#        logger.debug "Script: #{script}"
+#        AssLauncher::Support::Shell::ProcessHolder.run(script).wait
+#      end
+#
+#      # Run 1C binary as command with command +args+ and return object for
+#      # process executing control
+#      # @param (see to_command)
+#      # @option (see to_command)
+#      # @return [AssLauncher::Support::Shell::ProcessHolder] object for
+#      #  execute 1C controling
+#      # @api public
+#      def run_as_command(args = [], options = {})
+#        command = to_command(args, options)
+#        logger.debug "Run command: #{command.cmd} #{command.args}"
+#        AssLauncher::Support::Shell::ProcessHolder.run(command)
+#      end
+
+#      # @param run_mode [Symbol]
+#      #  Valid values define in the {#run_modes}
+#      # @raise [ArgumentError]
+#      def mode(run_mode)
+#        fail ArgumentError, "Invalid run_mode `#{run_mode}' for #{self.class}"\
+#          unless run_modes.include? run_mode
+#        run_modes[run_mode]
+#      end
+#      private :mode
 
       # Wrapper for 1C thin client binary
       class ThinClient < BinaryWrapper
         # Define run modes of thin client
         def run_modes
-          { :etnerpraise => RunModes::Enterprise }
+          { :etnerpraise => ''}
         end
 
         def accepted_connstr
           [:file, :server, :http]
         end
 
-        # Return suitable instanse for run client in enterprise mode with validate
-        # cmd arguments
-        # @return [CliBuilder::Launcher]
-        def enterprise(connectstr)
-          mode(:enterprise).new self, connectstr
-        end
+#        # Return suitable instanse for run client in enterprise mode with validate
+#        # cmd arguments
+#        # @return [CliBuilder::Launcher]
+#        def enterprise(connectstr)
+#          mode(:enterprise).new self, connectstr
+#        end
       end
 
       class ThickClient < ThinClient
         # (see ThinClient)
         def run_modes
           super.merge(
-            { :designer => RunModes::Designer,
-              :createinfobase => RunModes::CreateInfoBase
+            { :designer => '',
+              :createinfobase => ''
           })
         end
 
         def accepted_connstr
           [:file, :server]
-        end
-
-        # Return suitable instanse for run client in designer mode with validate
-        # cmd arguments
-        # @return [CliBuilder::Launcher]
-        def designer(connectstr)
-          mode(:designer).new self, connectstr
-        end
-
-        # Return suitable instanse for run client in createinfobase mode with
-        # validate cmd arguments
-        # @return [CliBuilder::Launcher]
-        def createinfobase(connectstr)
-          mode(:createinfobase).new self, connectstr
         end
       end
     end

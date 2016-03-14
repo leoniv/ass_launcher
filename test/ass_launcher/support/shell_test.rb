@@ -317,12 +317,50 @@ class TestCommand < Minitest::Test
     assert_equal :err, result.err
     assert_equal 'ass out content', result.assout
   end
+
+  def test_running?
+    inst = cls.new('',[])
+    refute inst.running?
+
+    process_holder = mock
+    process_holder.expects(:nil?).returns(false)
+    inst = cls.new('',[])
+    inst.expects(:process_holder).returns(process_holder)
+    assert inst.running?
+  end
+
+  def test_run
+    inst = cls.new('',[])
+    inst.expects(:running?).returns(false)
+    inst.expects(:process_holder).never
+    AssLauncher::Support::Shell::ProcessHolder.expects(:run).\
+      with(inst, :options).returns(:process_holder)
+    assert_equal :process_holder, inst.run(:options)
+  end
+
+  def test_run_running
+    inst = cls.new('',[])
+    inst.expects(:running?).returns(true)
+    inst.expects(:process_holder).returns(:process_holder)
+    AssLauncher::Support::Shell::ProcessHolder.expects(:run).never
+    assert_equal :process_holder, inst.run(:options)
+  end
 end
 
 class TestScript < Minitest::Test
 
   def cls
     AssLauncher::Support::Shell::Script
+  end
+
+  def test_run
+    process_holder = mock
+    process_holder.expects(:wait).returns(:process_holder)
+    AssLauncher::Support::Shell::Command.any_instance.expects(:run).\
+      with(:options).returns(process_holder)
+    inst = cls.new('')
+    assert_equal :process_holder, inst.run(:options)
+
   end
 
   def test_initialize

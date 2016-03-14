@@ -58,22 +58,24 @@ class ProcessHolderTest < Minitest::Test
 
   def test_initialize
     cls.any_instance.expects(:windows?).returns(false)
-    inst = cls.new(:command, :options)
-    assert_equal :command, inst.command
+    command = command_not_runned
+    inst = cls.new(command, :options)
+    assert_equal command, inst.command
     assert_equal :options, inst.options
   end
 
   def test_initialize_in_windows
     cls.any_instance.expects(:windows?).returns(true)
-    inst = cls.new(:command)
-    assert_equal :command, inst.command
+    command = command_not_runned
+    inst = cls.new(command)
+    assert_equal command, inst.command
     assert inst.options[:new_pgroup]
   end
 
   def test_inst_run
     popen3_thread = mock
     popen3_thread.expects(:pid).returns(:pid)
-    inst = cls.new(:command)
+    inst = cls.new(command_not_runned)
     out = StringIO.new
     err = StringIO.new
     inst.expects(:run_process).returns([popen3_thread, out, err])
@@ -90,6 +92,8 @@ class ProcessHolderTest < Minitest::Test
     err = StringIO.new('err')
     command = mock
     command.expects(:exit_handling).with(:exitstatus, 'out', 'err').returns(:result)
+    command.expects(:running?).returns(false)
+    command.expects(:send).with(:process_holder=, kind_of(cls))
     popen3_thread = mock
     popen3_thread.expects(:join)
 
@@ -106,6 +110,8 @@ class ProcessHolderTest < Minitest::Test
     command = mock
     command.expects(:exit_handling).with(:exitstatus, 'out', 'err').\
       raises(StandardError)
+    command.expects(:running?).returns(false)
+    command.expects(:send).with(:process_holder=, kind_of(cls))
     popen3_thread = mock
     popen3_thread.expects(:join)
 
@@ -121,15 +127,17 @@ class ProcessHolderTest < Minitest::Test
     popen3_thread = mock
     popen3_thread.expects(:value).returns('100')
 
-    inst = cls.new(:command)
+    inst = cls.new(command_not_runned)
     inst.expects(:popen3_thread).returns(popen3_thread)
     assert_equal 100, inst.send(:exitstatus)
   end
 
-  def test_run_process_in_windows
+  def test_run_process
     command = mock.responds_like_instance_of(AssLauncher::Support::Shell::Command)
     command.expects(:cmd).returns(:cmd)
     command.expects(:args).returns([]).times(3)
+    command.expects(:running?).returns(false)
+    command.expects(:send).with(:process_holder=, kind_of(cls))
     Open3.expects(:popen3).with(:cmd, '', :options).returns [:r1, :r2, :r3, :popen3_thread]
     inst = cls.new(command)
     inst.expects(:options).returns(:options)
@@ -137,7 +145,7 @@ class ProcessHolderTest < Minitest::Test
   end
 
   def test_kill_alive
-    inst = cls.new(:command)
+    inst = cls.new(command_not_runned)
     inst.expects(:alive?).returns(true)
     cls.expects(:cmd_exe_with_c?).returns(false)
     Process.expects(:kill).with('KILL',:pid)
@@ -148,7 +156,7 @@ class ProcessHolderTest < Minitest::Test
   end
 
   def test_kill_alive_fail
-    inst = cls.new(:command)
+    inst = cls.new(command_not_runned)
     inst.expects(:alive?).returns(true)
     cls.expects(:cmd_exe_with_c?).returns(true)
     assert_raises AssLauncher::Support::Shell::ProcessHolder::KillProcessError do
@@ -158,7 +166,7 @@ class ProcessHolderTest < Minitest::Test
 
   def test_kill_dead
     Process.expects(:kill).never
-    inst = cls.new(:command)
+    inst = cls.new(command_not_runned)
     inst.expects(:alive?).returns(false)
     assert_equal inst, inst.kill
   end
@@ -166,14 +174,21 @@ class ProcessHolderTest < Minitest::Test
   def test_wait_alive
     thread = mock
     thread.expects(:join)
-    inst = cls.new(:command)
+    inst = cls.new(command_not_runned)
     inst.expects(:alive?).returns(true)
     inst.expects(:thread).returns(thread)
     assert_equal inst, inst.wait
   end
 
+  def command_not_runned
+    command = mock
+    command.expects(:running?).returns(false)
+    command.expects(:process_holder=).with(kind_of(cls))
+    command
+  end
+
   def test_wait_dead
-    inst = cls.new(:command)
+    inst = cls.new(command_not_runned)
     inst.expects(:alive?).returns(false)
     inst.expects(:thread).never
     assert_equal inst, inst.wait
@@ -182,8 +197,25 @@ class ProcessHolderTest < Minitest::Test
   def test_alive?
     thread = mock
     thread.expects(:alive?).returns(true)
-    inst = cls.new(:command)
+    inst = cls.new(command_not_runned)
     inst.expects(:thread).returns(thread)
+    inst.expects(:running?).returns(true)
     assert inst.alive?
+  end
+
+  def test_running?
+    pid = mock
+    pid.expects(:nil?).returns(false)
+    inst = cls.new(command_not_runned)
+    inst.expects(:pid).returns(pid)
+    assert inst.running?
+  end
+
+  def test_alive_fail
+    inst = cls.new(command_not_runned)
+    inst.expects(:running?).returns(false)
+    assert_raises AssLauncher::Support::Shell::ProcessHolder::ProcessNotRunning do
+      assert inst.alive?
+    end
   end
 end
