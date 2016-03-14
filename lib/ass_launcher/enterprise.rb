@@ -9,7 +9,6 @@ module AssLauncher
   # 1C:Entrprise platform abstraction layer
   module Enterprise
     require 'ass_launcher/enterprise/binary_wrapper'
-    require 'ass_launcher/enterprise/run_modes'
     require 'ass_launcher/enterprise/web_clients'
     require 'ass_launcher/enterprise/ole'
 

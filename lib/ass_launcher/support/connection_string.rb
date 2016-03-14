@@ -40,6 +40,26 @@ module AssLauncher
                         Wsn: lambda { " /WSN\"#{wsn}\" " },
                         Wsp: lambda { " /WSP\"#{wsp}\" " }
       }
+      FIELDS_TO_ARGS = lambda do |cs|
+        _U cs.usr
+        _P cs.pwd
+        _UsePrivilegedMode if cs.prmod.nil?
+        _L cs.locale
+        _S "#{cs.srvr}/#{cs.ref}" if cs.is? :server
+        _F cs.file if cs.is? :file
+        if cs.is? :http
+          _WS cs.ws
+          _WSN cs.wsn
+          _WSP cs.wsp
+          unless cs.wspauto
+            _Proxy wspsrv do
+              _PPort cs.wspport
+              _PUser cs.wspuser
+              _PPwd cs.wsppwd
+            end
+          end
+        end
+      end
       FIELDS_TO_CMD.freeze
       # Proxy fields for accsess to infobase published on http server via proxy
       PROXY_FIELDS = %w(WspAuto WspSrv WspPort WspUser WspPwd)
@@ -122,6 +142,12 @@ module AssLauncher
           result << "#{prop_to_s(f)};" unless get_property(f).to_s.empty?
         end
         result
+      end
+
+      # @return block for set 1C cli parameters.
+      # @see [AssLauncher::Enterprise::Cli::ArgumentsBuilder#connection_string]
+      def to_args
+        FIELDS_TO_ARGS
       end
 
       # Convert connection string to 1C:Enterprise launch parameters

@@ -24,6 +24,8 @@ module AssLauncher
     #   `Создание информационной базы ("File=H:\genm\содержит;Locale = "ru_RU";") успешно завершено`
     #   в linux отработет корректно
 
+    require 'ass_launcher/enterprise/cli'
+
     # Class for wrapping 1C platform binary executables suach as 1cv8.exe and
     # 1cv8c.exe. Class makes it easy to juggle the different versions of 1C
     #
@@ -33,7 +35,6 @@ module AssLauncher
     # @note (see #arch)
     class BinaryWrapper
       include AssLauncher::Support::Platforms
-      include AssLauncher::Loggining
       attr_reader :path
 
       def initialize(binpath)
@@ -145,7 +146,7 @@ module AssLauncher
       private :mode
 
       def build_args(run_mode, &block)
-        arguments_builder = AssArgumentsBuilder.new(self, run_mode)
+        arguments_builder = Cli::ArgumentsBuilder.new(self, run_mode)
         arguments_builder.instance_eval &block
         arguments_builder.builded_args.to_array
       end
@@ -212,7 +213,7 @@ module AssLauncher
       def command(run_mode, args = [], options = {}, &block)
         _args = args.dup
         _args.unshift mode(run_mode)
-        _args += build_args if block_given?
+        _args += build_args &block if block_given?
         to_command(_args, options)
       end
 
@@ -232,48 +233,11 @@ module AssLauncher
         to_script(args, options)
       end
 
-#      # Run 1C binary as script with script +args+ and wait until prosess
-#      # runned
-#      # @param (see to_script)
-#      # @option (see to_script)
-#      # @return [Launcher::Support::Shell::ProcessHolder] object for
-#      #  execute 1C controling
-#      # @api public
-#      def run_as_script(args = '', options = {})
-#        script = to_script(args, options)
-#        logger.debug "Run script: #{script.cmd} #{script.args}"
-#        logger.debug "Script: #{script}"
-#        AssLauncher::Support::Shell::ProcessHolder.run(script).wait
-#      end
-#
-#      # Run 1C binary as command with command +args+ and return object for
-#      # process executing control
-#      # @param (see to_command)
-#      # @option (see to_command)
-#      # @return [AssLauncher::Support::Shell::ProcessHolder] object for
-#      #  execute 1C controling
-#      # @api public
-#      def run_as_command(args = [], options = {})
-#        command = to_command(args, options)
-#        logger.debug "Run command: #{command.cmd} #{command.args}"
-#        AssLauncher::Support::Shell::ProcessHolder.run(command)
-#      end
-
-#      # @param run_mode [Symbol]
-#      #  Valid values define in the {#run_modes}
-#      # @raise [ArgumentError]
-#      def mode(run_mode)
-#        fail ArgumentError, "Invalid run_mode `#{run_mode}' for #{self.class}"\
-#          unless run_modes.include? run_mode
-#        run_modes[run_mode]
-#      end
-#      private :mode
-
       # Wrapper for 1C thin client binary
       class ThinClient < BinaryWrapper
         # Define run modes of thin client
         def run_modes
-          { :etnerpraise => ''}
+          { :enterprise => ''}
         end
 
         def accepted_connstr

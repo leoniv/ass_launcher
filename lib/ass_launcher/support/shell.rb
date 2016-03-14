@@ -129,7 +129,7 @@ module AssLauncher
         # Run command
         # @param options [Hash] options for Process.spawn
         # @return [ProcessHolder]
-        def run(options)
+        def run(options = {})
           return process_holder if running?
           ProcessHolder.run(self, options)
         end
@@ -267,7 +267,7 @@ module AssLauncher
         # Run script. Script wait process exit
         # @param options [Hash] options for Process.spawn
         # @return [ProcessHolder]
-        def run(options)
+        def run(options = {})
           ph = super
           ph.wait
         end
