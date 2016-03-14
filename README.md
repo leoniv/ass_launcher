@@ -37,7 +37,7 @@ raise '1C:Enterprise v8.3.7 not found' if cl.nil?
 # create new infobase
 #
 
-conn_str = connection_string 'File=./new.ib'
+conn_str = connection_string 'File="./new.ib"'
 
 ph = cl.command(:createinfobase) do
   connection_string conn_str
