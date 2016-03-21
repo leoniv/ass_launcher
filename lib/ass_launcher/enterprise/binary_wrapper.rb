@@ -145,8 +145,12 @@ module AssLauncher
       end
       private :mode
 
+      def defined_parameters(run_mode)
+        Cli::CliSpec.for(self, run_mode).parameters
+      end
+
       def build_args(run_mode, &block)
-        arguments_builder = Cli::ArgumentsBuilder.new(self, run_mode)
+        arguments_builder = Cli::ArgumentsBuilder.new(defined_parameters)
         arguments_builder.instance_eval &block
         arguments_builder.builded_args.to_array
       end
