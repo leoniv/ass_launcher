@@ -6,6 +6,7 @@ module AssLauncher
       class ArgumetsBuilder
         attr_reader :connection_string, :defined_parameters, :args
 
+        # @param defined_arguments [Parameters::ParamtersList]
         def initialize(defined_arguments)
           @args = []
           @defined_parameters = defined_arguments

@@ -2,18 +2,35 @@
 
 module AssLauncher
   class Configuration
+    # 1C Enterprise cli specifications text written on Cli::SpecDsl
     def platform_cli_spec
       @platform_cli_spec ||= Enterprise::Cli::CliSpec.load
     end
   end
   module Enterprise
     module Cli
+      require 'ass_launcher/enterprise/cli/arguments_builder'
+      require 'ass_launcher/enterprise/cli/parameters'
+      require 'ass_launcher/enterprise/cli/spec_dsl'
+
+      # Run modes defined for 1C Enterprise binary client
       DEFINED_MODES = [
         :createinfobase,
         :enterprise,
         :designer
       ].freeze
-      require 'ass_launcher/enterprise/cli/arguments_builder'
+
+      # Return suitable run_mode see {DEFINED_MODES} for
+      # 1c client
+      # @param cl [BinaryWrapper::ThinClient, BinaryWrapper::ThickClient]
+      # @return [Array<Symbol>]
+      def self.defined_modes_for(cl)
+        return [DEFINED_MODES[1]] if cl.is_a? BinaryWrapper::ThinClient
+        return DEFINED_MODES if cl.is_a? BinaryWrapper::ThickClient
+      end
+
+      # Load and 1C Enterprise cli specifications
+      # for buld cli api and cli api help
       class CliSpec
         def self.loader(binary, run_mode)
           Class.new do
@@ -37,22 +54,38 @@ module AssLauncher
           spec = File.read(File.expand_path('../cli/cli.spec',__FILE__))
         end
 
+        # Defined 1C Enterprise cli parameters
+        # @return [Parameters::ParamtersList]
         attr_reader :parameters
+        # 1C Enterprise run modes descriptions for build cli api help
+        # @return (see Cli::SpecDsl#described_modes)
         attr_reader :modes
+        # Description for 1C Enterprise cli parameters group for group
+        #  parameters in cli help
+        # @return (see Cli::SpecDsl#described_modes)
         attr_reader :groups
 
+        # @api private
         def initialize(parameters, modes, groups)
           @parameters = parameters
           @modes = modes
           @groups = groups
         end
 
+        # Build suitable cli specifications for 1C Enterprise binary type,
+        # version and run mode
+        # @param binary [BinaryWrapper::ThinClient, BinaryWrapper::ThickClient]
+        # @param run_mode [Symbol] see {Cli::DEFINED_MODES}
         def self.for(binary, run_mode)
           loader(binary, run_mode).instance_eval\
             AssLauncher.config.platform_cli_spec
           new(loader.parameters,
               loader.described_modes,
               loader.parameters_groups)
+        end
+
+        def usage(run_mode = nil)
+          raise NotImplementedError
         end
       end
 
@@ -77,190 +110,6 @@ module AssLauncher
           @requirement.satisfied_by? bw.version
         end
       end
-
-      module Parameters
-        class String
-
-          DEFULT_OPTIONS = {
-            required: false,
-            value_validator: Proc.new {|value|},
-            switch_list: nil,
-            chose_list: nil,
-            switch_value: Proc.new {|value| value}
-          }.freeze
-
-          attr_reader :name
-          attr_reader :desc
-          attr_reader :binary_matcher
-          attr_reader :group
-          attr_reader :modes
-          attr_reader :parent
-
-          # @api private
-          def initialize(name, desc, binary_matcher,
-                         group, modes, parent = nil, **options)
-            @name = name
-            @desc = desc
-            @binary_matcher = binary_matcher || BinaryMatcher.new
-            @group = group
-            @modes = modes || Cli::DEFINED_MODES
-            @options = DEFAULT_OPTIONS.merge options
-            @parent = parent
-          end
-
-          def match?(binary_wrapper, run_mode)
-            binary_mather.match? binary_wrapper && modes.include?(run_mode)
-          end
-
-          def to_sym
-            name.downcase.to_sym
-          end
-
-          def full_name
-            return name if root?
-            "#{parent.full_name}#{name}"
-          end
-
-          def parents
-            return [] if root?
-            parent.parents << parent
-          end
-
-          def deep
-            parents.size
-          end
-
-          def root?
-            parent.nil?
-          end
-
-          def child?(parent)
-            return false if root?
-            parent() == parent
-          end
-
-          def to_s
-            name.to_s
-          end
-
-          def to_args(value)
-            [key(value), value(value)]
-          end
-
-          def key(value)
-            name
-          end
-          private :key
-
-          def validate(value)
-            value_validator.call value
-          end
-
-          def value(value)
-            validate(value)
-            value
-          end
-          private :value
-        end
-
-        class Path < String
-          include AssLauncher::Support::Platforms
-          def value(value)
-            platform.path(value).to_s
-          end
-        end
-
-        class Chose < String
-          def validate(value)
-            fail ArgumentError, "Wrong value #{value} for #{name} parameter"\
-              unless chose_list.key? value.to_sym
-          end
-
-          def chose_list
-            options[:chose_list]
-          end
-        end
-
-        class Flag < String
-          def value(value)
-            ''
-          end
-        end
-
-        class Switch < Flag
-          def key(value)
-            "#{name}#{switch_value(value)}"
-          end
-
-          def switch_value(value)
-            if switch_list
-              fail ArgumentError, "Wrong value #{value} for parameter #{name}"\
-                unless switch_list.key? value.to_sym
-            end
-            options.switch_value.call(validate(value))
-          end
-
-          def switch_list
-            options[:switch_list]
-          end
-        end
-      end
-
-      class ParamtersList
-        def initialize
-          @parameters = []
-        end
-
-        def defined?(p)
-          ! find(p.name, p.parent).nil?
-        end
-
-        def <<(p)
-          fail ArgumentError, "Parameter #{p.full_name} alrady defined"\
-            if defined?(p)
-          @parameters << p
-        end
-        alias :"+" :"<<"
-        alias :add :"<<"
-
-        def find(name, parent)
-          parameters.each do |p|
-            return p if (p.root? || p.child?(parent))\
-              && p.to_sym == name.downcase.to_sym
-          end
-        end
-
-        def each(&block)
-          parameters.each &block
-        end
-      end
-
-      module SpecDsl
-        def thick_client(v = '>= 0')
-          BinaryMatcher.new(:thick, v)
-        end
-
-        def thin_client(v = '>= 0')
-          BinaryMatcher.new(:thin, v)
-        end
-
-        def all_client(v = '>= 0')
-          BinaryMatcher.new(:all, v)
-        end
-
-        def parameters
-          @parameters ||= ParamtersList.new
-        end
-
-        def define(parameter, &block)
-          parameters.define(parameter, &block)
-        end
-        private :define
-
-        def mode(modes, &block)
-          raise 'FIXME'
-        end
-      end # SpecDsl
     end
   end
 end

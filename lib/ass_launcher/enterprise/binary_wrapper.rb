@@ -145,8 +145,16 @@ module AssLauncher
       end
       private :mode
 
+      def run_modes
+          Cli.defined_modes_for(self)
+      end
+
       def defined_parameters(run_mode)
-        Cli::CliSpec.for(self, run_mode).parameters
+        cli_spec.parameters
+      end
+
+      def cli_spec
+        Cli::CliSpec.for(self, run_mode)
       end
 
       def build_args(run_mode, &block)
@@ -165,7 +173,7 @@ module AssLauncher
       #  conn_str = AssLauncher::Support::ConnectionString.\
       #    new('File="//host/infobase"')
       #
-      #  command = cl.build_command(:designer, conn_str.to_args) do
+      #  command = cl.command(:designer, conn_str.to_args) do
       #    connection_string conn_str
       #    DumpIB './infobase.dt'
       #  end
@@ -175,7 +183,7 @@ module AssLauncher
       #
       #  # Crete info base
       #
-      #  ph = cl.build_command(:createinfobase) do
+      #  ph = cl.command(:createinfobase) do
       #    connection_string "File='//host/new.ib';"
       #    _UseTemplate './application.cf'
       #    _AddInList
@@ -185,8 +193,11 @@ module AssLauncher
       #
       #  # Check configuration
       #
-      #  ph = cl.build_command(:designer) do
-      #    CheckConfig do
+      #  ph = cl.command(:designer) do
+      #    _S '1c-server/infobase'
+      #    _N 'admin'
+      #    _P 'password'
+      #    _CheckConfig do
       #      _ConfigLogIntegrity
       #      _IncorrectReferences
       #      _Extension :all
@@ -200,12 +211,12 @@ module AssLauncher
       #  # Prepare external data processor 'processor.epf'
       #  # Make OnOpen form handler for main form of processor:
       #  # procedure OnOpen(Cansel)
-      #  #   message("Ass listen:  "+LaunchParameter)
+      #  #   message("Ass listen:  " + LaunchParameter)
       #  #   exit()
       #  # endprocedure
       #
-      #  ph = cl.build_command(:enterprise) do
-      #    connection_string 'File="./infobase"'
+      #  ph = cl.command(:enterprise) do
+      #    connection_string 'File="./infobase";Usr="admin";Pwd="password"'
       #    _Execute './processor.epf'
       #    _C 'Hello World'
       #  end.run.wait
@@ -214,7 +225,7 @@ module AssLauncher
       #
       #  puts ph.result.assout #=> 'Ass listen: Hello World'
       #
-      def command(run_mode, args = [], options = {}, &block)
+      def command(run_mode, args = [], **options, &block)
         _args = args.dup
         _args.unshift mode(run_mode)
         _args += build_args &block if block_given?
@@ -222,7 +233,7 @@ module AssLauncher
       end
 
       # Ruan as script. It waiting for script executed.
-      # Not use arguments_builder and not given block
+      # Not use arguments builder and not given block
       # Argumets string make as you want
       #
       # @example
@@ -232,39 +243,20 @@ module AssLauncher
       # ph.result.expected_assout = /\("File=new.ib;.*"\) успешно завершено/
       # ph.result.verify!
       #
-      def script(run_mode, args = '', options = {})
+      def script(run_mode, args = '', **options)
         _args = "#{mode(run_mode)} #{args}"
         to_script(args, options)
       end
 
       # Wrapper for 1C thin client binary
       class ThinClient < BinaryWrapper
-        # Define run modes of thin client
-        def run_modes
-          { :enterprise => ''}
-        end
-
         def accepted_connstr
           [:file, :server, :http]
         end
-
-#        # Return suitable instanse for run client in enterprise mode with validate
-#        # cmd arguments
-#        # @return [CliBuilder::Launcher]
-#        def enterprise(connectstr)
-#          mode(:enterprise).new self, connectstr
-#        end
       end
 
+      # Wrapper for 1C thick client binary
       class ThickClient < ThinClient
-        # (see ThinClient)
-        def run_modes
-          super.merge(
-            { :designer => '',
-              :createinfobase => ''
-          })
-        end
-
         def accepted_connstr
           [:file, :server]
         end

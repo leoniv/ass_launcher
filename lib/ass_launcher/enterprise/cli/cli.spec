@@ -202,9 +202,9 @@ mode :designer do
       flag '-ExtendedModulesCheck', 'проверка обращений к методам и свойствам объектов "через точку" (для ограниченного набора типов)'
     end
     string '/ReduceEventLogSize', 'сокращение журнала регистрации, дата в формате ГГГГ-ММ-ДД',
-    value_validator: (Proc.new do |value|
-        fail ArgumentError, "Use ГГГГ-ММ-ДД for /ReduceEventLogSize parameter but `#{value}' given" if /\A\d{4}-\d{2}-\d{2}\z/ =~ value
-      end) do
+      value_validator: (Proc.new do |value|
+          fail ArgumentError, "Use ГГГГ-ММ-ДД for /ReduceEventLogSize parameter but `#{value}' given" if /\A\d{4}-\d{2}-\d{2}\z/ =~ value
+        end) do
       path '-saveAs', 'файл для сохранения копии удаляемых записей'
       flag '-KeepSplitting', 'требуется сохранить разделение на файлы по периодам'
     end
