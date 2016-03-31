@@ -1,7 +1,10 @@
 # encoding: utf-8
 
 module AssLauncher
+  #
   module Enterprise
+    require 'ass_launcher/enterprise/cli'
+    # rubocop:disable all
     # TODO: перенести этот текст в другое место
     # fucking 1C: команда `CEATEINFOBASE` принимает фаловую строку
     # соединения в котрой путь должен быть в формате win т.е. H:\bla\bla.
@@ -9,9 +12,9 @@ module AssLauncher
     # H:/bla/bla. При передаче команде `CREATEINFOBASE` некорректного пути
     # база будет создана абы где и в косоль вернется успех $?=0. Какие бывают
     # некоректные пути:
-    # - H:/bla/bla - будет создана база H: где? Да прямо в корне диска H:. Вывод 1С win-xp:
+    # - (!! Похоже в v 8.3.8 устранили) H:/bla/bla - будет создана база H: где? Да прямо в корне диска H:. Вывод 1С win-xp:
     #   `Создание информационной базы ("File=H:;Locale = "ru_RU";") успешно завершено`
-    # - H:/путь/котрого/нет/имябазы - будет оздана база в каталоге по умолчанию
+    # - (!! Похоже в v 8.3.8 устранили) H:/путь/котрого/нет/имябазы - будет оздана база в каталоге по умолчанию
     #   с именем InfoBase[N]. Вывод 1С win-xp:
     #   `Создание информационной базы ("File = "C:\Documents and Settings\vlv\Мои документы\InfoBase41";Locale = "ru_RU";") успешно завершено`
     #   в linux отработает корректно и попытается содать каталоги или вылитит с
@@ -20,11 +23,10 @@ module AssLauncher
     #   умолчанию как в предидущем пункте в linux создаст базу empty.ib в текущем
     #   каталоге при этом вывод 1C в linux:
     #   `Создание информационной базы ("File=../empty.ib;Locale = "en_US";") успешно завершено`
-    # - H:\путь\содержит-тире - в win создаст базу H:\путь\содержит вывод 1С:
+    # - H(!! Похоже в v 8.3.8 устранили):\путь\содержит-тире - в win создаст базу H:\путь\содержит вывод 1С:
     #   `Создание информационной базы ("File=H:\genm\содержит;Locale = "ru_RU";") успешно завершено`
     #   в linux отработет корректно
-
-    require 'ass_launcher/enterprise/cli'
+    # rubocop:enable all
 
     # Class for wrapping 1C platform binary executables suach as 1cv8.exe and
     # 1cv8c.exe. Class makes it easy to juggle the different versions of 1C
@@ -38,10 +40,11 @@ module AssLauncher
       attr_reader :path
 
       def initialize(binpath)
-        @path  = platform.path(binpath).realpath
+        @path = platform.path(binpath).realpath
         fail ArgumentError, "Is not a file `#{binpath}'" unless @path.file?
-        fail ArgumentError, "Invalid binary #{@path.basename} for #{self.class}"\
-          unless @path.basename.to_s.upcase ==  expects_basename.upcase
+        fail ArgumentError,
+             "Invalid binary #{@path.basename} for #{self.class}"\
+          unless @path.basename.to_s.upcase == expects_basename.upcase
       end
 
       # Define version of 1C platform.
@@ -54,7 +57,7 @@ module AssLauncher
       # @api public
       # @return [Gem::Version]
       def version
-        @version ||= extract_version(@path.to_s)
+        @version ||= extract_version(path.to_s)
       end
 
       # Define arch on 1C platform.
@@ -62,25 +65,29 @@ module AssLauncher
       # @api public
       # @return [String]
       def arch
-        @arch ||= extract_arch(@path.to_s)
+        @arch ||= extract_arch(path.to_s)
       end
 
       # Extract version from path
+      # @note
+      #  - In windows 1C V > 8.2 default install into path:
+      #    +bla/1cv?/8.3.8.1502/bin/1cv8.exe+
+      #  - In Linux 1V default install into path:
+      #    +/opt/1C/v8.3/i386/1cv8+
       def extract_version(realpath)
-        if platform.linux?
-          extracted = realpath.to_s.split('/')[-3]
-        else
-          extracted = realpath.to_s.split('/')[-3]
-        end
+        extracted = realpath.to_s.split('/')[-3]
         extracted =~ /(\d+\.\d+\.?\d*\.?\d*)/i
-        extracted = ($1.to_s.split('.') + [0,0,0,0])[0,4].join('.')
+        extracted = (Regexp.last_match(1).to_s.split('.')\
+                     + [0, 0, 0, 0])[0, 4].join('.')
         Gem::Version.new(extracted)
       end
       private :extract_version
 
+      # Extract arch from path
+      # @note (see #extract_version)
       def extract_arch(realpath)
-        if platform.linux?
-          extracted = realpath.to_s.split('/')[-1]
+        if linux?
+          extracted = realpath.to_s.split('/')[-2]
         else
           extracted = 'i386'
         end
@@ -93,7 +100,7 @@ module AssLauncher
       # @return [Bollean]
       # @api public
       def <=>(other)
-        self.version <=> other.version
+        version <=> other.version
       end
 
       def expects_basename
@@ -111,7 +118,7 @@ module AssLauncher
       # @return [String]
       # @api public
       def major_v
-        version.to_s.split('.')[0,2].join('.')
+        version.to_s.split('.')[0, 2].join('.')
       end
 
       # Convert to {AssLauncher::Support::Shell::Command} instance
@@ -129,42 +136,55 @@ module AssLauncher
       # @option options (see AssLauncher::Support::Shell::Script#initialize}
       # @return [AssLauncher::Support::Shell::Script]
       def to_script(args = '', options = {})
-        AssLauncher::Support::Shell::Script.\
-          new("#{path.win_string.to_cmd} #{args}", options)
+        AssLauncher::Support::Shell::Script\
+          .new("#{path.win_string.to_cmd} #{args}", options)
       end
       private :to_script
+
+      def fail_if_wrong_mode(run_mode)
+        fail ArgumentError, "Invalid run_mode `#{run_mode}' for #{self.class}"\
+          unless run_modes.include? run_mode
+        run_mode
+      end
+      private :fail_if_wrong_mode
 
       # @param run_mode [Symbol]
       #  Valid values define in the {#run_modes}
       # @raise [ArgumentError]
       # @return [String] run mode for run 1C binary
       def mode(run_mode)
-        fail ArgumentError, "Invalid run_mode `#{run_mode}' for #{self.class}"\
-          unless run_modes.include? run_mode
-            run_mode.to_s.upcase
+        fail_if_wrong_mode(run_mode).to_s.upcase
       end
       private :mode
 
+      # @api public
+      # @return (see Cli.defined_modes_for)
       def run_modes
-          Cli.defined_modes_for(self)
+        Cli.defined_modes_for(self)
       end
 
+      # @api public
+      # @return (see Cli::CliSpec#parameters)
       def defined_parameters(run_mode)
-        cli_spec.parameters
+        cli_spec(run_mode).parameters
       end
 
-      def cli_spec
-        Cli::CliSpec.for(self, run_mode)
+      # @api public
+      # @return [Cli::CliSpec]
+      def cli_spec(run_mode)
+        Cli::CliSpec.for(self, fail_if_wrong_mode(run_mode))
       end
 
       def build_args(run_mode, &block)
-        arguments_builder = Cli::ArgumentsBuilder.new(defined_parameters)
-        arguments_builder.instance_eval &block
-        arguments_builder.builded_args.to_array
+        arguments_builder = Cli::ArgumentsBuilder\
+                            .new(defined_parameters(run_mode))
+        arguments_builder.instance_eval(&block)
+        arguments_builder.builded_args
       end
       private :build_args
 
       # @example
+      #
       #  cl = AssLauncher::Enterprise.thick_clients('~> 8.3.6').last
       #  raise 'Can't find 1C binary' if cl.nil?
       #
@@ -225,31 +245,38 @@ module AssLauncher
       #
       #  puts ph.result.assout #=> 'Ass listen: Hello World'
       #
+      # @api public
+      # @return (see #to_command)
       def command(run_mode, args = [], **options, &block)
-        _args = args.dup
-        _args.unshift mode(run_mode)
-        _args += build_args &block if block_given?
-        to_command(_args, options)
+        args_ = args.dup
+        args_.unshift mode(run_mode)
+        args_ += build_args(run_mode, &block) if block_given?
+        to_command(args_, options)
       end
 
-      # Ruan as script. It waiting for script executed.
+      # Run as script. It waiting for script executed.
       # Not use arguments builder and not given block
       # Argumets string make as you want
       #
       # @example
       #
-      # script = cl.build_script(:makeinfobase, 'File="new.ib"')
-      # ph = script.run # this waiting until process executing
-      # ph.result.expected_assout = /\("File=new.ib;.*"\) успешно завершено/
-      # ph.result.verify!
+      #  script = cl.script(:createinfobase, 'File="path\\new.ib"')
+      #  ph = script.run # this waiting until process executing
+      #  ph.result.expected_assout = /\("File="path\\new.ib";.*"\)/i
+      #  ph.result.verify!
       #
+      # @api public
+      # @return (see #to_script)
       def script(run_mode, args = '', **options)
-        _args = "#{mode(run_mode)} #{args}"
-        to_script(args, options)
+        args_ = "#{mode(run_mode)} #{args}"
+        to_script(args_, options)
       end
 
       # Wrapper for 1C thin client binary
       class ThinClient < BinaryWrapper
+        # Define type of connection_string
+        # suitable for 1C binary
+        # @return [Array<Symbol>]
         def accepted_connstr
           [:file, :server, :http]
         end
@@ -257,6 +284,7 @@ module AssLauncher
 
       # Wrapper for 1C thick client binary
       class ThickClient < ThinClient
+        # (see ThinClient#accepted_connstr)
         def accepted_connstr
           [:file, :server]
         end

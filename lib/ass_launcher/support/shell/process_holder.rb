@@ -132,7 +132,7 @@ module AssLauncher
         end
 
         # @return [self]
-        # @rise [RunProcessError] if process was already running
+        # @raise [RunProcessError] if process was already running
         def run
           fail RunProcessError, "Process was run. Pid: #{pid}" if running?
           @popen3_thread, stdout, stderr = run_process

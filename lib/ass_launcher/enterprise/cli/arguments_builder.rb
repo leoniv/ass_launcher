@@ -3,12 +3,12 @@
 module AssLauncher
   module Enterprise
     module Cli
-      class ArgumetsBuilder
-        attr_reader :connection_string, :defined_parameters, :args
+      class ArgumentsBuilder
+        attr_reader :connection_string, :defined_parameters, :builded_args
 
         # @param defined_arguments [Parameters::ParamtersList]
         def initialize(defined_arguments)
-          @args = []
+          @builded_args = []
           @defined_parameters = defined_arguments
           build_api
         end
@@ -23,12 +23,13 @@ module AssLauncher
           verify_connection_string!
           case run_mode
           when  :createinfobase
-            args.unshift connection_string.to_s(
+            builded_args.unshift connection_string.to_s(
               AssLauncher::Support::ConnectionString::FILE_FIELDS +
               AssLauncher::Support::ConnectionString::SERVER_FIELDS +
               AssLauncher::Support::ConnectionString::IB_MAKER_FIELDS
             )
           else
+            raise "FIXME: where convert connection_string to args?"
             instance_eval connection_string.to_args
           end
         end
@@ -39,10 +40,6 @@ module AssLauncher
             include?(run_mode)
         end
         private :verify_connection_string?
-
-        def to_array
-          args.dup
-        end
       end
     end
   end

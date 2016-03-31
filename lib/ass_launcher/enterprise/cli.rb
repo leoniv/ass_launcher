@@ -25,8 +25,8 @@ module AssLauncher
       # @param cl [BinaryWrapper::ThinClient, BinaryWrapper::ThickClient]
       # @return [Array<Symbol>]
       def self.defined_modes_for(cl)
-        return [DEFINED_MODES[1]] if cl.is_a? BinaryWrapper::ThinClient
-        return DEFINED_MODES if cl.is_a? BinaryWrapper::ThickClient
+        return [DEFINED_MODES[1]] if cl.instance_of? BinaryWrapper::ThinClient
+        return DEFINED_MODES if cl.instance_of? BinaryWrapper::ThickClient
       end
 
       # Load and 1C Enterprise cli specifications
@@ -54,6 +54,10 @@ module AssLauncher
           spec = File.read(File.expand_path('../cli/cli.spec',__FILE__))
         end
 
+        # Max 1C Enterprise version
+        # for which defined parameters
+        # @return [Gem::Version]
+        attr_reader :enterprise_version
         # Defined 1C Enterprise cli parameters
         # @return [Parameters::ParamtersList]
         attr_reader :parameters
