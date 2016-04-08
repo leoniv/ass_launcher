@@ -8,6 +8,8 @@ module AssLauncher
     end
   end
   module Enterprise
+    # @api private
+    # 1C:Enterprise cli api wrapper
     module Cli
       require 'ass_launcher/enterprise/cli/arguments_builder'
       require 'ass_launcher/enterprise/cli/parameters'
@@ -40,9 +42,9 @@ module AssLauncher
               @binary_wrapper = binary_wrapper
               @run_mode = run_mode
             end
-            def dup
-              self.class.new(binary_wrapper, run_mode)
-            end
+#            def dup
+#              self.class.new(binary_wrapper, run_mode)
+#            end
           end.new(binary, run_mode)
         end
         private_class_method :loader
@@ -95,23 +97,24 @@ module AssLauncher
 
       # @api private
       class BinaryMatcher
+        attr_reader :client, :requirement
         def initialize(client = :all, version = '>= 0')
           @client = client.to_sym
           @requirement = Gem::Requirement.new version
         end
 
         def match?(binary_wrapper)
-          match_client(binary_wrapper) && match_version(binary_wrapper)
+          match_client?(binary_wrapper) && match_version?(binary_wrapper)
         end
 
         private
-        def match_client(bw)
-          return true if @client == :all
-          @client == bw.class.name.to_s.downcase.gsub(/client$/,'').to_sym
+        def match_client?(bw)
+          return true if client == :all
+          client == bw.class.name.to_s.downcase.gsub(/client$/,'').to_sym
         end
 
-        def match_version(bw)
-          @requirement.satisfied_by? bw.version
+        def match_version?(bw)
+          requirement.satisfied_by? bw.version
         end
       end
     end

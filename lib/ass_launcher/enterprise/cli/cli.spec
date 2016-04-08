@@ -5,7 +5,7 @@
 # Параметры определяются для режимов запуска платформы и разбиваются на группы.
 # Режимы запуска определены в AssLauncher::Enterprise::Cli::DEFINED_MODES
 # Группы определяются в этом модуле вызовом define_group
-# 
+#
 # Определение параметра производится вызовом методов string, parh и т.д завернутых в блоки
 # @example
 #  mode :name do #Параметры для заданных режимов запуска 1С:Предприятие
@@ -51,7 +51,7 @@ end
 mode :enterprise, :designer, :createinfobase do
   group :other do
     reserved 'use option :capture_assout => false for didn\'t capture 1C output', path('/Out', 'файл используемый 1С вместо stdout и stderr. В файл выводятся служебные сообщения, а также сообщения метода Сообщить()')
-    reserved 'use option :silent_mode => false for enable gui dialogs', flag('/DisableStartupDialogs', 'подавляет gui диалоги') 
+    reserved 'use option :silent_mode => false for enable gui dialogs', flag('/DisableStartupDialogs', 'подавляет gui диалоги')
     reserved 'use option :silent_mode => false for enable gui messages', flag('/DisableStartupMessages', 'подавляет gui сообщения')
   end
 end
@@ -61,7 +61,7 @@ mode :enterprise, :designer do
     path '/F', 'путь к файловой информационной базе'
     string '/S', 'адрес информационной базы, хранящейся на сервере "1С:Предприятие 8". Имеет вид "host:port/ib_name"'
   end
-  
+
   group :authentication do
     string '/N', 'имя пользователя информационной базы'
     string '/P', 'пароль пользователя информационной базы'
@@ -85,7 +85,7 @@ mode :enterprise do
       num '-PPort', 'порт прокси', required: true
       string '-PUser', 'имя пользователя прокси'
       string '-PPwd', 'имя пользователя прокси'
-    end   
+    end
   end
 
   group :authentication do
@@ -104,12 +104,12 @@ mode :enterprise do
     string '/C', 'передача строкового значения в экземпляр 1С приложения.'
       ' Значение доступно в глобальной переменной `ПараметрЗапуска`.'
       ' Если в строке есть двойные кавычки работает криво.',
-      value_validator: (Proc.new do |value|
-        fail ArgumentError, "Use `\"' forbidden for /C parameter" if /"/ =~ value
+      value_validator: ''# (Proc.new do |value|
+        fail ArgumentError, 'Use `\"` forbidden for /C parameter' if /"/ =~ value
       end)
     flag '/RunModeOrdinaryApplication', 'запуск толстого клиента в режиме обычного приложения  не зависимо от настроек', thick_client('>= 8.2')
     flag '/RunModeManagedApplication', 'запуск толстого клиента в режиме управляемого приложения  не зависимо от настроек', thick_client('>= 8.2')
-    string '/UC', 'код доступа для установки соединения с заблокированной базой'  
+    string '/UC', 'код доступа для установки соединения с заблокированной базой'
     skip '/SLev'
     path '/Execute', 'запуска внешней обработки в режиме 1С:Предприятие непосредственно после старта системы'
     skip '/ClearCache'
@@ -124,7 +124,7 @@ mode :enterprise do
     url '/DebuggerURL', 'url отладчика'
   end
 end
-  
+
 mode :designer do
   group :packge_mode do
     path '/DumpIB', 'выгрузка дампа информационной базы'
@@ -151,7 +151,7 @@ mode :designer do
 
     flag '/IBCheckAndRepair', 'выполнить тестирование и исправление информационной базы' do
       flag '-ReIndex', 'реиндексация таблиц'
-      flag '-LogIntegrity', 'проверка логической целостности' 
+      flag '-LogIntegrity', 'проверка логической целостности'
       flag '-LogAndRefsIntegrity', 'проверка логической и ссылочной целостности'
       flag '-RecalcTotals', 'пересчет итогов'
       flag '-IBCompression', 'сжатие таблиц'
@@ -220,7 +220,7 @@ mode :designer do
     skip '/RunEnterprise', 'предназначен для запуска 1С:Предприятия после исполнения пакетной команды'
     skip '/DumpResult', 'предназначен для записи результата работы конфигуратора в файл'
   end
-  
+
   group :repository do
     path '/ConfigurationRepositoryF', 'каталог хранилища'
     string '/ConfigurationRepositoryN', 'имя пользователя хранилища'
@@ -243,7 +243,7 @@ mode :designer do
       flag '-GroupByComment', 'с группировкой по комментарию'
     end
   end
-  
+
   group :distribution do
     flag '/CreateDistributionFiles', 'создание файлов поставки и обновления' do
       path '-cffile', 'создать дистрибутив (.cf файл)'
