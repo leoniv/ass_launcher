@@ -104,7 +104,7 @@ mode :enterprise do
     string '/C', 'передача строкового значения в экземпляр 1С приложения.'
       ' Значение доступно в глобальной переменной `ПараметрЗапуска`.'
       ' Если в строке есть двойные кавычки работает криво.',
-      value_validator: ''# (Proc.new do |value|
+      value_validator: (Proc.new do |value|
         fail ArgumentError, 'Use `\"` forbidden for /C parameter' if /"/ =~ value
       end)
     flag '/RunModeOrdinaryApplication', 'запуск толстого клиента в режиме обычного приложения  не зависимо от настроек', thick_client('>= 8.2')
