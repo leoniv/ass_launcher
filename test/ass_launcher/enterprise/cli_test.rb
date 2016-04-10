@@ -69,6 +69,8 @@ class TestEnetrpriseCliSpec < Minitest::Test
   end
 
   def test_smoky_test_for
+    AssLauncher::Enterprise::Cli::Parameters::StringParam\
+      .any_instance.expects(:match?).at_least_once.returns(false)
     assert_instance_of cls, cls.for(:fake_binary, :fake_mode)
   end
 end

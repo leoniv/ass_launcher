@@ -42,9 +42,6 @@ module AssLauncher
               @binary_wrapper = binary_wrapper
               @run_mode = run_mode
             end
-#            def dup
-#              self.class.new(binary_wrapper, run_mode)
-#            end
           end.new(binary, run_mode)
         end
         private_class_method :loader
@@ -72,10 +69,11 @@ module AssLauncher
         attr_reader :groups
 
         # @api private
-        def initialize(parameters, modes, groups)
+        def initialize(parameters, modes, groups, enterprise_version)
           @parameters = parameters
           @modes = modes
           @groups = groups
+          @enterprise_version = enterprise_version
         end
 
         # Build suitable cli specifications for 1C Enterprise binary type,
@@ -83,11 +81,12 @@ module AssLauncher
         # @param binary [BinaryWrapper::ThinClient, BinaryWrapper::ThickClient]
         # @param run_mode [Symbol] see {Cli::DEFINED_MODES}
         def self.for(binary, run_mode)
-          loader(binary, run_mode).instance_eval\
-            AssLauncher.config.platform_cli_spec
-          new(loader.parameters,
-              loader.described_modes,
-              loader.parameters_groups)
+          l = loader(binary, run_mode)
+          l.instance_eval(AssLauncher.config.platform_cli_spec)
+          new(l.parameters,
+              l.described_modes,
+              l.parameters_groups,
+              l.enterprise_version)
         end
 
         def usage(run_mode = nil)

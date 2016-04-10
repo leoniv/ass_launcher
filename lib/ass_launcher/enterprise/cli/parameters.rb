@@ -45,7 +45,7 @@ module AssLauncher
         attr_reader :parent
 
         def match?(binary_wrapper, run_mode)
-          binary_matcher.match? binary_wrapper && modes.include?(run_mode)
+          binary_matcher.match?(binary_wrapper) && modes.include?(run_mode)
         end
 
         def to_sym
@@ -145,7 +145,7 @@ module AssLauncher
 
           def auto_binary_matcher(arg)
             return arg if arg.is_a? BinaryMatcher
-            return BinaryMatcher.new(auto_client, arg) if arg.is_a String
+            return BinaryMatcher.new(auto_client, arg) if arg.is_a? String
             BinaryMatcher.new auto_client
           end
           private :auto_binary_matcher

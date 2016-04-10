@@ -101,11 +101,11 @@ mode :enterprise do
     skip '/AppAutoCheckMode'
     skip '/LogUI'
     string '/VL', 'код локализации сеанса'
-    string '/C', 'передача строкового значения в экземпляр 1С приложения.'
-      ' Значение доступно в глобальной переменной `ПараметрЗапуска`.'
+    string '/C', 'передача строкового значения в экземпляр 1С приложения.'\
+      ' Значение доступно в глобальной переменной `ПараметрЗапуска`.'\
       ' Если в строке есть двойные кавычки работает криво.',
       value_validator: (Proc.new do |value|
-        fail ArgumentError, 'Use `\"` forbidden for /C parameter' if /"/ =~ value
+        fail ArgumentError, 'In /C parameter char `\"` forbidden for use' if /"/ =~ value
       end)
     flag '/RunModeOrdinaryApplication', 'запуск толстого клиента в режиме обычного приложения  не зависимо от настроек', thick_client('>= 8.2')
     flag '/RunModeManagedApplication', 'запуск толстого клиента в режиме управляемого приложения  не зависимо от настроек', thick_client('>= 8.2')
@@ -136,7 +136,7 @@ mode :designer do
       flag '-Server', 'обновление будет выполняться на сервере'
     end
     path '/UpdateCfg', 'обновление конфигурации, находящейся на поддержке из .cf или .cfu файла'
-    flag '/ConfigurationRepositoryUpdateCfg'
+    skip '/ConfigurationRepositoryUpdateCfg' # похоже это параметр для работы с хранилищем
     skip '/DumpConfigFiles', 'выгрузка свойств объектов метаданных конфигурации'
     skip '/LoadConfigFiles', 'загрузка свойств объектов метаданных конфигурации'
     path '/DumpDBCfg', 'сохранение конфигурации базы данных в файл'
