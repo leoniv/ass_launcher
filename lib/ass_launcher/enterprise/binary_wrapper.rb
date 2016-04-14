@@ -185,23 +185,73 @@ module AssLauncher
       end
       private :build_args
 
+      # Run 1C:Enterprise client as command. For correct pass cli parameters
+      # to 1C:Enterprise binary, you can passes block. Block will be eval in
+      # instance of {Cli::ArgumentsBuilder}. +ArgumentsBuilder+ use
+      # {Cli::CliSpec} and verify parameters and prameters values.
+      # Also you can pass arguments directly, without verify, uses +args+ array.
+      #
+      # Command not wait while 1C:Enterprise execution. You can manipulate with
+      # many 1C clients runned at once.
+      #
       # @example
       #
+      #  # Get 1C:Enterprise last release for 8.3.6 version:
+      #
       #  cl = AssLauncher::Enterprise.thick_clients('~> 8.3.6').last
-      #  raise 'Can't find 1C binary' if cl.nil?
+      #  raise 'Can\'t find 1C binary' if cl.nil?
+      #
+      # @example
+      #
+      #  # Run 1C:Enterprise designer
+      #  # Directly pass parameters:
+      #
+      #  args = ['/F', 'path/to/file/infobase']
+      #  ph = cl.command(:designer, args).run
+      #
+      #  ph.wait.result.assout # => "Информационная база не обнаружена!"
+      #  ph.result.exitstatus # => 0
+      #
+      #  # Fucking 1C: "Информационная база не обнаружена!" but exit with 0 ????
+      #
+      # @example
       #
       #  # Dump infobase
+      #  # Directly pass parameters:
+      #
+      #  args = ['/F', 'path/infobase', '/DumpIB', 'dump/path/file.dt']
+      #  cm = cl.command(:designer, args)
+      #
+      #  cm.run.wait.result.verify!
+      #  #=> RunAssResult::RunAssError: Информационная база не обнаружена!
+      #
+      # @example
+      #
+      #  TODO `verify' exaples:
+      #
+      #  # Dump infobase
+      #  # Uses Cli::ArgumentsBuilder:
       #
       #  conn_str = AssLauncher::Support::ConnectionString.\
       #    new('File="//host/infobase"')
       #
-      #  command = cl.command(:designer, conn_str.to_args) do
+      #  command = cl.command(:designer) do
       #    connection_string conn_str
       #    DumpIB './infobase.dt'
       #  end
       #  ph = command.run.wait
       #
       #  ph.result.verify!
+      #
+      #
+      #  # Run 1C:Enterprise designer
+      #  # Uses Cli::ArgumentsBuilder:
+      #
+      #  ph = cl.command(:designer) do
+      #    _F 'path/to/file/infobase' # => warning '/F' is depricated. Uses connection_string
+      #  end.run
+      #  ph.wait.result.assout # => "Информационная база не обнаружена!"
+      #
       #
       #  # Crete info base
       #
@@ -256,9 +306,9 @@ module AssLauncher
         to_command(args_, options)
       end
 
-      # Run as script. It waiting for script executed.
-      # Not use arguments builder and not given block
-      # Argumets string make as you want
+      # Run 1C:Enterprise client as cmd or shell script. It waiting for script
+      # execution. Not use arguments builder and not expects of block.
+      # Arguments string make as you want
       #
       # @example
       #
