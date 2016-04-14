@@ -28,8 +28,10 @@ module AssLauncher
     #   в linux отработет корректно
     # rubocop:enable all
 
-    # Class for wrapping 1C platform binary executables suach as 1cv8.exe and
-    # 1cv8c.exe. Class makes it easy to juggle the different versions of 1C
+    # Class for wrapping 1C:Enterprise platform binary executables such as
+    # 1cv8.exe and 1cv8c.exe.
+    # Class makes it easy to juggle with the different versions of
+    # 1C:Enterprise installations
     #
     # @abstract
     # @api private
