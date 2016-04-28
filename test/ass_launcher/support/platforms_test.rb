@@ -75,6 +75,16 @@ class PlatformsTest < Minitest::Test
   end
 end
 
+class UnixEnvTest < Minitest::Test
+  def cls
+    AssLauncher::Support::Platforms::UnixEnv
+  end
+
+  def test_brakets
+    assert_instance_of Array, cls[/./]
+  end
+end
+
 class PathnameExtTest < Minitest::Test
 
   def cls
