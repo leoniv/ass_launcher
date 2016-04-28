@@ -49,8 +49,10 @@ class ProcessHolderTest < Minitest::Test
   end
 
   def test_reg_process
-    skip
-    assert_equal mock_holder, cls.process_list.last
+    process_list = mock
+    process_list.expects(:"<<").with(:fake_process)
+    cls.expects(:process_list).returns(process_list)
+    cls.send(:reg_process, :fake_process)
   end
 
   def test_run_fail
