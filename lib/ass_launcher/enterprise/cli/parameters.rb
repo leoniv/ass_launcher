@@ -15,10 +15,10 @@ module AssLauncher
       module Parameters
         DEFAULT_OPTIONS = {
           required: false,
-          value_validator: Proc.new {|value|},
+          value_validator: proc { |value| value },
           switch_list: nil,
           chose_list: nil,
-          switch_value: Proc.new {|value| value}
+          switch_value: proc { |value| value }
         }.freeze
 
         # Parameter name like it define in 1C cli api
@@ -43,6 +43,9 @@ module AssLauncher
         # Parent parameter for subpurameter
         # @return kinde of [String]
         attr_reader :parent
+        # Options
+        # @return [Hash]
+        attr_reader :options
 
         def match?(binary_wrapper, run_mode)
           binary_matcher.match?(binary_wrapper) && modes.include?(run_mode)
@@ -70,9 +73,9 @@ module AssLauncher
           parent.nil?
         end
 
-        def child?(parent)
+        def child?(expected_parent)
           return false if root?
-          parent() == parent
+          parent == expected_parent
         end
 
         def to_s
@@ -91,7 +94,7 @@ module AssLauncher
           options[:chose_list]
         end
 
-        def key(value)
+        def key(_value)
           name
         end
         private :key
@@ -113,8 +116,22 @@ module AssLauncher
         private :def_options
 
         def usage
-          raise NotImplementedError
+          fail NotImplementedError
         end
+
+        def auto_binary_matcher(arg)
+          return arg if arg.is_a? BinaryMatcher
+          return BinaryMatcher.new(auto_client, arg) if arg.is_a? String
+          BinaryMatcher.new auto_client
+        end
+        private :auto_binary_matcher
+
+        def auto_client
+          return :thick if modes.include?(:createinfobase) ||
+                           modes.include?(:designer)
+          :all
+        end
+        private :auto_client
 
         # Parameter expects string value
         class StringParam
@@ -142,20 +159,6 @@ module AssLauncher
             @options = def_options.merge options
             @parent = parent
           end
-
-          def auto_binary_matcher(arg)
-            return arg if arg.is_a? BinaryMatcher
-            return BinaryMatcher.new(auto_client, arg) if arg.is_a? String
-            BinaryMatcher.new auto_client
-          end
-          private :auto_binary_matcher
-
-          def auto_client
-            return :thick if (@modes.include?(:createinfobase) ||\
-              @modes.include?(:designer))
-            :all
-          end
-          private :auto_client
         end
 
         # Parameter expects filesystem path
@@ -165,10 +168,10 @@ module AssLauncher
         # {AssLauncher::Support::Platforms::PathExtension} class
         class Path < StringParam
           include AssLauncher::Support::Platforms
-          private
           def value(value)
             platform.path(value).to_s
           end
+          private :value
         end
 
         # Chose parameter expects argunment value from chose_list
@@ -182,10 +185,10 @@ module AssLauncher
 
         # Flag parameter not expects argument
         class Flag < StringParam
-          private
-          def value(value)
+          def value(_value)
             ''
           end
+          private :value
         end
 
         # Switch parameter expects argument value from switch_list or
@@ -217,13 +220,14 @@ module AssLauncher
           private :switch_value
         end
 
+        # List of parameters
         class ParamtersList
           def initialize
             @parameters = []
           end
 
           def defined?(p)
-            ! find(p.name, p.parent).nil?
+            !find(p.name, p.parent).nil?
           end
 
           def <<(p)
@@ -242,11 +246,11 @@ module AssLauncher
           end
 
           def each(&block)
-            parameters.each &block
+            parameters.each block
           end
 
           def usage
-            raise NotImplementedError
+            fail NotImplementedError
           end
         end
       end
