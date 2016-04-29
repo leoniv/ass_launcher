@@ -1,10 +1,6 @@
 require 'test_helper'
 
 class CliParametersTest < Minitest::Test
-  def mod
-    AssLauncher::Enterprise::Cli::Parameters
-  end
-
   def param
     Class.new do
       include AssLauncher::Enterprise::Cli::Parameters
@@ -134,6 +130,12 @@ class CliParametersTest < Minitest::Test
     assert_equal :chose_list_value, inst.chose_list
   end
 
+  def test_required?
+    inst = param
+    inst.expects(:options).returns({:required => :required})
+    assert_equal :required, inst.required?
+  end
+
   def test_key
     inst = param
     inst.expects(:name).returns(:name)
@@ -166,15 +168,162 @@ class CliParametersTest < Minitest::Test
   end
 
   def test_auto_binary_matcher
-    skip
+    inst = param
+    inst.expects(:auto_client).returns(:all)
+    assert_instance_of AssLauncher::Enterprise::Cli::BinaryMatcher,
+      inst.send(:auto_binary_matcher, nil)
   end
 
   def test_auto_client
-    skip
+    inst = param
+    inst.expects(:modes).returns([:createinfobase])
+    assert_equal :thick, inst.send(:auto_client)
+    inst.expects(:modes).returns([:designer]).twice
+    assert_equal :thick, inst.send(:auto_client)
+    inst.expects(:modes).returns([:enterprise]).twice
+    assert_equal :all, inst.send(:auto_client)
+  end
+end
+
+class CliChoseParameterTest < Minitest::Test
+  def cls
+    AssLauncher::Enterprise::Cli::Parameters::Chose
+  end
+
+  def test_to_args
+    inst = cls.new('/ChoseList',nil,nil,nil,nil,{chose_list: {ch1:'', ch2:''}})
+    assert_equal ['/ChoseList', 'ch2'], inst.to_args('ch2')
+  end
+
+  def test_to_args_invalid_value
+    inst = cls.new('/ChoseList',nil,nil,nil,nil,{chose_list: {ch1:'', ch2:''}})
+    assert_raises ArgumentError do
+      inst.to_args('ch3')
+    end
+  end
+end
+
+class CliFlagParameter < Minitest::Test
+  def cls
+    AssLauncher::Enterprise::Cli::Parameters::Flag
+  end
+
+  def test_to_args
+    inst = cls.new('/FlagParameter',nil,nil,nil,nil)
+    assert_equal ['/FlagParameter',''], inst.to_args
+  end
+end
+
+class CliParametersListTest < Minitest::Test
+  def list
+    AssLauncher::Enterprise::Cli::Parameters::ParametersList.new
+  end
+
+  def test_each
+    zond = mock
+    zond.expects(:each).yields(:zonde_value)
+    inst = list
+    inst.expects(:parameters).returns(zond)
+    inst.each do |v|
+      assert_equal :zonde_value, v
+    end
+  end
+
+  def test_usage
+    assert_raises NotImplementedError do
+      list.usage
+    end
+  end
+
+  def test_add
+    inst = list
+    inst.expects(:param_defined?).with(:p1).returns(false)
+    inst.expects(:param_defined?).with(:p2).returns(false)
+    inst << :p1
+    inst << :p2
+    assert_equal [:p1, :p2], inst.send(:parameters)
+  end
+
+  def test_find
+    p1 = stub({:to_sym => :p1, :parent => nil})
+    p2 = stub({:to_sym => :p2, :parent => p1})
+    p3 = stub({:to_sym => :p3, :parent => p2})
+    inst = list
+    inst.expects(:parameters).returns([p1,p2,p3]).times(4)
+    assert_nil inst.find('p4',p2)
+    assert_equal p1, inst.find('p1', nil)
+    assert_equal p3, inst.find('p3', p2)
+    assert_equal p2, inst.find('p2', p1)
+  end
+
+  def test_initialize
+    assert_equal [], list.send(:parameters)
+  end
+
+  def test_param_defined?
+    inst = list
+    inst.expects(:find).with(:name,:parent).returns(:param)
+    p = mock({:name=>:name, :parent=>:parent})
+    assert inst.param_defined?(p)
+    inst.expects(:find).with(:name,:parent).returns(nil)
+    p = mock({:name=>:name, :parent=>:parent})
+    refute inst.param_defined?(p)
+  end
+end
+
+class CliSwitchParameterTest < Minitest::Test
+  def cls
+    AssLauncher::Enterprise::Cli::Parameters::Switch
+  end
+
+  def test_to_args_with_switch_list
+    inst = cls.new('/Fucking1C?',nil,nil,nil,nil,
+                   {switch_list:{:yes=>'Is true', :true=>'Is true true'}})
+    assert_equal ['/Fucking1C?yes',''], inst.to_args('yes')
+    assert_equal ['/Fucking1C?true',''], inst.to_args('true')
+    assert_raises ArgumentError do
+      inst.to_args('not')
+    end
+  end
+
+  def test_to_args_with_switch_value
+    inst = cls.new('/Fucking1C?',nil,nil,nil,nil,
+                   {switch_value: proc do |value|
+                      " => #{value}"
+                    end
+                   }
+                  )
+    assert_equal ['/Fucking1C? => Yes it is!',''], inst.to_args('Yes it is!')
+  end
+
+  def test_to_args_with_switch_value_and_validate
+    inst = cls.new('/Fucking1C?',nil,nil,nil,nil,
+                   {switch_value: proc do |value|
+                      " => #{value}"
+    end,
+    value_validator: proc { |value| fail ArgumentError if value =~ /no/i }
+                   }
+                  )
+    assert_equal ['/Fucking1C? => Yes it is!',''], inst.to_args('Yes it is!')
+    assert_raises ArgumentError do
+      inst.to_args 'No'
+    end
+  end
+end
+
+class CliPathParameterTest < Minitest::Test
+  def cls
+    AssLauncher::Enterprise::Cli::Parameters::Path
+  end
+
+  def test_to_args
+    inst = cls.new('/PathParameter',nil,nil,nil,nil,nil)
+    assert_equal ['/PathParameter', '.'], inst.to_args('.')
   end
 end
 
 class CliStringParamTest < Minitest::Test
+
   def cls
     AssLauncher::Enterprise::Cli::Parameters::StringParam
   end
@@ -196,4 +345,20 @@ class CliStringParamTest < Minitest::Test
     assert_equal :options, inst.options
   end
 
+  def test_to_args
+    inst = cls.new('/StringParam','',nil,'',nil,nil)
+    assert_equal ['/StringParam', 'string value'], inst.to_args('string value')
+  end
+
+  def test_to_args_not_valid_value
+    inst = cls.new('/S',nil,nil,nil,nil,
+                   {value_validator: proc do |value|
+                      fail ArgumentError if value == 'invalid value'
+                    end
+                   }
+                  )
+    assert_raises ArgumentError do
+      inst.to_args 'invalid value'
+    end
+  end
 end

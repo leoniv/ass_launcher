@@ -24,7 +24,7 @@ module AssLauncher
           end
 
           def parameters
-            @parameters ||= Parameters::ParamtersList.new
+            @parameters ||= Parameters::ParametersList.new
           end
 
           attr_reader :current_modes

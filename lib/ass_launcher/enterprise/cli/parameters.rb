@@ -94,6 +94,14 @@ module AssLauncher
           options[:chose_list]
         end
 
+        def value_validator
+          options[:value_validator]
+        end
+
+        def required?
+          options[:required]
+        end
+
         def key(_value)
           name
         end
@@ -185,26 +193,31 @@ module AssLauncher
 
         # Flag parameter not expects argument
         class Flag < StringParam
-          def value(_value)
-            ''
+          def to_args
+            super ''
           end
-          private :value
         end
 
-        # Switch parameter expects argument value from switch_list or
-        # block switch_value which return modified value argument.
-        # Switch parameter modifyed self name when set 1C cli value
+        # Switch parameter is most stupid cli parameter of 1C:Enterprise.
+        # Switch parameter expects argument value from +:switch_list* or
+        # block +:switch_value+ which return modified value argument.
+        # Switch parameter modifyed self name when uses parameter value
         # @example
         #  # /UseHwLicenses have {:"+"=>'',:"-"=>''} switch_list and:
         #   to_args(:"+") # => ['/UseHwLicenses+','']
         #   to_args(:"-") # => ['/UseHwLicenses-','']
-        #   to_args(:"bad value")i # => ArgumentError
+        #   to_args(:"bad value") # => ArgumentError
         #
         #  # -TimeLimit have block:
         #   switch_value: =>{|value|; ":#{value}"}
         #  # and
         #   to_args("12:00") #=> ['-TimeLimit:12:00','']
-        class Switch < Flag
+        class Switch < StringParam
+          def value(_value)
+            ''
+          end
+          private :value
+
           def key(value)
             "#{name}#{switch_value(value)}"
           end
@@ -215,38 +228,54 @@ module AssLauncher
               fail ArgumentError, "Wrong value #{value} for parameter #{name}"\
                 unless switch_list.key? value.to_sym
             end
-            options.switch_value.call(validate(value))
+            validate(value)
+            options[:switch_value].call(value)
           end
           private :switch_value
         end
 
         # List of parameters
-        class ParamtersList
+        class ParametersList
           def initialize
             @parameters = []
           end
 
-          def defined?(p)
+          attr_reader :parameters
+          private :parameters
+
+          def param_defined?(p)
             !find(p.name, p.parent).nil?
           end
 
+          # Add parameter in to tail of list
+          # @param p [StringParam Flag Path Switch Chose] parameter instance
+          # @raise [ArgumentError] if parameter alrady present in list
           def <<(p)
-            fail ArgumentError, "Parameter #{p.full_name} alrady defined"\
-              if defined?(p)
+            fail ArgumentError,
+                 "Parameter #{p.full_name} alrady defined" if\
+                    param_defined?(p)
             @parameters << p
           end
-          alias :"+" :"<<"
-          alias :add :"<<"
+          alias_method :"+", :"<<"
+          alias_method :add, :"<<"
 
+          # Find parameter in list
+          # @param name [String] name of finded parameter
+          # @param parent [StringParam Flag Path Switch Chose] parent for
+          #  subparameter
+          # @return [StringParam Flag Path Switch Chose nil] founded parameter
           def find(name, parent)
             parameters.each do |p|
-              return p if (p.root? || p.child?(parent))\
-                && p.to_sym == name.downcase.to_sym
+              if p.to_sym == name.downcase.to_sym &&
+                 p.parent == parent
+                return p
+              end
             end
+            nil
           end
 
           def each(&block)
-            parameters.each block
+            parameters.each(&block)
           end
 
           def usage
