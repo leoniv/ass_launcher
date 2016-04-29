@@ -176,11 +176,9 @@ class CliParametersTest < Minitest::Test
 
   def test_auto_client
     inst = param
-    inst.expects(:modes).returns([:createinfobase])
+    inst.expects(:modes).returns([:createinfobase, :designer])
     assert_equal :thick, inst.send(:auto_client)
-    inst.expects(:modes).returns([:designer]).twice
-    assert_equal :thick, inst.send(:auto_client)
-    inst.expects(:modes).returns([:enterprise]).twice
+    inst.expects(:modes).returns([:enterprise, :createinfobase, :designer])
     assert_equal :all, inst.send(:auto_client)
   end
 end

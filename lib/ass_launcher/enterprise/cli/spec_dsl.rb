@@ -47,9 +47,9 @@ module AssLauncher
             p = klass.new(name, desc, binary_matcher, current_group,
                           current_modes, curent_parent, **options)
             return unless p.match?(binary_wrapper, run_mode)
+            parameters << p
             if block_given?
-              parents_stack.unsift p
-              parameters << p
+              parents_stack.unshift p
               instance_eval &block
               parents_stack.shift
             end
@@ -148,7 +148,6 @@ module AssLauncher
         def skip(name, desc = '', binary_matcher = nil, **options, &block)
           #nop
         end
-        alias reserved skip
       end # SpecDsl
     end
   end

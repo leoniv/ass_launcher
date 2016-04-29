@@ -50,9 +50,9 @@ end
 
 mode :enterprise, :designer, :createinfobase do
   group :other do
-    reserved 'use option :capture_assout => false for didn\'t capture 1C output', path('/Out', 'файл используемый 1С вместо stdout и stderr. В файл выводятся служебные сообщения, а также сообщения метода Сообщить()')
-    reserved 'use option :silent_mode => false for enable gui dialogs', flag('/DisableStartupDialogs', 'подавляет gui диалоги')
-    reserved 'use option :silent_mode => false for enable gui messages', flag('/DisableStartupMessages', 'подавляет gui сообщения')
+    path('/Out', 'файл используемый 1С вместо stdout и stderr. В файл выводятся служебные сообщения, а также сообщения метода Сообщить()')
+    flag('/DisableStartupDialogs', 'подавляет gui диалоги')
+    flag('/DisableStartupMessages', 'подавляет gui сообщения')
   end
 end
 

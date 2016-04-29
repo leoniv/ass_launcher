@@ -135,8 +135,9 @@ module AssLauncher
         private :auto_binary_matcher
 
         def auto_client
-          return :thick if modes.include?(:createinfobase) ||
-                           modes.include?(:designer)
+          #return :thick if modes.include?(:createinfobase) ||
+          #                 modes.include?(:designer)
+          return :thick unless modes.include?(:enterprise)
           :all
         end
         private :auto_client
@@ -185,7 +186,7 @@ module AssLauncher
         # Chose parameter expects argunment value from chose_list
         class Chose < StringParam
           def validate(value)
-            fail ArgumentError, "Wrong value #{value} for #{name} parameter"\
+            fail ArgumentError, "Wrong value `#{value}' for #{name} parameter"\
               unless chose_list.key? value.to_sym
           end
           private :validate

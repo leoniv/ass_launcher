@@ -109,7 +109,8 @@ module AssLauncher
         private
         def match_client?(bw)
           return true if client == :all
-          client == bw.class.name.to_s.downcase.gsub(/client$/,'').to_sym
+          client == bw.class.name.split('::').last.
+            to_s.downcase.gsub(/client$/,'').to_sym
         end
 
         def match_version?(bw)
