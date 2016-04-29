@@ -145,7 +145,7 @@ class BinaryWrapperTest < Minitest::Test
     cli_spec.expects(:parameters).returns(:defined_arguments)
     inst = inst_
     inst.expects(:cli_spec).with(:run_mode).returns(cli_spec)
-    assert_equal :defined_arguments, inst.defined_parameters(:run_mode)
+    assert_equal :defined_arguments, inst.send(:defined_parameters, :run_mode)
   end
 
   def test_cli_spec
@@ -177,35 +177,6 @@ class BinaryWrapperTest < Minitest::Test
       end
     end)
     assert builder.block_executed?
-  end
-
-  def test_to_command_with_block
-    zonde = {}
-    block = lambda {|zonde| zonde[:call] = :yes}
-    inst = inst_
-    inst.expects(:mode).returns(:run_mode)
-    inst.expects(:build_args).with(:run_mode).\
-      yields(zonde).returns([:arg1, :arg2, :arg3])
-    inst.expects(:to_command).\
-      with([:run_mode, :arg0, :arg1, :arg2, :arg3], {options:''}).\
-      returns(:command)
-    assert_equal :command, inst.command(:run_mode, [:arg0], options:'', &block)
-    assert_equal :yes, zonde[:call]
-  end
-
-  def test_to_command_without_block
-    inst = inst_
-    inst.expects(:mode)
-    inst.expects(:build_args).never
-    inst.expects(:to_command).returns(:command)
-    assert_equal :command, inst.command(nil)
-  end
-
-  def test_script
-    inst = inst_
-    inst.expects(:to_script).with("run_mode arg1 arg2", {}).returns(:script)
-    inst.expects(:mode).with(:run_mode).returns(:run_mode)
-    assert_equal :script, inst.script(:run_mode, 'arg1 arg2')
   end
 
   def test_initialize
@@ -245,6 +216,21 @@ class TestThinClient < Minitest::Test
   def test_accepted_connstr
     assert_equal [:file, :server, :http], inst_.accepted_connstr
   end
+
+  def test_script
+    inst = inst_
+    inst.expects(:to_script).with("enterprise arg1 arg2", {}).returns(:script)
+    inst.expects(:mode).with(:enterprise).returns(:enterprise)
+    assert_equal :script, inst.script('arg1 arg2')
+  end
+
+  def test_command
+    AssLauncher::Enterprise::BinaryWrapper::ThickClient.any_instance
+      .expects(:command).with(:enterprise, :args, {o1:'', o2:''}).yields(:zond)
+    inst_.command(:args, {o1:'', o2:''}) do |z|
+      assert_equal :zond, z
+    end
+  end
 end
 
 class TestThickClient < Minitest::Test
@@ -264,4 +250,34 @@ class TestThickClient < Minitest::Test
   def test_accepted_connstr
     assert_equal [:file, :server], inst_.accepted_connstr
   end
+
+  def test_script
+    inst = inst_
+    inst.expects(:to_script).with("run_mode arg1 arg2", {}).returns(:script)
+    inst.expects(:mode).with(:run_mode).returns(:run_mode)
+    assert_equal :script, inst.script(:run_mode, 'arg1 arg2')
+  end
+
+  def test_to_command_with_block
+    zonde = {}
+    block = lambda {|zonde| zonde[:call] = :yes}
+    inst = inst_
+    inst.expects(:mode).returns(:run_mode)
+    inst.expects(:build_args).with(:run_mode).\
+      yields(zonde).returns([:arg1, :arg2, :arg3])
+    inst.expects(:to_command).\
+      with([:run_mode, :arg0, :arg1, :arg2, :arg3], {options:''}).\
+      returns(:command)
+    assert_equal :command, inst.command(:run_mode, [:arg0], options:'', &block)
+    assert_equal :yes, zonde[:call]
+  end
+
+  def test_to_command_without_block
+    inst = inst_
+    inst.expects(:mode)
+    inst.expects(:build_args).never
+    inst.expects(:to_command).returns(:command)
+    assert_equal :command, inst.command(nil)
+  end
+
 end

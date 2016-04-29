@@ -133,9 +133,9 @@ module AssLauncher
       private :to_command
 
       # Convert to {AssLauncher::Support::Shell::Script} instance
-      # @param [String] args string arguments for run 1C binary wrapped in
+      # @param args [String] string arguments for run 1C binary wrapped in
       #  +cmd.exe+ or +sh+ script like as: +'/Arg1 "Value" /Arg2 "value"'+
-      # @option options (see AssLauncher::Support::Shell::Script#initialize}
+      # @option options (see AssLauncher::Support::Shell::Script#initialize)
       # @return [AssLauncher::Support::Shell::Script]
       def to_script(args = '', options = {})
         AssLauncher::Support::Shell::Script\
@@ -165,15 +165,16 @@ module AssLauncher
         Cli.defined_modes_for(self)
       end
 
-      # @api public
       # @return (see Cli::CliSpec#parameters)
       def defined_parameters(run_mode)
         cli_spec(run_mode).parameters
       end
+      private :defined_parameters
 
       # @api public
+      # @param run_mode [Symbol] run mode 1C binary.
       # @return [Cli::CliSpec]
-      def cli_spec(run_mode)
+      def cli_spec(run_mode = :enterprise)
         Cli::CliSpec.for(self, fail_if_wrong_mode(run_mode))
       end
 
@@ -185,14 +186,15 @@ module AssLauncher
       end
       private :build_args
 
-      # Run 1C:Enterprise client as command. For correct pass cli parameters
-      # to 1C:Enterprise binary, you can passes block. Block will be eval in
-      # instance of {Cli::ArgumentsBuilder}. +ArgumentsBuilder+ use
-      # {Cli::CliSpec} and verify parameters and prameters values.
-      # Also you can pass arguments directly, without verify, uses +args+ array.
+      # Wrapper for 1C thick client binary
+      # @api public
       #
-      # Command not wait while 1C:Enterprise execution. You can manipulate with
-      # many 1C clients runned at once.
+      # @example
+      #
+      #  script = cl.script(:createinfobase, 'File="path\\new.ib"')
+      #  ph = script.run # this waiting until process executing
+      #  ph.result.expected_assout = /\("File="path\\new.ib";.*"\)/i
+      #  ph.result.verify!
       #
       # @example
       #
@@ -243,16 +245,6 @@ module AssLauncher
       #
       #  ph.result.verify!
       #
-      #
-      #  # Run 1C:Enterprise designer
-      #  # Uses Cli::ArgumentsBuilder:
-      #
-      #  ph = cl.command(:designer) do
-      #    _F 'path/to/file/infobase' # => warning '/F' is depricated. Uses connection_string
-      #  end.run
-      #  ph.wait.result.assout # => "Информационная база не обнаружена!"
-      #
-      #
       #  # Crete info base
       #
       #  ph = cl.command(:createinfobase) do
@@ -297,48 +289,77 @@ module AssLauncher
       #
       #  puts ph.result.assout #=> 'Ass listen: Hello World'
       #
-      # @api public
-      # @return (see #to_command)
-      def command(run_mode, args = [], **options, &block)
-        args_ = args.dup
-        args_.unshift mode(run_mode)
-        args_ += build_args(run_mode, &block) if block_given?
-        to_command(args_, options)
-      end
+      class ThickClient < BinaryWrapper
+        # (see ThinClient#accepted_connstr)
+        def accepted_connstr
+          [:file, :server]
+        end
 
-      # Run 1C:Enterprise client as cmd or shell script. It waiting for script
-      # execution. Not use arguments builder and not expects of block.
-      # Arguments string make as you want
-      #
-      # @example
-      #
-      #  script = cl.script(:createinfobase, 'File="path\\new.ib"')
-      #  ph = script.run # this waiting until process executing
-      #  ph.result.expected_assout = /\("File="path\\new.ib";.*"\)/i
-      #  ph.result.verify!
-      #
-      # @api public
-      # @return (see #to_script)
-      def script(run_mode, args = '', **options)
-        args_ = "#{mode(run_mode)} #{args}"
-        to_script(args_, options)
+        # Run 1C:Enterprise client as command.
+        # @note For correct pass cli parameters
+        #  to 1C:Enterprise binary, you can passes block. Block will be eval in
+        #  instance of {Cli::ArgumentsBuilder}. +ArgumentsBuilder+ use
+        #  {Cli::CliSpec} and verify parameters and prameters values.
+        #  Also you can pass arguments directly, without verify, uses +args+
+        #  array.
+        #
+        # @note Command not wait while 1C:Enterprise execution. You can
+        #  manipulate with many 1C clients runned at once.
+        #
+        # @param run_mode [Symbol] run mode 1C binary. It will be puts fierst
+        #  parameter in +args+
+        # @param args (see BinaryWrapper#to_command)
+        # @option options (see BinaryWrapper#to_command)
+        # @return (see #to_command)
+        def command(run_mode, args = [], **options, &block)
+          args_ = args.dup
+          args_.unshift mode(run_mode)
+          args_ += build_args(run_mode, &block) if block_given?
+          to_command(args_, options)
+        end
+
+        # Run 1C:Enterprise client as cmd or shell script.
+        # @note It waiting for script
+        #  execution.
+        # @note It not use arguments builder and not expects of block.
+        #  Arguments string make as you want
+        #
+        # @param run_mode (see #command)
+        # @param args (see #to_script)
+        # @option options (see #to_script)
+        # @return (see #to_script)
+        def script(run_mode, args = '', **options)
+          args_ = "#{mode(run_mode)} #{args}"
+          to_script(args_, options)
+        end
       end
 
       # Wrapper for 1C thin client binary
-      class ThinClient < BinaryWrapper
+      # @api public
+      class ThinClient < ThickClient
         # Define type of connection_string
         # suitable for 1C binary
         # @return [Array<Symbol>]
         def accepted_connstr
           [:file, :server, :http]
         end
-      end
 
-      # Wrapper for 1C thick client binary
-      class ThickClient < ThinClient
-        # (see ThinClient#accepted_connstr)
-        def accepted_connstr
-          [:file, :server]
+        # Run 1C:Enterprise client as command.
+        # @note (see ThickClient#command)
+        # @param args (see ThickClient#command)
+        # @option options (see ThickClient#command)
+        # @return (see ThickClient#command)
+        def command(args = [], **options, &block)
+          super(:enterprise, args, options, &block)
+        end
+
+        # Run 1C:Enterprise client as cmd or shell script.
+        # @note (see ThickClient#script)
+        # @param args (see ThickClient#script)
+        # @option options (see ThickClient#script)
+        # @return (see ThickClient#script)
+        def script(args = '', **options)
+          super(:enterprise, args, options)
         end
       end
     end
