@@ -62,18 +62,25 @@ module AssLauncher
         attr_reader :parameters
         # 1C Enterprise run modes descriptions for build cli api help
         # @return (see Cli::SpecDsl#described_modes)
-        attr_reader :modes
+        attr_reader :run_modes
         # Description for 1C Enterprise cli parameters group for group
         #  parameters in cli help
         # @return (see Cli::SpecDsl#described_modes)
         attr_reader :groups
 
+        attr_reader :current_run_mode
+
+        attr_reader :current_binary_wrapper
+
         # @api private
-        def initialize(parameters, modes, groups, enterprise_version)
-          @parameters = parameters
-          @modes = modes
+        def initialize(parameters, modes, groups,
+                       enterprise_version, binary_wrapper, run_mode)
+          @run_modes = modes.select { |k, v| binary_wrapper.run_modes.include? k }
           @groups = groups
           @enterprise_version = enterprise_version
+          @current_run_mode = run_mode
+          @current_binary_wrapper = binary_wrapper
+          @parameters = parameters
         end
 
         # Build suitable cli specifications for 1C Enterprise binary type,
@@ -86,7 +93,9 @@ module AssLauncher
           new(l.parameters,
               l.described_modes,
               l.parameters_groups,
-              l.enterprise_version)
+              l.enterprise_version,
+              binary,
+              run_mode)
         end
 
         def usage(run_mode = nil)
