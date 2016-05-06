@@ -4,6 +4,7 @@ module AssLauncher
   module Enterprise
     module Cli
       module SpecDsl
+        require 'uri'
         module DslHelpers
           # Translating stub
           def _t(s)
@@ -27,34 +28,37 @@ module AssLauncher
             @parameters ||= Parameters::ParametersList.new
           end
 
-          attr_reader :current_modes
-          private :current_modes
+          attr_accessor :current_modes
+          private :current_modes, :current_modes=
 
-          attr_reader :current_group
-          private :current_group
+          attr_accessor :current_group
+          private :current_group, :current_group=
 
           def parents_stack
             @parents_stack ||= []
           end
           private :parents_stack
 
-          def curent_parent
+          def current_parent
             parents_stack[0]
           end
-          private :curent_parent
+          private :current_parent
 
           def new_param(klass, name, desc, binary_matcher, **options, &block)
             p = klass.new(name, desc, binary_matcher, current_group,
-                          current_modes, curent_parent, **options)
+                          current_modes, current_parent, **options)
             return unless p.match?(binary_wrapper, run_mode)
             parameters << p
-            if block_given?
-              parents_stack.unshift p
-              instance_eval &block
-              parents_stack.shift
-            end
+            eval_sub_params(p, &block) if block_given?
           end
           private :new_param
+
+          def eval_sub_params(p, &block)
+            parents_stack.unshift p
+            instance_eval(&block)
+            parents_stack.shift
+          end
+          private :eval_sub_params
         end
 
         include DslHelpers
@@ -65,11 +69,12 @@ module AssLauncher
 
         def describe_mode(mode, desc, banner)
           fail "Undefined mode: #{mode}" unless defined_modes.include? mode
-          described_modes[mode] = {desc: _t(desc), banner: _t(banner)}
+          described_modes[mode] = { desc: _t(desc), banner: _t(banner) }
         end
 
         def define_group(name, desc, priority)
-          parameters_groups[name.to_sym] = {desc: _t(desc), priority: priority}
+          parameters_groups[name.to_sym] =
+            { desc: _t(desc), priority: priority }
         end
 
         def thick_client(v = '>= 0')
@@ -77,7 +82,7 @@ module AssLauncher
         end
 
         def thin_client(v = '>= 0')
-           BinaryMatcher.new(:thin, v)
+          BinaryMatcher.new(:thin, v)
         end
 
         def all_client(v = '>= 0')
@@ -87,16 +92,16 @@ module AssLauncher
         def mode(*modes, &block)
           fail "Undefined modes #{modes}" if (defined_modes & modes).size == 0
           fail 'method `mode` block required' unless block_given?
-          @current_modes = modes
-          instance_eval &block
+          self.current_modes = modes
+          instance_eval(&block)
         end
 
         def group(key, &block)
           fail "Undefined parameters group #{key}"\
             unless parameters_groups.key? key
           fail 'method `group` block required' unless block_given?
-          @current_group = key
-          instance_eval &block
+          self.current_group = key
+          instance_eval(&block)
         end
 
         def switch_list(**options)
@@ -104,7 +109,7 @@ module AssLauncher
             options[k] = _t(options[k])
           end
         end
-        alias :chose_list :switch_list
+        alias_method :chose_list, :switch_list
 
         def path(name, desc, binary_matcher = nil, **options, &block)
           new_param(Parameters::Path, name, desc,
@@ -132,13 +137,13 @@ module AssLauncher
         end
 
         def url(name, desc, binary_matcher = nil, **options, &block)
-          options[:value_validator] = Proc.new {fail "FIXME make validate URL string code"}
+          options[:value_validator] = proc { |value| value if URI(value) }
           new_param(Parameters::StringParam, name, desc,
                     binary_matcher, **options, &block)
         end
 
         def num(name, desc, binary_matcher = nil, **options, &block)
-          options[:value_validator] = Proc.new {fail "FIXME make validate numeric string code"}
+          options[:value_validator] = proc { |value| value if Float(value) }
           new_param(Parameters::StringParam, name, desc,
                     binary_matcher, **options, &block)
         end
@@ -146,7 +151,7 @@ module AssLauncher
         # Stub for skipped parameter
         # TODO may be register skipped parameter?
         def skip(name, desc = '', binary_matcher = nil, **options, &block)
-          #nop
+          # nop
         end
       end # SpecDsl
     end
