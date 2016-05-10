@@ -137,16 +137,40 @@ module AssLauncher
         end
 
         def url(name, desc, binary_matcher = nil, **options, &block)
-          options[:value_validator] = proc { |value| value if URI(value) }
-          new_param(Parameters::StringParam, name, desc,
-                    binary_matcher, **options, &block)
+          options[:value_validator] = url_value_validator(name)
+          string(name, desc, binary_matcher, **options, &block)
         end
 
-        def num(name, desc, binary_matcher = nil, **options, &block)
-          options[:value_validator] = proc { |value| value if Float(value) }
-          new_param(Parameters::StringParam, name, desc,
-                    binary_matcher, **options, &block)
+        def url_value_validator(n)
+          proc do |value|
+            begin
+              URI(value)
+            rescue
+              raise ArgumentError,
+                "Invalid URL for parameter `#{n}': `#{value}'"
+            end
+            value
+          end
         end
+        private :url_value_validator
+
+        def num(name, desc, binary_matcher = nil, **options, &block)
+          options[:value_validator] = num_value_validator(name)
+          string(name, desc, binary_matcher, **options, &block)
+        end
+
+        def num_value_validator(n)
+          proc do |value|
+            begin
+              Float(value)
+            rescue
+              raise ArgumentError,
+                "Invalid Number for parameter `#{n}': `#{value}'"
+            end
+            value
+          end
+        end
+        private :num_value_validator
 
         # Stub for skipped parameter
         # TODO may be register skipped parameter?
