@@ -101,7 +101,7 @@ module AssLauncher
         #   build help message
         # @param binary_matcher [Cli::BinaryMatcher] uses DSL:
         #  {#thick_client}, {#thin_client} or {#all_client}. If +nil+ uses
-        #  BinaryMatcher[Cli::BinaryMatcher] for all 1C clients and all client's
+        #  {Cli::BinaryMatcher} for all 1C clients and all client's
         #  verions like returns {#all_client} method
         # @param options (see Cli::Parameters::StringParam#initialize)
         # @return [Cli::Parameters::Path]
