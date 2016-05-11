@@ -100,7 +100,9 @@ module AssLauncher
         # @param desc [String] description of 1C:Enterprise CLI parameter for
         #   build help message
         # @param binary_matcher [Cli::BinaryMatcher] uses DSL:
-        #  {#thick_client}, {#thin_client} or {#all_client}
+        #  {#thick_client}, {#thin_client} or {#all_client}. If +nil+ uses
+        #  BinaryMatcher[Cli::BinaryMatcher] for all 1C clients and all client's
+        #  verions like returns {#all_client} method
         # @param options (see Cli::Parameters::StringParam#initialize)
         # @return [Cli::Parameters::Path]
         def path(name, desc, binary_matcher = nil, **options, &block)
