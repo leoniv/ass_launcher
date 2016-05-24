@@ -101,13 +101,15 @@ class BinaryWrapperTest < Minitest::Test
   end
 
   def test_to_script
+    String.any_instance.expects(:to_cmd).returns('path')
     AssLauncher::Support::Shell::Script.expects(:new).\
-      with('"path" args', :opts).returns(:script)
+      with('path args', :opts).returns(:script)
     path = mock
     path.expects(:win_string).returns("path")
     inst = inst_
     inst.expects(:path).returns(path)
     assert_equal :script, inst.send(:to_script, :args, :opts)
+    String.unstub
   end
 
   def test_mode

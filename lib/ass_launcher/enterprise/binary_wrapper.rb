@@ -312,8 +312,6 @@ module AssLauncher
         # @option options (see BinaryWrapper#to_command)
         # @return (see #to_command)
         def command(run_mode, args = [], **options, &block)
-          fail 'Uses #script method for :createinfobase run mode'\
-            if run_mode == :createinfobase
           args_ = args.dup
           args_.unshift mode(run_mode)
           args_ += build_args(run_mode, &block) if block_given?

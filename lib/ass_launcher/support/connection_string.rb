@@ -134,7 +134,7 @@ module AssLauncher
         args.each_with_index do |v, i|
           next unless i.even?
           r << v
-          r << args[i + 1].to_s.to_cmd unless args[i + 1].to_s.empty?
+          r << "\"#{args[i + 1].to_s}\"" unless args[i + 1].to_s.empty?
           r << ' '
         end
         r
@@ -269,6 +269,12 @@ module AssLauncher
           to_s
         end
 
+        # Build args array suitable for
+        # :createinfibase runmode
+        def createinfobase_args
+          [createinfobase_cmd]
+        end
+
         # (see DBMS_VALUES)
         def dbms=(value)
           fail ArgumentError, "Bad value #{value}" unless\
@@ -309,6 +315,15 @@ module AssLauncher
         # :createinfibase runmode
         def createinfobase_cmd
           "File=\"#{path.realdirpath.win_string}\""
+        end
+
+        # Build args array suitable for
+        # :createinfibase runmode
+        # Fucking 1C:
+        # - File="pat" not work but work running as script
+        # - File='path' work correct
+        def createinfobase_args
+          ["File='#{path.realdirpath.win_string}'"]
         end
 
         def path
