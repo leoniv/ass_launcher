@@ -27,7 +27,7 @@ class TestConnectionString < Minitest::Test
 
   class FakeConnStr
     def self.fields
-      []
+      AssLauncher::Support::ConnectionString::COMMON_FIELDS
     end
 
     def self.required_fields
@@ -168,37 +168,32 @@ class TestConnectionString < Minitest::Test
     assert FakeConnStr.new.is? :fakeconnstr
   end
 
-  def test_prop_to_cmd
-    cs = FakeConnStr.new
-    cs.expects(:file).returns('.')
-    assert_equal ' /F"." ', cs.send(:prop_to_cmd, 'File')
-    cs.expects(:srvr).returns('Srvr_value')
-    cs.expects(:ref).returns('Ref_value')
-    assert_equal ' /S"Srvr_value/Ref_value" ', cs.send(:prop_to_cmd, 'Srvr')
-    assert_equal ' /UsePrivilegedMode ', cs.send(:prop_to_cmd, 'prmod')
-    fields = {"Usr" => ' /N"Usr_value" ',
-              "Pwd" => ' /P"Pwd_value" ',
-              "Locale" => ' /L"Locale_value" ',
-              "Ws" => ' /WS"Ws_value" ',
-              "Wsn" => ' /WSN"Wsn_value" ',
-              "Wsp" => ' /WSP"Wsp_value" '
-    }
-    fields.each do |f, cmd|
-      cs.expects(f.downcase.to_sym).returns("#{f}_value")
-      assert_equal cmd, cs.send(:prop_to_cmd, f)
-    end
-  end
-
   def test_to_cmd
     cs = FakeConnStr.new
-    fields = %w(Usr Pwd)
-    cs.expects(:fields).returns(fields)
-    fields.each do |f|
-      cs.expects(:prop_to_cmd).with(f).returns("#{f}_value")
-      cs.expects(:get_property).with(f).returns("#{f}_value")
-    end
-    cs.expects(:proxy_cmd).returns('proxy_cmd')
-    assert_equal 'Usr_value Pwd_value proxy_cmd', cs.to_cmd
+    cs.expects(:to_args).returns(['1','_1','2','','3','_3'])
+    assert_equal '1"_1" 2 3"_3" ', cs.to_cmd
+  end
+
+  def test_to_args_common
+    cs = FakeConnStr.new
+    assert_equal [], cs.send(:to_args_common)
+    cs.usr = :usr
+    assert_equal ['/N',:usr], cs.send(:to_args_common)
+    cs.pwd = :pwd
+    assert_equal ['/N',:usr,'/P',:pwd], cs.send(:to_args_common)
+    cs.prmod = 1
+    assert_equal ['/N',:usr,'/P',:pwd, '/UsePrivilegedMode', ''],
+      cs.send(:to_args_common)
+    cs.locale = :locale
+    assert_equal ['/N',:usr,'/P',:pwd, '/UsePrivilegedMode', '', '/L', :locale],
+      cs.send(:to_args_common)
+  end
+
+  def test_to_args
+    cs = FakeConnStr.new
+    cs.expects(:to_args_common).returns([1,2])
+    cs.expects(:to_args_private).returns([3,4])
+    assert_equal [1,2,3,4], cs.to_args
   end
 end
 
@@ -271,6 +266,11 @@ class TestConnectionStringServer < Minitest::Test
       mock.dbms = 'Bad dbms'
     end
   end
+
+  def test_to_args_private
+    inst = cls.new({srvr:'host:port',ref:'ib'})
+    assert_equal ['/S', 'host:port/ib'], inst.send(:to_args_private)
+  end
 end
 
 class TestConnectionStringFile < Minitest::Test
@@ -298,6 +298,17 @@ class TestConnectionStringFile < Minitest::Test
     assert_raises ArgumentError do
       mock.file=''
     end
+  end
+
+  def test_to_args_private
+    path = mock
+    path.responds_like(AssLauncher::Support::Platforms::PathnameExt.new(''))
+    path.expects(:realpath).returns(path)
+    path.expects(:to_s).returns('real_path')
+    inst = cls.new({file:'path'})
+    AssLauncher::Support::Platforms.expects(:path).with('path').
+      returns(path)
+    assert_equal ['/F', 'real_path'], inst.send(:to_args_private)
   end
 end
 
@@ -338,26 +349,25 @@ class TestConnectionStringHttp < Minitest::Test
     assert_kind_of ::URI, mock.uri
   end
 
-  def test_proxy_cmd_auto
-    inst = cls.new({ws:'http://example.com', WspAuto:'yes'})
-    assert_equal '', inst.send(:proxy_cmd)
+  def test_to_args_private_with_auto_proxy
+    inst = cls.new(ws:'https://ex.com')
+    inst.wsn = :wsn
+    inst.wsp = :wsp
+    inst.wspauto = true
+    assert_equal ['/WS','https://ex.com','/WSN',:wsn,'/WSP',:wsp], inst.send(:to_args_private)
   end
 
-  def test_proxy_cmd_unset_wspsrv
-    inst = cls.new({ws:'http://example.com'})
-    assert_equal '', inst.send(:proxy_cmd)
-  end
-
-  def test_proxy_cmd_set_wspsrv
-    inst = cls.new({ws:'http://example.com',
-                    wspsrv:'proxy address',
-                    wspport: :port,
-                    wspuser: :user,
-                    wsppwd: :password}
-    )
-    assert_equal " /Proxy -PSrv\"proxy address\""\
-                 " -PPort\"port\""\
-                 " -PUser\"user\""\
-                 " -PPwd\"password\" ", inst.send(:proxy_cmd)
+  def test_to_args_private_with_manual_proxy
+    inst = cls.new(ws:'https://ex.com')
+    inst.wsn = :wsn
+    inst.wsp = :wsp
+    inst.wspauto = false
+    inst.wspsrv = :wspsrv
+    inst.wspport = 8080
+    inst.wspuser = :wspuser
+    inst.wsppwd = :wsppwd
+    assert_equal ['/WS','https://ex.com','/WSN',:wsn,'/WSP',:wsp,
+                  '/Proxy','','-Psrv',:wspsrv,'-PPort','8080',
+                  '-PUser',:wspuser,'-PPwd',:wsppwd], inst.send(:to_args_private)
   end
 end

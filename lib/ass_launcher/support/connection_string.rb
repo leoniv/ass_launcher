@@ -26,41 +26,6 @@ module AssLauncher
       # Fields for infobase published on http server
       HTTP_FIELDS = %w(Ws)
       HTTP_WEB_AUTH_FIELDS = %w(Wsn Wsp)
-      # Rule for {#to_cmd}
-      FIELDS_TO_CMD = { Usr: lambda { " /N\"#{usr}\" " },
-                        Pwd: lambda { " /P\"#{pwd}\" " },
-                        prmod: lambda { ' /UsePrivilegedMode ' },
-                        Locale: lambda { " /L\"#{locale}\" " },
-                        Srvr: lambda { " /S\"#{srvr}/#{ref}\" " },
-                        File: lambda do
-                          " /F\"#{AssLauncher::Support::\
-                                      Platforms.path(file).win_string}\" "
-                        end,
-                        Ws: lambda { " /WS\"#{ws}\" " },
-                        Wsn: lambda { " /WSN\"#{wsn}\" " },
-                        Wsp: lambda { " /WSP\"#{wsp}\" " }
-      }
-      FIELDS_TO_ARGS = lambda do |cs|
-        _U cs.usr
-        _P cs.pwd
-        _UsePrivilegedMode if cs.prmod.nil?
-        _L cs.locale
-        _S "#{cs.srvr}/#{cs.ref}" if cs.is? :server
-        _F cs.file if cs.is? :file
-        if cs.is? :http
-          _WS cs.ws
-          _WSN cs.wsn
-          _WSP cs.wsp
-          unless cs.wspauto
-            _Proxy wspsrv do
-              _PPort cs.wspport
-              _PUser cs.wspuser
-              _PPwd cs.wsppwd
-            end
-          end
-        end
-      end
-      FIELDS_TO_CMD.freeze
       # Proxy fields for accsess to infobase published on http server via proxy
       PROXY_FIELDS = %w(WspAuto WspSrv WspPort WspUser WspPwd)
       # Fields for makes server-infobase
@@ -144,45 +109,38 @@ module AssLauncher
         result
       end
 
-      # @return block for set 1C cli parameters.
-      # @see [AssLauncher::Enterprise::Cli::ArgumentsBuilder#connection_string]
+      # Convert connection string to array of 1C:Enterprise parameters.
+      # @return [Array] of 1C:Enterprise CLI parameters.
       def to_args
-        FIELDS_TO_ARGS
+        to_args_common + to_args_private
       end
 
-      # Convert connection string to 1C:Enterprise launch parameters
-      # like /N"usr" /P"pwd" etc
-      # see {FIELDS_TO_CMD} and {#proxy_cmd}
+      def to_args_common
+        r = []
+        r += ['/N', usr] if usr
+        r += ['/P', pwd] if pwd
+        r += ['/UsePrivilegedMode', ''] if prmod.to_s == '1'
+        r += ['/L', locale] if locale
+        r
+      end
+      private :to_args_common
+
+      # Convert connection string to string of 1C:Enterprise parameters
+      # like /N"usr" /P"pwd" etc. See {#to_args}
       # @return [String]
       def to_cmd
         r = ''
-        fields.each do |f|
-          r += "#{prop_to_cmd(f)} " unless get_property(f).to_s.empty?
+        args = to_args
+        args.each_with_index do |v,i|
+          if i.even?
+            r << v
+            r << args[i+1].to_s.to_cmd unless args[i+1].to_s.empty?
+            r << ' '
+          end
         end
-        r += proxy_cmd
+        r
       end
 
-      def prop_to_cmd(f)
-        instance_exec &FIELDS_TO_CMD[f.to_sym] if FIELDS_TO_CMD.key? f.to_sym
-      end
-      private :prop_to_cmd
-
-      # @api private
-      # Convert proxy fields to 1C:Enterprise launch parameter /Proxy
-      # see {PROXY_FIELDS}
-      # @return [String]
-      def proxy_cmd
-        return '' unless is? :http
-        return '' if wspauto
-        return " /Proxy -PSrv\"#{wspsrv}\""\
-               " -PPort\"#{wspport}\""\
-               " -PUser\"#{wspuser}\""\
-               " -PPwd\"#{wsppwd}\" "\
-               if wspsrv
-        ''
-      end
-
-      # @api private
       # Fields required for new instance of connection string
       def required_fields
         self.class.required_fields
@@ -217,7 +175,7 @@ module AssLauncher
 
       def prop_to_s(prop)
         "#{fields_to_hash[prop.downcase.to_sym]}="\
-          +"\"#{get_property(prop).gsub('"', '""')}\""
+          +"\"#{get_property(prop).to_s.gsub('"', '""')}\""
       end
 
       def fields_to_hash
@@ -311,6 +269,11 @@ module AssLauncher
             DBMS_VALUES.map(&:downcase).include? value.downcase
           @dbms = value
         end
+
+        def to_args_private
+          ['/S', "#{srvr}/#{ref}"]
+        end
+        private :to_args_private
       end
 
       # Connection string for file-infobases
@@ -335,6 +298,13 @@ module AssLauncher
           fail ArgumentError if str.empty?
           @file = str
         end
+
+        # Convert connection string to array of 1C:Enterprise parameters.
+        # @return [Array] of 1C:Enterprise CLI parameters.
+        def to_args_private
+          ['/F', AssLauncher::Support::Platforms.path(file).realpath.to_s]
+        end
+        private :to_args_private
       end
 
       # Connection string for infobases published on http server
@@ -367,6 +337,23 @@ module AssLauncher
           uri.password = wsp
           uri
         end
+
+        # Convert connection string to array of 1C:Enterprise parameters.
+        # @return [Array] of 1C:Enterprise CLI parameters.
+        def to_args_private
+          r = []
+          r += ['/WS', ws] if ws
+          r += ['/WSN', wsn] if wsn
+          r += ['/WSP', wsp] if wsp
+          if !wspauto && wspsrv
+            r += ['/Proxy', '', '-Psrv', wspsrv]
+            r += ['-PPort', wspport.to_s] if wspport
+            r += ['-PUser', wspuser] if wspuser
+            r += ['-PPwd', wsppwd] if wsppwd
+          end
+          r
+        end
+        private :to_args_private
       end
     end
   end
