@@ -131,12 +131,11 @@ module AssLauncher
       def to_cmd
         r = ''
         args = to_args
-        args.each_with_index do |v,i|
-          if i.even?
-            r << v
-            r << args[i+1].to_s.to_cmd unless args[i+1].to_s.empty?
-            r << ' '
-          end
+        args.each_with_index do |v, i|
+          next unless i.even?
+          r << v
+          r << args[i + 1].to_s.to_cmd unless args[i + 1].to_s.empty?
+          r << ' '
         end
         r
       end
@@ -345,15 +344,18 @@ module AssLauncher
           r += ['/WS', ws] if ws
           r += ['/WSN', wsn] if wsn
           r += ['/WSP', wsp] if wsp
-          if !wspauto && wspsrv
-            r += ['/Proxy', '', '-Psrv', wspsrv]
-            r += ['-PPort', wspport.to_s] if wspport
-            r += ['-PUser', wspuser] if wspuser
-            r += ['-PPwd', wsppwd] if wsppwd
-          end
-          r
+          to_args_private_proxy(r)
         end
         private :to_args_private
+
+        def to_args_private_proxy(r)
+          return r unless !wspauto && wspsrv
+          r += ['/Proxy', '', '-Psrv', wspsrv]
+          r += ['-PPort', wspport.to_s] if wspport
+          r += ['-PUser', wspuser] if wspuser
+          r += ['-PPwd', wsppwd] if wsppwd
+          r
+        end
       end
     end
   end
