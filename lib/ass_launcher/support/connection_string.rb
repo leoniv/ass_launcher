@@ -262,6 +262,13 @@ module AssLauncher
           @srvr
         end
 
+        # Build string suitable for
+        # :createinfibase runmode
+        # @todo validte createinfibase params
+        def createinfobase_cmd
+          to_s
+        end
+
         # (see DBMS_VALUES)
         def dbms=(value)
           fail ArgumentError, "Bad value #{value}" unless\
@@ -298,10 +305,20 @@ module AssLauncher
           @file = str
         end
 
+        # Build string suitable for
+        # :createinfibase runmode
+        def createinfobase_cmd
+          "File=\"#{path.realdirpath.win_string}\""
+        end
+
+        def path
+          AssLauncher::Support::Platforms.path(file)
+        end
+
         # Convert connection string to array of 1C:Enterprise parameters.
         # @return [Array] of 1C:Enterprise CLI parameters.
         def to_args_private
-          ['/F', AssLauncher::Support::Platforms.path(file).realpath.to_s]
+          ['/F', path.realpath.to_s]
         end
         private :to_args_private
       end
