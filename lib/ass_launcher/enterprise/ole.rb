@@ -69,7 +69,6 @@ module AssLauncher
         attr_reader :__ole__, :__version__
         def initialize(v)
           @__version__ = Gem::Version.new(v.to_s)
-          __main_ole__ #It cal for faile if linux
         end
 
         def __open__(conn_str)
@@ -135,9 +134,22 @@ module AssLauncher
 
       class ThinApplication < IbConnection
         def __open__(conn_str)
-          fail ApplicationConnectError unless\
-            __main_ole__.connect(conn_str.to_s)
+          begin
+            r = __main_ole__.connect(conn_str.to_s)
+          rescue
+            r = false
+          end
+          unless r
+            @__main_ole__ = nil
+            fail ApplicationConnectError
+          end
           @__ole__ = __main_ole__
+        end
+
+        def __close__
+          return if __closed__?
+          __main_ole__.visible = false
+          super
         end
 
         def __main_ole__
