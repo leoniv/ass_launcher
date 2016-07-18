@@ -180,7 +180,7 @@ module AssLauncher
 
       def build_args(run_mode, &block)
         arguments_builder = Cli::ArgumentsBuilder\
-                            .new(defined_parameters(run_mode))
+                            .new(defined_parameters(run_mode), run_mode)
         arguments_builder.instance_eval(&block)
         arguments_builder.builded_args
       end

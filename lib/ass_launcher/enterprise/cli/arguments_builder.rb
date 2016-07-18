@@ -3,43 +3,38 @@
 module AssLauncher
   module Enterprise
     module Cli
+      # @api private
       class ArgumentsBuilder
-        attr_reader :connection_string, :defined_parameters, :builded_args
+        attr_reader :run_mode, :defined_parameters, :builded_args
 
         # @param defined_arguments [Parameters::ParamtersList]
-        def initialize(defined_arguments)
+        def initialize(defined_arguments, run_mode)
           @builded_args = []
           @defined_parameters = defined_arguments
-          build_api
-        end
-
-        def build_api
-          @defined_parameters.build_api(self)
+          @run_mode = run_mode
         end
 
         def connection_string(conn_str)
-          @connection_string = AssLauncher::Support::ConnectionString.\
+          conn_str = AssLauncher::Support::ConnectionString.\
             new(conn_str) if conn_str.is_a? String
-          verify_connection_string!
-          case run_mode
-          when  :createinfobase
-            builded_args.unshift connection_string.to_s(
-              AssLauncher::Support::ConnectionString::FILE_FIELDS +
-              AssLauncher::Support::ConnectionString::SERVER_FIELDS +
-              AssLauncher::Support::ConnectionString::IB_MAKER_FIELDS
-            )
-          else
-            raise "FIXME: where convert connection_string to args?"
-            instance_eval connection_string.to_args
-          end
+          args = conn_str_to_args(conn_str)
+          args += build_args
         end
 
-        def verify_connection_string?
-          fail "Wrong connection_string: #{connection_string.is}"\
-            " for mode: #{run_mode}" if binary_wrapper.accepted_connstr.\
-            include?(run_mode)
+        def conn_str_to_args(conn_str)
+          return conn_str.createinfobase_args if run_mode == :createinfobase
+          conn_str.to_args
         end
-        private :verify_connection_string?
+
+        def method_missing(method, *args, &block)
+          param_name = method_to_param_name(method)
+          FIXME
+        end
+
+        def method_to_param_name(method)
+          FIXME
+        end
+
       end
     end
   end
