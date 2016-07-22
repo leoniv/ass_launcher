@@ -269,6 +269,11 @@ module AssLauncher
           to_s
         end
 
+        # Build string suitable for Ole objects connecting.
+        def to_ole_string
+          "#{to_s(fields - IB_MAKER_FIELDS)}"
+        end
+
         # Build args array suitable for
         # :createinfibase runmode
         def createinfobase_args
@@ -277,7 +282,7 @@ module AssLauncher
 
         # (see DBMS_VALUES)
         def dbms=(value)
-          fail ArgumentError, "Bad value #{value}" unless\
+          fail ArgumentError, "Bad value #{value}. See DBMS_VALUES" unless\
             DBMS_VALUES.map(&:downcase).include? value.downcase
           @dbms = value
         end
@@ -315,6 +320,11 @@ module AssLauncher
         # :createinfibase runmode
         def createinfobase_cmd
           "File=\"#{path.realdirpath.win_string}\""
+        end
+
+        # Build string suitable for Ole objects connecting.
+        def to_ole_string
+          "#{createinfobase_cmd};#{to_s(fields - ["File"])}"
         end
 
         # Build args array suitable for
