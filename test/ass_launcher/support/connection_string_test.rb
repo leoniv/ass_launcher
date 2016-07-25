@@ -271,6 +271,55 @@ class TestConnectionStringServer < Minitest::Test
     inst = cls.new({srvr:'host:port',ref:'ib'})
     assert_equal ['/S', 'host:port/ib'], inst.send(:to_args_private)
   end
+
+  def test_or_not_values
+    mock = Class.new(cls) do
+      def initialize
+      end
+    end.new
+    mock.schjobdn = 'Y'
+    assert_equal 'Y', mock.schjobdn
+    mock.crsqldb = 'N'
+    assert_equal 'N', mock.crsqldb
+    assert_raises ArgumentError do
+      mock.schjobdn = 'B'
+    end
+    assert_raises ArgumentError do
+      mock.crsqldb = 'B'
+    end
+  end
+
+  def test_createinfobase_cmd
+    mock = Class.new(cls) do
+      def initialize
+
+      end
+    end.new
+    mock.expects(:to_s).returns(:to_s)
+    assert_equal :to_s, mock.createinfobase_cmd
+  end
+
+  def test_createinfobase_args
+    mock = Class.new(cls) do
+      def initialize
+
+      end
+    end.new
+    mock.expects(:createinfobase_cmd).returns(:to_s)
+    assert_equal [:to_s], mock.createinfobase_args
+  end
+
+  def test_to_ole_string
+    mock = Class.new(cls) do
+      def initialize
+
+      end
+    end.new
+    mock.expects(:fields).returns([1,2] + AssLauncher::Support::ConnectionString::IB_MAKER_FIELDS)
+    mock.expects(:to_s).with([1,2]).returns(:ole_string)
+    actual = mock.to_ole_string
+    assert_equal :ole_string.to_s, actual
+  end
 end
 
 class TestConnectionStringFile < Minitest::Test
@@ -309,6 +358,41 @@ class TestConnectionStringFile < Minitest::Test
     AssLauncher::Support::Platforms.expects(:path).with('path').
       returns(path)
     assert_equal ['/F', 'real_path'], inst.send(:to_args_private)
+  end
+
+  def test_createinfobase_cmd
+    mock = Class.new(cls) do
+      def initialize
+      end
+    end.new
+    path = mock
+    path.expects(:realdirpath).returns(path)
+    path.expects(:win_string).returns(:win_string)
+    mock.expects(:path).returns(path)
+    assert_equal "File=\"#{:win_string}\"", mock.createinfobase_cmd
+  end
+
+  def test_createinfobase_args
+    mock = Class.new(cls) do
+      def initialize
+      end
+    end.new
+    path = mock
+    path.expects(:realdirpath).returns(path)
+    path.expects(:win_string).returns(:win_string)
+    mock.expects(:path).returns(path)
+    assert_equal ["File='#{:win_string}'"], mock.createinfobase_args
+  end
+
+  def test_to_ole_string
+    mock = Class.new(cls) do
+      def initialize
+      end
+    end.new
+    mock.expects(:createinfobase_cmd).returns(:createinfobase_cmd)
+    mock.expects(:fields).returns([1,2,'File'])
+    mock.expects(:to_s).with([1,2]).returns(:to_s)
+    assert_equal "#{:createinfobase_cmd};#{:to_s}", mock.to_ole_string
   end
 end
 

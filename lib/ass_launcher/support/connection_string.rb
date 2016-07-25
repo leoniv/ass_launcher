@@ -174,7 +174,7 @@ module AssLauncher
 
       def prop_to_s(prop)
         "#{fields_to_hash[prop.downcase.to_sym]}="\
-          +"\"#{get_property(prop).to_s.gsub('"', '""')}\""
+          "\"#{get_property(prop).to_s.gsub('"', '""')}\""
       end
 
       def fields_to_hash
@@ -282,10 +282,28 @@ module AssLauncher
 
         # (see DBMS_VALUES)
         def dbms=(value)
-          fail ArgumentError, "Bad value #{value}. See DBMS_VALUES" unless\
-            DBMS_VALUES.map(&:downcase).include? value.downcase
-          @dbms = value
+          @dbms = valid_value(value, DBMS_VALUES)
         end
+
+        def crsqldb=(value)
+          @crsqldb = yes_or_not(value)
+        end
+
+        def schjobdn=(value)
+          @schjobdn = yes_or_not(value)
+        end
+
+        def yes_or_not(value)
+          valid_value(value, %w(Y N))
+        end
+        private :yes_or_not
+
+        def valid_value(v, av)
+          fail ArgumentError, "Bad value #{v}. Accepted values are `#{av}'"\
+            unless av.map(&:downcase).include?(v.to_s.downcase)
+          v
+        end
+        private :valid_value
 
         def to_args_private
           ['/S', "#{srvr}/#{ref}"]
@@ -330,7 +348,7 @@ module AssLauncher
         # Build args array suitable for
         # :createinfibase runmode
         # Fucking 1C:
-        # - File="pat" not work but work running as script
+        # - File="path" not work but work running as script
         # - File='path' work correct
         def createinfobase_args
           ["File='#{path.realdirpath.win_string}'"]

@@ -24,6 +24,23 @@ class WIN32OLE
        @__objects__ ||= []
     end
 
+    def __parent__
+      @__parent__
+    end
+
+    def __parent__=(p)
+      @__parent__ = p
+    end
+
+    def __root__?
+      __parent__.nil?
+    end
+
+    def __root__
+      return self if __root__?
+      __parent__.__root__
+    end
+
     # Free created chiled Ole objects then free self
     def __ass_ole_free__
       @__objects__ = __ass_ole_free_objects__
@@ -57,6 +74,7 @@ class WIN32OLE
     define_method(:method_missing) do |*args|
       o = old_method_missing.bind(self).(*args)
       __objects__ << o if o.is_a? WIN32OLE
+      o.__parent__ = self if o.is_a? WIN32OLE
       o
     end
   end
@@ -78,10 +96,21 @@ module AssLauncher
 
         def __open__(conn_str)
           return true if __opened__?
-          @__ole__ = __ole_binary__.ole.connect(__cs__(conn_str))
+          __init_ole__(__ole_binary__.ole.connect(__cs__(conn_str)))
           true
         end
 
+        def __init_ole__(ole)
+          @__ole__ = ole
+          @__ole__.__parent__ = nil
+        end
+        private :__init_ole__
+
+        # @note It work not correct. It is not guaranteed to close connection.
+        # FIXME: translate: соединение с ИБ останется активным
+        # если будет существовать хотябы одна ссылка на ole объект порожденный
+        # соединение. Вызов {#__ass_ole_free__} попытается вызват {#ole_free}
+        # для всех ссылок но это работает не всегда.
         def __close__
           return if __closed__?
           @__ole__.send :__ass_ole_free__
@@ -115,7 +144,8 @@ module AssLauncher
         def method_missing(method, *args)
           fail "Attempt call method for closed object #{self.class.name}"\
             if __closed__?
-          __ole__.send(method, *args);
+          o = __ole__.send(method, *args);
+          o
         end
         protected :method_missing
       end
@@ -124,7 +154,7 @@ module AssLauncher
       class WpConnection < IbConnection
         def __open__(uri)
           return true if __opened__?
-          @__ole__ = __ole_binary__.connectworkingprocess(uri.to_s)
+          __init_ole__(__ole_binary__.connectworkingprocess(uri.to_s))
           true
         end
       end
@@ -133,7 +163,7 @@ module AssLauncher
       class AgentConnection < IbConnection
         def __open__(uri)
           return true if __opened__?
-          @__ole__ = __ole_binary__.ole.connectagent(uri.to_s)
+          __init_ole__(__ole_binary__.ole.connectagent(uri.to_s))
           true
         end
       end
