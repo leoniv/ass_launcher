@@ -2,7 +2,8 @@
 
 #Monkey patch for WIN32OLE class
 #-Define dummy class for Linux
-#-Modification bihavior for ole_free method. FIXME: 1с соединение с ИБ остается
+#-Modification bihavior for ole_free method. FIXME: внешнее соединение с ИБ
+# остается
 # активным пока существует хотябы один объект порожденный этим соединением.
 # Объекты могут пораждать другие объекты и т.д. Ссылки на объекты могут
 # находиться как на строне Ruby так и на строне 1С. Теоретически если на стороне
@@ -24,21 +25,13 @@ class WIN32OLE
        @__objects__ ||= []
     end
 
-    def __parent__
-      @__parent__
+    def __ruby__?
+      ole_respond_to? :object_id
     end
 
-    def __parent__=(p)
-      @__parent__ = p
-    end
-
-    def __root__?
-      __parent__.nil?
-    end
-
-    def __root__
-      return self if __root__?
-      __parent__.__root__
+    def __real_obj__
+      return self unless __ruby__?
+      ObjectSpace._id2ref(invoke :object_id)
     end
 
     # Free created chiled Ole objects then free self
@@ -74,7 +67,6 @@ class WIN32OLE
     define_method(:method_missing) do |*args|
       o = old_method_missing.bind(self).(*args)
       __objects__ << o if o.is_a? WIN32OLE
-      o.__parent__ = self if o.is_a? WIN32OLE
       o
     end
   end
@@ -102,7 +94,6 @@ module AssLauncher
 
         def __init_ole__(ole)
           @__ole__ = ole
-          @__ole__.__parent__ = nil
         end
         private :__init_ole__
 
