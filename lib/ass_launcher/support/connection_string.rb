@@ -134,7 +134,7 @@ module AssLauncher
         args.each_with_index do |v, i|
           next unless i.even?
           r << v
-          r << "\"#{args[i + 1].to_s}\"" unless args[i + 1].to_s.empty?
+          r << "\"#{args[i + 1]}\"" unless args[i + 1].to_s.empty?
           r << ' '
         end
         r
@@ -342,7 +342,7 @@ module AssLauncher
 
         # Build string suitable for Ole objects connecting.
         def to_ole_string
-          "#{createinfobase_cmd};#{to_s(fields - ["File"])}"
+          "#{createinfobase_cmd};#{to_s(fields - ['File'])}"
         end
 
         # Build args array suitable for
