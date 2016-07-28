@@ -134,9 +134,10 @@ module AssLauncher
         def __try_open__(conn_str)
           @opened = __ole_binary__.ole.connect(__cs__(conn_str))
           fail ApplicationConnectError unless __opened__?
-        ensure
+        rescue StandardError => e
           @opened = false
           @__ole_binary__ = nil
+          raise e
         end
         protected :__try_open__
 
