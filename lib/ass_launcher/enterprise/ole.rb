@@ -6,16 +6,19 @@ module AssLauncher
   module Enterprise
     # 1C:Enterprise ole objects layer
     module Ole
+      # 1C Infobase External Connection
       class IbConnection
         attr_reader :__ole__
+        protected :__ole__
+
+        # (see OleBinaries::AbstractAssOleBinary#initialize)
         def initialize(requirement)
           @requirement = requirement.to_s
         end
 
-        def __version__
-          @__version__ = __ole_binary__.version
-        end
-
+        # Open connection in to infobase described in conn_str
+        # @param conn_str [Support::ConnectionString::Server,
+        #  Support::ConnectionString::File, String]
         def __open__(conn_str)
           return true if __opened__?
           __init_ole__(__ole_binary__.ole.connect(__cs__(conn_str)))
@@ -27,33 +30,29 @@ module AssLauncher
         end
         private :__init_ole__
 
-        # FIXME: внешнее соединение
-        # с ИБ остается [AssLauncher::Enterprise::Ole::IBConnection]
-        # активным пока существует хотябы один объект порожденный этим соединением.
-        # Объекты могут пораждать другие объекты и т.д. Ссылки на объекты могут
-        # находиться как на строне Ruby так и на строне 1С. Теоретически если на стороне
-        # Ruby держать все ссылки на объекты и вызвать для них ole_free соеденинение
-        # должно закрыться. Но 1С объекты могут ссылаться на другие объекты тогда
-        # ole_free для бъекта на которого есть ссылки на строне 1С не сработает.
-        # @note It work not correct. It is not guaranteed to close connection.
-        #  FIXME: translate: соединение с ИБ останется активным
-        #  если будет существовать хотябы одна ссылка на ole объект порожденный
-        #  соединение. Вызов {#__ass_ole_free__} попытается вызват {#ole_free}
-        #  для всех ссылок но это работает не всегда.
+        # Try close connection.
+        # @note *It* *not* *guaranteed* *real* *closing* *connection!*
+        #  Connection keep alive while have any alive WIN32OLE refs
+        #  generated this connection. {WIN32OLE#\_\_ass_ole_free\_\_} try kill
+        #  refs but it work not always
+        # @see WIN32OLE
         def __close__
           return if __closed__?
           @__ole__.send :__ass_ole_free__
           @__ole__ = nil
         end
 
+        # True if connection closed
         def __closed__?
           __ole__.nil?
         end
 
+        # True if connection opened
         def __opened__?
           !__closed__?
         end
 
+        # Set 1C Ole server properties
         def __configure_com_connector__(**opts)
           opts.each do |k, v|
             __ole_binary__.ole.setproperty(k, v)
@@ -69,11 +68,14 @@ module AssLauncher
         def __ole_binary__
           @__ole_binary__ ||= OleBinaries::COMConnector.new(@requirement)
         end
+        protected :__ole_binary__
 
+        # Try call ole method
+        # @raise [RuntimeError] if object closed
         def method_missing(method, *args)
           fail "Attempt call method for closed object #{self.class.name}"\
             if __closed__?
-          o = __ole__.send(method, *args);
+          o = __ole__.send(method, *args)
           o
         end
         protected :method_missing
@@ -81,6 +83,8 @@ module AssLauncher
 
       # IWorkingProcessConnection
       class WpConnection < IbConnection
+        # Connection with 1C Server working process described in uri
+        # @param uri [URI, String]
         def __open__(uri)
           return true if __opened__?
           __init_ole__(__ole_binary__.connectworkingprocess(uri.to_s))
@@ -90,6 +94,8 @@ module AssLauncher
 
       # Wrapper for IServerAgentConnection
       class AgentConnection < IbConnection
+        # Connection with 1C Server agent described in uri
+        # @param (see WpConnection#__open__)
         def __open__(uri)
           return true if __opened__?
           __init_ole__(__ole_binary__.ole.connectagent(uri.to_s))
@@ -103,14 +109,12 @@ module AssLauncher
       class ThinApplication < IbConnection
         # Array of objects with opened connection for close all
         def self.objects
-          @@objects ||= []
+          @objects ||= []
         end
 
         # Close all opened connectons
         def self.close_all
-          objects.each do |o|
-            o.__close__
-          end
+          objects.each(&:__close__)
         end
 
         def initialize(requirement)
@@ -118,24 +122,28 @@ module AssLauncher
           @opened = false
         end
 
-        # Open connection in to infobase describe in conn_str
+        # (see IbConnection#__open__)
+        # @raise [ApplicationConnectError]
         def __open__(conn_str)
           return true if __opened__?
-          begin
-            @opened = __ole_binary__.ole.connect(__cs__(conn_str))
-            fail ApplicationConnectError unless __opened__?
-          rescue Exception => e
-            @opened = false
-            @__ole_binary__ = nil
-            fail e
-          end
-          ThinApplication.objects << self
+          __try_open__(conn_str)
+          self.class.objects << self
           __opened__?
         end
+
+        def __try_open__(conn_str)
+          @opened = __ole_binary__.ole.connect(__cs__(conn_str))
+          fail ApplicationConnectError unless __opened__?
+        ensure
+          @opened = false
+          @__ole_binary__ = nil
+        end
+        protected :__try_open__
 
         def __ole__
           __ole_binary__.ole
         end
+        protected :__ole__
 
         def __opened__?
           @opened
@@ -147,23 +155,24 @@ module AssLauncher
 
         def __close__
           return true if __closed__?
+          # rubocop:disable HandleExceptions
           begin
-    #       __ole__.visible = false
             __ole__.terminate
           rescue
+            # NOP
           ensure
-            # __ole__.send :__ass_ole_free__
-            #__ole__.ole_free
             @__ole_binary__ = nil
             @opened = false
             ThinApplication.objects.delete(self)
           end
+          # rubocop:enable HandleExceptions
           true
         end
 
         def __ole_binary__
           @__ole_binary__ ||= OleBinaries::ThinApplication.new(@requirement)
         end
+        protected :__ole_binary__
       end
 
       # Wrapper for V8x.Application ole object
@@ -171,6 +180,7 @@ module AssLauncher
         def __ole_binary__
           @__ole_binary__ ||= OleBinaries::ThickApplication.new(@requirement)
         end
+        protected :__ole_binary__
       end
     end
   end
