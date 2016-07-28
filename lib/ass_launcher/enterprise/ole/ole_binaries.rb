@@ -33,7 +33,7 @@ module AssLauncher
           private :new_ole
 
           def v8x
-            version.to_s.split('.').slice(0, 2).join('')
+            instaled_version.to_s.split('.').slice(0, 2).join('')
           end
           private :v8x
 
@@ -54,7 +54,7 @@ module AssLauncher
           private :_binary_wrapper
 
           def registred_version
-            fail 'FIXME'
+            fail NotImplementedError # FIXME not find object in WinReg
           end
           private :registred_version
 
@@ -80,7 +80,7 @@ module AssLauncher
           end
 
           def reg_server
-            faisl 'Abstract method call'
+            fail 'Abstract method call'
           end
           private :reg_server
 
@@ -93,7 +93,7 @@ module AssLauncher
           end
 
           def unreg_server
-            faisl 'Abstract method call'
+            fail 'Abstract method call'
           end
           private :unreg_server
 
@@ -101,6 +101,11 @@ module AssLauncher
             @path ||= _path
           end
           protected :path
+
+          def binary
+            fail 'Abstract method call'
+          end
+          protected :binary
 
           def _path
             return unless binary_wrapper
@@ -111,12 +116,12 @@ module AssLauncher
           def clsid
             clsids[v8x]
           end
-          private :clsid
+          protected :clsid
 
           def clsids
             fail 'Abstract method call'
           end
-          private :clsids
+          protected :clsids
         end
 
         # Wrapper for v8x.COMConnector inproc OLE server
