@@ -54,7 +54,7 @@ module AssLauncher
           private :_binary_wrapper
 
           def registred_version
-            fail NotImplementedError # FIXME not find object in WinReg
+            fail NotImplementedError # FIXME: not find object in WinReg
           end
           private :registred_version
 
@@ -156,18 +156,32 @@ module AssLauncher
           # @note It work not correct. If old version ole object is loded in
           # memory new registred version will be ignored.
           def reg_server
-            `regsvr32 /i /s "#{path.win_string}"`
-            fail "Failure register `#{path.win_string}' #{$CHILD_STATUS}"\
-              unless $CHILD_STATUS.success?
+            fail_reg_unreg_server('register', reg_unreg_server('i'))
           end
           private :reg_server
 
           def unreg_server
-            `regsvr32 /u /s "#{path.win_string}"`
-            fail "Failure register `#{path.win_string}' #{$CHILD_STATUS}"\
-              unless $CHILD_STATUS.success?
+            fail_reg_unreg_server('unregister', reg_unreg_server('u'))
           end
           private :unreg_server
+
+          def reg_unreg_server(mode)
+            `regsvr32 /#{mode} /s "#{path.win_string}"`
+            childe_status
+          end
+          private :reg_unreg_server
+
+          def childe_status
+            $CHILD_STATUS
+          end
+          private :childe_status
+
+          def fail_reg_unreg_server(message, status)
+            fail "Failure #{message} `#{path.win_string}' #{status}"\
+              unless status.success?
+            status
+          end
+          private :fail_reg_unreg_server
         end
 
         # Wrapper for v8x.Application standalone OLE server
@@ -226,7 +240,6 @@ module AssLauncher
           def run_as_enterprise(args)
             binary_wrapper.command(args)
               .run.wait.result.verify!
-            true
           end
           private :run_as_enterprise
         end
