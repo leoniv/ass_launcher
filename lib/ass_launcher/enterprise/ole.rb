@@ -37,9 +37,10 @@ module AssLauncher
         #  refs but it work not always
         # @see WIN32OLE
         def __close__
-          return if __closed__?
-          @__ole__.send :__ass_ole_free__
+          return true if __closed__?
+          __ole__.send :__ass_ole_free__
           @__ole__ = nil
+          true
         end
 
         # True if connection closed
@@ -75,8 +76,7 @@ module AssLauncher
         def method_missing(method, *args)
           fail "Attempt call method for closed object #{self.class.name}"\
             if __closed__?
-          o = __ole__.send(method, *args)
-          o
+          __ole__.send(method, *args)
         end
         protected :method_missing
       end
@@ -87,7 +87,7 @@ module AssLauncher
         # @param uri [URI, String]
         def __open__(uri)
           return true if __opened__?
-          __init_ole__(__ole_binary__.connectworkingprocess(uri.to_s))
+          __init_ole__(__ole_binary__.ole.connectworkingprocess(uri.to_s))
           true
         end
       end
