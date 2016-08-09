@@ -87,7 +87,9 @@ ph.kill # kill designer
   - ```Enterprse``` stable
   - ```BinaryWrapper``` mostly stable, depends ```Cli::ArgumentsBuilder```
   - ```Enterprse::Ole``` stable
+
 #### Small exaple:
+
 ```ruby
 require 'ass_launcher'
 cs = AssLauncher::Support::ConnectionString.new('File="tmp/tmp.i";Usr="root"')
