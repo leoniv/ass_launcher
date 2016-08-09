@@ -76,6 +76,38 @@ ph.kill # kill designer
 
 ```
 
+## Releases
+
+### 0.1.1.alpha
+  - ```Cli::ArgumentsBuilder``` not implements
+  - ```Cli::CliSpec``` require extracts in standalone ```gem```
+  - ```WebClients``` not implements
+  - ```API``` not implements
+  - ```Support::``` stable
+  - ```Enterprse``` stable
+  - ```BinaryWrapper``` mostly stable, depends ```Cli::ArgumentsBuilder```
+  - ```Enterprse::Ole``` stable
+#### Small exaple:
+```ruby
+require 'ass_launcher'
+cs = AssLauncher::Support::ConnectionString.new('File="tmp/tmp.i";Usr="root"')
+tc = AssLauncher::Enterprise.thick_clients('~> 8.3').last
+cmd = tc.command :designer, cs.to_args
+cmd.run # Opens 1C Designer
+
+com_conn = AssLauncher::Enterprise::Ole::IbConnection.new '~>8.3'
+com_conn.__open__ cs # Open ole connection into infobase
+
+a = com_conn.newObject 'array'
+a.add 'Hello World'
+
+puts com_con.string a.get(0) # => "Hello World"
+
+com_con.__close__
+
+cmd.process_holder.kill # Not forget to kill 1C Designer process!
+```
+
 ## Development
 
 After checking out the repo, run `bin/setup` to install dependencies. Then, run `rake test` to run the tests. You can also run `bin/console` for an interactive prompt that will allow you to experiment.
