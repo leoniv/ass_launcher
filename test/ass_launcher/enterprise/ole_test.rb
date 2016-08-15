@@ -1,5 +1,36 @@
 require 'test_helper'
 
+class OleTest < Minitest::Test
+
+  def expects_ole_types
+    {
+      external: AssLauncher::Enterprise::Ole::IbConnection,
+      wprocess: AssLauncher::Enterprise::Ole::WpConnection,
+      sagent: AssLauncher::Enterprise::Ole::AgentConnection,
+      thin: AssLauncher::Enterprise::Ole::ThinApplication,
+      thick: AssLauncher::Enterprise::Ole::ThickApplication
+    }
+  end
+
+  def test_const
+    assert_equal expects_ole_types,
+      AssLauncher::Enterprise::Ole::OLE_CLIENT_TYPES
+  end
+
+  def test_ole_client_fail
+    assert_raises ArgumentError do
+      AssLauncher::Enterprise::Ole.ole_client(:invalid)
+    end
+  end
+
+  def test_ole_client
+    expects_ole_types.keys.each do |type|
+      assert_equal expects_ole_types[type],
+        AssLauncher::Enterprise::Ole.ole_client(type)
+    end
+  end
+end
+
 module LikeCOMConnectorTest
 
   def test_open_opened
@@ -168,7 +199,7 @@ class OleThinApplicationTest < Minitest::Test
   end
 
   def test_class_objects
-    assert_equal [], cls.objects
+    assert_equal [], Class.new(cls).objects
   end
 
   def test_class_close_all

@@ -2,15 +2,6 @@
 module AssLauncher
   # Helpers for easy to use ass_launcher
   module Api
-    # Define type of 1C OLE clients
-    OLE_CLIENTS = {
-      external: AssLauncher::Enterprise::Ole::IbConnection,
-      wprocess: AssLauncher::Enterprise::Ole::WpConnection,
-      sagent: AssLauncher::Enterprise::Ole::AgentConnection,
-      thin: AssLauncher::Enterprise::Ole::ThinApplication,
-      thick: AssLauncher::Enterprise::Ole::ThickApplication
-    }
-
     # Return sorted array of instaled 1C binary wrappers
     # @example
     #  inclide AssLauncher::Api
@@ -88,9 +79,7 @@ module AssLauncher
     # @param requiremet [String, Gem::Version::Requirement] require version spec
     # @raise [ArgumentError] if invalid +type+ given
     def ole(type, requiremet = '>= 0')
-      fail ArgumentError, "Invalid ole type `#{type}'. Use types:"\
-        " #{OLE_CLIENTS.keys}" unless OLE_CLIENTS.key? type
-      OLE_CLIENTS[type].new(requiremet)
+      AssLauncher::Enterprise::Ole.ole_client(type).new(requiremet)
     end
   end
 end

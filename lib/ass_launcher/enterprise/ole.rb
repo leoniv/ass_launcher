@@ -6,6 +6,13 @@ module AssLauncher
   module Enterprise
     # 1C:Enterprise ole objects layer
     module Ole
+      # Wrapper for {OLE_CLIENT_TYPES}
+      def self.ole_client(type)
+      fail ArgumentError, "Invalid ole type `#{type}'. Use types:"\
+        " #{OLE_CLIENT_TYPES.keys}" unless OLE_CLIENT_TYPES.key? type
+        OLE_CLIENT_TYPES[type]
+      end
+
       # 1C Infobase External Connection
       class IbConnection
         attr_reader :__ole__
@@ -183,6 +190,15 @@ module AssLauncher
         end
         protected :__ole_binary__
       end
+
+      # Define type of 1C OLE clients
+      OLE_CLIENT_TYPES = {
+        external: AssLauncher::Enterprise::Ole::IbConnection,
+        wprocess: AssLauncher::Enterprise::Ole::WpConnection,
+        sagent: AssLauncher::Enterprise::Ole::AgentConnection,
+        thin: AssLauncher::Enterprise::Ole::ThinApplication,
+        thick: AssLauncher::Enterprise::Ole::ThickApplication
+      }
     end
   end
 end
