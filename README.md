@@ -25,40 +25,39 @@ For example:
 ```ruby
 require 'ass_launcher'
 
-include AssLauncher::API
+include AssLauncher::Api
 
 #
 # Get 1C:Enterprise v8.3.7 binary wrapper
 #
 
-cl = thick_clients('~> 8.3.7').last
+cl = thicks('~> 8.3.7').last
 
-raise '1C:Enterprise v8.3.7 not found' if cl.nil?
+fail '1C:Enterprise v8.3.7 not found' if cl.nil?
 
 #
 # create new infobase
 #
 
-conn_str = connection_string 'File="./new.ib"'
+conn_str = cs 'File="./tmp/new.ib"'
 
-ph = cl.command(:createinfobase) do
+process_holder = cl.command(:createinfobase) do
   connection_string conn_str
   _AddInList
 end.run.wait
 
-raise 'Error while create infobase' if ph.result.success?
+raise 'Error while create infobase' if process_holder.result.success?
 
 #
 # dump infobase
 #
 
 command = cl.command(:designer) do
-  connection_string 'File="./new.ib"'
-  _DumpIB './new.ib.dt'
+  connection_string 'File="./tmp/new.ib"'
+  _DumpIB './tmp/new.ib.dt'
 end
 
-ph = command.run
-ph.wait
+ph = command.run.wait
 
 ph.result.verify! # raised error unless executing success
 
@@ -67,7 +66,7 @@ ph.result.verify! # raised error unless executing success
 #
 
 ph = cl.command(:designer) do
-  connection_string 'File="./new.ib"'
+  connection_string 'File="./tmp/new.ib"'
 end.run
 
 # .... do in designer
