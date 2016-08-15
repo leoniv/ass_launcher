@@ -165,12 +165,6 @@ module AssLauncher
         Cli.defined_modes_for(self)
       end
 
-      # @return (see Cli::CliSpec#parameters)
-      def defined_parameters(run_mode)
-        cli_spec(run_mode).parameters
-      end
-      private :defined_parameters
-
       # @api public
       # @param run_mode [Symbol] run mode 1C binary.
       # @return [Cli::CliSpec]
@@ -179,10 +173,7 @@ module AssLauncher
       end
 
       def build_args(run_mode, &block)
-        arguments_builder = Cli::ArgumentsBuilder\
-                            .new(defined_parameters(run_mode), run_mode)
-        arguments_builder.instance_eval(&block)
-        arguments_builder.builded_args
+        Cli::ArgumentsBuilder.build_args(self, run_mode, &block)
       end
       private :build_args
 

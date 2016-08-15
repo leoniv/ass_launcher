@@ -5,12 +5,27 @@ module AssLauncher
     module Cli
       # @api private
       class ArgumentsBuilder
+
+        def self.build_args(binary_wrapper, run_mode, &block)
+          new(binary_wrapper.cli_spec(run_mode).parameters,
+              run_mode).build_args(&block)
+        end
+
+
+        def build_args(&block)
+          fail ArgumentError, 'Block require' unless block_given?
+          raise 'FIXME'
+        end
+
         attr_reader :run_mode, :defined_parameters, :builded_args
 
-        # @param defined_arguments [Parameters::ParamtersList]
-        def initialize(defined_arguments, run_mode)
+        # @param defined_parameters [Parameters::ParamtersList]
+        # @param run_mode [Symbol]
+        def initialize(defined_parameters, run_mode)
+          require 'pry'
+          binding.pry
           @builded_args = []
-          @defined_parameters = defined_arguments
+          @defined_parameters = defined_parameters
           @run_mode = run_mode
         end
 

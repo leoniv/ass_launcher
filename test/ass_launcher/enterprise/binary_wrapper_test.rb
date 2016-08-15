@@ -141,15 +141,6 @@ class BinaryWrapperTest < Minitest::Test
     end
   end
 
-  def test_defined_parameters
-    cli_spec = mock
-    cli_spec.quacks_like(cli_spec_stub.new)
-    cli_spec.expects(:parameters).returns(:defined_arguments)
-    inst = inst_
-    inst.expects(:cli_spec).with(:run_mode).returns(cli_spec)
-    assert_equal :defined_arguments, inst.send(:defined_parameters, :run_mode)
-  end
-
   def test_cli_spec
     inst = inst_
     inst.expects(:fail_if_wrong_mode).with(:run_mode).returns(:run_mode)
@@ -167,18 +158,14 @@ class BinaryWrapperTest < Minitest::Test
   end
 
   def test_build_args
-    builder = mock('builder')
-    builder.quacks_like(builder_stub.new)
-    builder.expects(:builded_args).returns(:builded_args)
-    AssLauncher::Enterprise::Cli::ArgumentsBuilder.expects(:new).returns(builder)
+    zonde = {}
     inst= inst_
-    inst.expects(:defined_parameters).with(:run_mode)
-    assert_equal(:builded_args, inst.build_args(:run_mode) do
-      def block_executed?
-        true
-      end
+    AssLauncher::Enterprise::Cli::ArgumentsBuilder.expects(:build_args)\
+      .with(inst, :run_mode).yields(zonde).returns(:args)
+    assert_equal(:args, inst.build_args(:run_mode) do |z|
+      z[:executed] = true
     end)
-    assert builder.block_executed?
+    assert zonde[:executed]
   end
 
   def test_initialize
