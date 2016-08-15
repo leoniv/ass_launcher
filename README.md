@@ -43,7 +43,7 @@ conn_str = cs 'File="./tmp/new.ib"'
 
 process_holder = cl.command(:createinfobase) do
   connection_string conn_str
-  _AddInList
+  addInList 'New infobase'
 end.run.wait
 
 raise 'Error while create infobase' if process_holder.result.success?
@@ -54,7 +54,7 @@ raise 'Error while create infobase' if process_holder.result.success?
 
 command = cl.command(:designer) do
   connection_string 'File="./tmp/new.ib"'
-  _DumpIB './tmp/new.ib.dt'
+  dumpIB './tmp/new.ib.dt'
 end
 
 ph = command.run.wait
