@@ -28,12 +28,12 @@ require 'ass_launcher'
 include AssLauncher::Api
 
 #
-# Get 1C:Enterprise v8.3.7 binary wrapper
+# Get 1C:Enterprise ~> v8.3.7 binary wrapper
 #
 
 cl = thicks('~> 8.3.7').last
 
-fail '1C:Enterprise v8.3.7 not found' if cl.nil?
+fail '1C:Enterprise ~> v8.3.7 not found' if cl.nil?
 
 #
 # create new infobase
@@ -46,7 +46,7 @@ process_holder = cl.command(:createinfobase) do
   addInList 'New infobase'
 end.run.wait
 
-raise 'Error while create infobase' if process_holder.result.success?
+raise 'Error while create infobase' unless process_holder.result.success?
 
 #
 # dump infobase

@@ -86,10 +86,11 @@ module AssLauncher
 
         def param_argument_get(param, args)
           v = args[0]
-          fail ArgumentError, "Parameter #{param.name} require argument"\
+          fail ArgumentError, "Parameter #{param.full_name} require argument"\
             if param.argument_require && v.nil?
           v
         end
+        private :param_argument_get
 
         def add_args(args)
           self.builded_args = builded_args + args
@@ -112,15 +113,18 @@ module AssLauncher
         def param_find(method)
           defined_parameters.find(to_param_name(method), parent_parameter)
         end
+        private :param_find
 
         def to_param_name(method)
           param_key + method.to_s.gsub(METHOD_TO_PARAM_NAME, '')
         end
+        private :to_param_name
 
         def param_key
           return TOP_LEVEL_PARAM_KEY unless parent_parameter
           NESTED_LEVEL_PARAM_KEY
         end
+        private :param_key
       end
     end
   end

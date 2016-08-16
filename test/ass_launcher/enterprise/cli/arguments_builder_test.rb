@@ -40,7 +40,225 @@ class ArgumentsBuilderTest < Minitest::Test
   end
 
   def test_initialize
-    skip
+    inst = cls.new(:cli_spec, :parent_parameter)
+    assert_equal :cli_spec, inst.cli_spec
+    assert_equal :parent_parameter, inst.parent_parameter
+    assert_equal [], inst.builded_args
+    assert_equal [], inst.params_stack
+  end
+
+  def stub_cli_spec
+    Class.new(AssLauncher::Enterprise::Cli::CliSpec) do
+      def initialize
+
+      end
+    end.new
+  end
+
+  def test_defined_parameters
+    cli_spec = mock
+    cli_spec.responds_like(stub_cli_spec)
+    cli_spec.expects(:parameters).returns(:parameters)
+    inst = cls.new cli_spec
+    assert_equal :parameters, inst.defined_parameters
+  end
+
+  def test_binary_wrapper
+    cli_spec = mock
+    cli_spec.responds_like(stub_cli_spec)
+    cli_spec.expects(:current_binary_wrapper).returns(:binary_wrapper)
+    inst = cls.new cli_spec
+    assert_equal :binary_wrapper, inst.binary_wrapper
+  end
+
+  def test_run_mode
+    cli_spec = mock
+    cli_spec.responds_like(stub_cli_spec)
+    cli_spec.expects(:current_run_mode).returns(:run_mode)
+    inst = cls.new cli_spec
+    assert_equal :run_mode, inst.run_mode
+  end
+
+  def test_nested_builder
+    inst = cls.new(:cli_spec)
+    cls.expects(:new).with(:cli_spec, :parent_parameter).returns(:nested)
+    assert_equal :nested, inst.send(:nested_builder, :parent_parameter)
+  end
+
+  def param_stub
+    Class.new(AssLauncher::Enterprise::Cli::Parameters::StringParam) do
+      def initialize
+
+      end
+    end.new
+  end
+
+  def test_fail_if_parameter_exists
+    param = mock
+    param.responds_like(param_stub)
+    param.expects(:full_name).returns('fullname')
+    inst = cls.new(nil)
+    inst.params_stack << param
+    assert_raises AssLauncher::Enterprise::Cli::ArgumentsBuilder::BuildError do
+      inst.send(:fail_if_parameter_exist, param)
+    end
+  end
+
+  def test_not_fail_if_parameter_not_exists
+    param = mock
+    param.responds_like(param_stub)
+    param.expects(:full_name).never
+    inst = cls.new(nil)
+    assert_equal [ param ],  inst.send(:fail_if_parameter_exist, param)
+    assert_equal [ param ],  inst.params_stack
+  end
+
+  def test_fail_no_parameter_error
+    inst = cls.new(nil)
+    inst.expects(:bw_pesentation)
+    inst.expects(:run_mode)
+    inst.expects(:to_param_name).with(:method)
+    assert_raises AssLauncher::Enterprise::Cli::ArgumentsBuilder::BuildError do
+      inst.send(:fail_no_parameter_error, :method)
+    end
+  end
+
+  def test_bw_presentatoion
+    binary_wrapper = mock
+    binary_wrapper.responds_like(binary_wrapper_stub)
+    binary_wrapper.expects(:class).returns(AssLauncher::Enterprise::BinaryWrapper::ThinClient)
+    binary_wrapper.expects(:version).returns('8.3.7.1')
+    inst = cls.new(nil)
+    inst.expects(:binary_wrapper).returns(binary_wrapper).twice
+    assert_equal 'ThinClient 8.3.7.1', inst.send(:bw_pesentation)
+  end
+
+  def test_to_param_name
+    inst = cls.new(nil)
+    inst.expects(:param_key).returns('/').twice
+    assert_equal '/Method', inst.send(:to_param_name, :_Method)
+    assert_equal '/method', inst.send(:to_param_name, :method)
+  end
+
+  def test_param_ket_for_top_parameter
+    inst = cls.new(nil, nil)
+    assert_equal '/', inst.send(:param_key)
+  end
+
+  def test_param_key_for_nested_parameter
+    inst = cls.new(nil, :parent_parameter)
+    assert_equal '-', inst.send(:param_key)
+  end
+
+  def test_add_args
+    inst = cls.new(nil)
+    assert_equal [:arg1], inst.send(:add_args, [:arg1])
+    assert_equal [:arg1, :arg2], inst.send(:add_args, [:arg2])
+  end
+
+  def test_build_args_fail
+    inst = cls.new(nil)
+    assert_raises ArgumentError do
+      inst.build_args
+    end
+  end
+
+  def test_build_args_top
+    zonde = {}
+    inst = cls.new(nil, nil)
+    actual = inst.build_args do
+      builded_args << 1
+      builded_args << 2
+    end
+    assert_respond_to inst, :connection_string
+    assert [1,2], actual
+  end
+
+  def test_build_args_nestd
+    zonde = {}
+    inst = cls.new(nil, :parent_parameter)
+    inst.build_args do
+      zonde[:executed] = true
+    end
+    refute_respond_to inst, :connection_string
+    assert zonde[:executed]
+  end
+
+  def test_param_find
+    parameters = mock
+    parameters.responds_like(AssLauncher::Enterprise::Cli::Parameters::ParametersList.new)
+    parameters.expects(:find).with(:param_name, :parent_parameter).returns(:param)
+    inst = cls.new(nil)
+    inst.expects(:parent_parameter).returns(:parent_parameter)
+    inst.expects(:to_param_name).with(:method).returns(:param_name)
+    inst.expects(:defined_parameters).returns(parameters)
+    assert_equal :param, inst.send(:param_find, :method)
+  end
+
+  def test_param_argument_get
+    inst = cls.new(nil)
+    param = mock
+    param.responds_like(param_stub)
+    param.expects(:argument_require).returns(false)
+    assert_nil inst.send(:param_argument_get, param, [])
+  end
+
+  def test_param_argument_get_fail
+    inst = cls.new(nil)
+    param = mock
+    param.responds_like(param_stub)
+    param.expects(:argument_require).returns(true)
+    param.expects(:full_name)
+    assert_raises ArgumentError do
+      inst.send(:param_argument_get, param, [])
+    end
+  end
+
+  def test_method_missing_fail_no_parameter
+    inst = cls.new(nil)
+    inst.expects(:param_find).with(:bad_param).returns(nil)
+    inst.expects(:fail_no_parameter_error).with(:bad_param).raises(ArgumentError)
+    assert_raises ArgumentError do
+      inst.method_missing(:bad_param)
+    end
+  end
+
+  def moked_inst(good_param)
+    inst = cls.new(nil)
+    inst.expects(:param_find).with(:good_param).returns(good_param)
+    inst.expects(:fail_no_parameter_error).never
+    inst.expects(:fail_if_parameter_exist).with(good_param)
+    inst.expects(:param_argument_get).with(good_param, [:args]).returns([:args])
+    inst
+  end
+
+  def test_method_missing
+    good_param = mock
+    good_param.responds_like(param_stub)
+    good_param.expects(:to_args).with([:args]).returns(['/good_param', 'args'])
+    inst = moked_inst(good_param)
+    inst.expects(:nested_builder).never
+    inst.builded_args << 1
+    inst.builded_args << 2
+    inst.good_param(:args)
+    assert_equal [1, 2, '/good_param', 'args'], inst.builded_args
+  end
+
+  def test_method_missing_with_block
+    zonde = []
+    nested_builder = mock
+    nested_builder.responds_like(builder_stub)
+    nested_builder.expects(:build_args).yields(zonde).returns(zonde)
+    good_param = mock
+    good_param.responds_like(param_stub)
+    good_param.expects(:to_args).with([:args]).returns(['/good_param', 'args'])
+    inst = moked_inst(good_param)
+    inst.expects(:nested_builder).with(good_param).returns(nested_builder)
+    inst.good_param :args do |z|
+      z << 1
+      z << 5
+    end
+    assert_equal ['/good_param', 'args', 1, 5], inst.builded_args
   end
 end
 
