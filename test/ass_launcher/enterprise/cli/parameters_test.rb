@@ -1,5 +1,12 @@
 require 'test_helper'
 
+module PramArgumetRequire
+  def test_argumet_require
+    inst = cls.new(nil,nil,nil,nil,nil)
+    assert inst.argument_require
+  end
+end
+
 class CliParametersTest < Minitest::Test
   def param
     Class.new do
@@ -115,7 +122,7 @@ class CliParametersTest < Minitest::Test
     inst = param
     inst.expects(:key).with(:value).returns(:key)
     inst.expects(:value).with(:value).returns(:value)
-    assert_equal [:key, :value], inst.to_args(:value)
+    assert_equal [:key.to_s, :value.to_s], inst.to_args(:value)
   end
 
   def test_switch_list
@@ -184,6 +191,7 @@ class CliParametersTest < Minitest::Test
 end
 
 class CliChoseParameterTest < Minitest::Test
+  include PramArgumetRequire
   def cls
     AssLauncher::Enterprise::Cli::Parameters::Chose
   end
@@ -209,6 +217,11 @@ class CliFlagParameter < Minitest::Test
   def test_to_args
     inst = cls.new('/FlagParameter',nil,nil,nil,nil)
     assert_equal ['/FlagParameter',''], inst.to_args
+  end
+
+  def test_argumet_require
+    inst = cls.new(nil,nil,nil,nil,nil)
+    refute inst.argument_require
   end
 end
 
@@ -270,6 +283,7 @@ class CliParametersListTest < Minitest::Test
 end
 
 class CliSwitchParameterTest < Minitest::Test
+  include PramArgumetRequire
   def cls
     AssLauncher::Enterprise::Cli::Parameters::Switch
   end
@@ -310,17 +324,39 @@ class CliSwitchParameterTest < Minitest::Test
 end
 
 class CliPathParameterTest < Minitest::Test
+  include PramArgumetRequire
+  include AssLauncher::Support::Platforms
   def cls
     AssLauncher::Enterprise::Cli::Parameters::Path
   end
 
+  def test_def_options
+    assert cls.new('',nil ,nil, nil, nil, nil).default_options.key? :mast_be
+  end
+
   def test_to_args
     inst = cls.new('/PathParameter',nil,nil,nil,nil,nil)
-    assert_equal ['/PathParameter', '.'], inst.to_args('.')
+    assert_equal ['/PathParameter', platform.path('.').realdirpath.to_s],
+      inst.to_args('.')
+  end
+
+  def test_to_args_fail_if_exists
+    inst = cls.new('/PathParameter',nil,nil,nil,nil,:mast_be => :not_exist)
+    assert_raises ArgumentError do
+      inst.to_args('.')
+    end
+  end
+
+  def test_to_args_fail_if_not_exists
+    inst = cls.new('/PathParameter',nil,nil,nil,nil,:mast_be => :exist)
+    assert_raises ArgumentError do
+      inst.to_args('./tmp/fake_path')
+    end
   end
 end
 
 class CliStringParamTest < Minitest::Test
+  include PramArgumetRequire
 
   def cls
     AssLauncher::Enterprise::Cli::Parameters::StringParam

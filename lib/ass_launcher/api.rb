@@ -75,7 +75,8 @@ module AssLauncher
     end
 
     # Return 1C ole client suitable class instance
-    # @param type [Symbol] type of 1C ole client. See {OLE_CLIENTS}
+    # @param type [Symbol] type of 1C ole client.
+    #  See {Enterprise::Ole::OLE_CLIENT_TYPES}
     # @param requiremet [String, Gem::Version::Requirement] require version spec
     # @raise [ArgumentError] if invalid +type+ given
     def ole(type, requiremet = '>= 0')

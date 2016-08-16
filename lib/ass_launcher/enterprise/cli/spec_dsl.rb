@@ -110,6 +110,25 @@ module AssLauncher
                     binary_matcher, **options, &block)
         end
 
+        # Path with exist validation.
+        # @see #path
+        # @param (see #path)
+        # @return (see #path)
+        def path_exist(name, desc, binary_matcher = nil, **options, &block)
+          path(name, desc, binary_matcher, options.merge(mast_be: :exist),
+               &block)
+        end
+
+        # Path with not exist validation.
+        # @see #path
+        # @param (see #path)
+        # @return (see #path)
+        def path_not_exist(name, desc, binary_matcher = nil, **options, &block)
+          path(name, desc, binary_matcher,
+               options.merge(mast_be: :not_exist),
+               &block)
+        end
+
         # Define {Cli::Parameters::StringParam} parameter and him subparameters.
         # Subparameters defines in the block.
         # @param (see #path)

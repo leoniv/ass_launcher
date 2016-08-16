@@ -130,6 +130,32 @@ class SpecDslTest < Minitest::Test
     assert_equal :param, p
   end
 
+  def test_path_exist
+    klass = AssLauncher::Enterprise::Cli::Parameters::Path
+    zonde = {}
+    dsl = spec_dsl
+    dsl.expects(:new_param).with(klass, :name, :desc, :binary_matcher, {options:'', mast_be: :exist}).
+      yields(zonde).returns(:param)
+    p = dsl.path_exist(:name, :desc, :binary_matcher, {options:''}) do |z|
+      z[:value] = :set
+    end
+    assert_equal({:value=>:set}, zonde)
+    assert_equal :param, p
+  end
+
+  def test_path_not_exist
+    klass = AssLauncher::Enterprise::Cli::Parameters::Path
+    zonde = {}
+    dsl = spec_dsl
+    dsl.expects(:new_param).with(klass, :name, :desc, :binary_matcher, {options:'', mast_be: :not_exist}).
+      yields(zonde).returns(:param)
+    p = dsl.path_not_exist(:name, :desc, :binary_matcher, {options:''}) do |z|
+      z[:value] = :set
+    end
+    assert_equal({:value=>:set}, zonde)
+    assert_equal :param, p
+  end
+
   def test_string
     klass = AssLauncher::Enterprise::Cli::Parameters::StringParam
     zonde = {}

@@ -83,7 +83,7 @@ module AssLauncher
         end
 
         def to_args(value)
-          [key(value), value(value)]
+          [key(value).to_s, value(value).to_s]
         end
 
         def switch_list
@@ -135,7 +135,7 @@ module AssLauncher
         private :auto_binary_matcher
 
         def auto_client
-          #return :thick if modes.include?(:createinfobase) ||
+          # return :thick if modes.include?(:createinfobase) ||
           #                 modes.include?(:designer)
           return :thick unless modes.include?(:enterprise)
           :all
@@ -168,6 +168,11 @@ module AssLauncher
             @options = def_options.merge options
             @parent = parent
           end
+
+          # Parameter require argumet
+          def argument_require
+            true
+          end
         end
 
         # Parameter expects filesystem path
@@ -177,10 +182,42 @@ module AssLauncher
         # {AssLauncher::Support::Platforms::PathExtension} class
         class Path < StringParam
           include AssLauncher::Support::Platforms
+
+          def default_options
+            DEFAULT_OPTIONS.merge(mast_be: nil)
+          end
+
+          def mast_be
+            options[:mast_be]
+          end
+
           def value(value)
-            platform.path(value).to_s
+            validate(value)
+            path = platform.path(value).realdirpath
+            verify(path)
+            path.to_s
           end
           private :value
+
+          def verify(path)
+            case mast_be
+            when :exist then mast_exists(path)
+            when :not_exist then mast_not_exists(path)
+            end
+          end
+          private :verify
+
+          def mast_exists(path)
+            fail ArgumentError, "Wrong value for #{name}."\
+              " Path #{path} not exists" unless path.exist?
+          end
+          private :mast_exists
+
+          def mast_not_exists(path)
+            fail ArgumentError, "Wrong value for #{name}."\
+              " Path #{path} exists" if path.exist?
+          end
+          private :mast_not_exists
         end
 
         # Chose parameter expects argunment value from chose_list
@@ -194,8 +231,13 @@ module AssLauncher
 
         # Flag parameter not expects argument
         class Flag < StringParam
-          def to_args
+          def to_args(_ = nil)
             super ''
+          end
+
+          # Parameter not require argument
+          def argument_require
+            false
           end
         end
 

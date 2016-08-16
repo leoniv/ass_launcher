@@ -43,14 +43,14 @@ define_group :other, 'Прочие', 100
 
 mode :createinfobase do
   group :other do
-    path '/UseTemplate', 'создание информационной базы на основе дампа (.dt файл) или конфигурации (.cf файл)'
+    path_exist '/UseTemplate', 'создание информационной базы на основе дампа (.dt файл) или конфигурации (.cf файл)'
     string '/AddInList', 'имя под которым надо добавить базу в пользовательский файл .v8i'
   end
 end
 
 mode :enterprise, :designer, :createinfobase do
   group :other do
-    path('/Out', 'файл используемый 1С вместо stdout и stderr. В файл выводятся служебные сообщения, а также сообщения метода Сообщить()')
+    path_exist('/Out', 'файл используемый 1С вместо stdout и stderr. В файл выводятся служебные сообщения, а также сообщения метода Сообщить()')
     flag('/DisableStartupDialogs', 'подавляет gui диалоги')
     flag('/DisableStartupMessages', 'подавляет gui сообщения')
   end
@@ -58,7 +58,7 @@ end
 
 mode :enterprise, :designer do
   group :connection do
-    path '/F', 'путь к файловой информационной базе'
+    path_exist '/F', 'путь к файловой информационной базе'
     string '/S', 'адрес информационной базы, хранящейся на сервере "1С:Предприятие 8". Имеет вид "host:port/ib_name"'
   end
 
@@ -111,7 +111,7 @@ mode :enterprise do
     flag '/RunModeManagedApplication', 'запуск толстого клиента в режиме управляемого приложения  не зависимо от настроек', thick_client('>= 8.2')
     string '/UC', 'код доступа для установки соединения с заблокированной базой'
     skip '/SLev'
-    path '/Execute', 'запуска внешней обработки в режиме 1С:Предприятие непосредственно после старта системы'
+    path_exist '/Execute', 'запуска внешней обработки в режиме 1С:Предприятие непосредственно после старта системы'
     skip '/ClearCache'
     skip '/@'
     flag '/UsePrivilegedMode', 'запуск в режиме привилегированного сеанса'
@@ -128,14 +128,14 @@ end
 mode :designer do
   group :packge_mode do
     path '/DumpIB', 'выгрузка дампа информационной базы'
-    path '/RestoreIB', 'загрузка информационной базы из дампа'
+    path_exist '/RestoreIB', 'загрузка информационной базы из дампа'
     path '/DumpCfg', 'сохранение конфигурации в файл'
-    path '/LoadCfg', 'загрузка конфигурации из файла'
+    path_exist '/LoadCfg', 'загрузка конфигурации из файла'
     flag '/UpdateDBCfg', 'обновление конфигурации базы данных' do
       flag '-WarningsAsErrors', 'все предупредительные сообщения трактуются как ошибки'
       flag '-Server', 'обновление будет выполняться на сервере'
     end
-    path '/UpdateCfg', 'обновление конфигурации, находящейся на поддержке из .cf или .cfu файла'
+    path_exist '/UpdateCfg', 'обновление конфигурации, находящейся на поддержке из .cf или .cfu файла'
     skip '/ConfigurationRepositoryUpdateCfg' # похоже это параметр для работы с хранилищем
     skip '/DumpConfigFiles', 'выгрузка свойств объектов метаданных конфигурации'
     skip '/LoadConfigFiles', 'загрузка свойств объектов метаданных конфигурации'
@@ -177,14 +177,14 @@ mode :designer do
     end
 
     path '/CreateDistributive', 'создания комплекта поставки в указанном каталоге' do
-      path '-File', 'имя файла описания комплекта поставки'
+      path_exist '-File', 'имя файла описания комплекта поставки'
       string '-Option','вариант поставки'
       switch '-Make', 'создать',
         switch_list: switch_list(
         Setup: 'комплект поставки (используется по умолчанию)',
         Files: 'файлы поставки'
         )
-      path '-digisign', 'файл с параметрами лицензирования'
+      path_exist '-digisign', 'файл с параметрами лицензирования'
     end
     flag '/ResetMasterNode', 'сброс главного узла РИБ'
     flag '/CheckConfig', 'централизованная проверка конфигурации' do
@@ -222,13 +222,13 @@ mode :designer do
   end
 
   group :repository do
-    path '/ConfigurationRepositoryF', 'каталог хранилища'
+    path_exist '/ConfigurationRepositoryF', 'каталог хранилища'
     string '/ConfigurationRepositoryN', 'имя пользователя хранилища'
     string '/ConfigurationRepositoryP', 'пароль пользователя хранилища'
     path '/ConfigurationRepositoryDumpCfg', 'сохранить конфигурацию из хранилища в файл' do
       string '-v', 'номер версии хранилища'
     end
-    path '/ConfigurationRepositoryUpdateCfg', 'обновить конфигурацию хранилища из хранилища' do
+    path_exist '/ConfigurationRepositoryUpdateCfg', 'обновить конфигурацию хранилища из хранилища' do
       string '-v', 'номер версии хранилища'
       flag '-revised', 'получать захваченные объекты, если потребуется'
       flag '-force', 'подтверждение получения новых или удаления существующих объектов конфигурации'
@@ -236,7 +236,7 @@ mode :designer do
     flag '/ConfigurationRepositoryUnbindCfg', 'отключение конфигурации от хранилища' do
       flag '-force', 'принудительное отключение от хранилища'
     end
-    path '/ConfigurationRepositoryReport', 'построение отчета по истории хранилища' do
+    path_exist '/ConfigurationRepositoryReport', 'построение отчета по истории хранилища' do
       string '-NBegin', 'номер версии начала отчета'
       string '-NEnd', 'номер версии окончания отчета'
       flag '-GroupByObject', 'с группировкой по объектам'
@@ -250,7 +250,7 @@ mode :designer do
       path '-cfufile', 'создать обновление дистрибутива (.cfu файл)'
       path '-f', 'дистрибутив включаемый в обновление (.cf файл)'
       string '-v', 'версия дистрибутива включаемого в обновление'
-      path '–digisign', 'файл с параметрами лицензирования'
+      path_exist '–digisign', 'файл с параметрами лицензирования'
     end
   end
 end
