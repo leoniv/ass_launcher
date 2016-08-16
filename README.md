@@ -71,7 +71,7 @@ end.run
 
 # .... do in designer
 
-ph.kill # kill designer
+ph.wait # wait while designer open
 
 #
 # Check config
