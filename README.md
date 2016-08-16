@@ -73,6 +73,20 @@ end.run
 
 ph.kill # kill designer
 
+#
+# Check config
+#
+
+result = cl.command(:designer) do
+  connection_string 'File="./tmp/new.ib"'
+  checkConfig do
+    configLogIntegrity
+    incorrectReferences
+    thinClient
+    unreferenceProcedures
+  end
+end.run.wait.result
+result.verify!
 ```
 
 ## Releases
