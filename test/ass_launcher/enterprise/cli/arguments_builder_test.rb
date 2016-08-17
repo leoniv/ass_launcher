@@ -41,10 +41,10 @@ class ArgumentsBuilderTest < Minitest::Test
 
   def test_initialize
     inst = cls.new(:cli_spec, :parent_parameter)
-    assert_equal :cli_spec, inst.cli_spec
-    assert_equal :parent_parameter, inst.parent_parameter
-    assert_equal [], inst.builded_args
-    assert_equal [], inst.params_stack
+    assert_equal :cli_spec, inst.send(:cli_spec)
+    assert_equal :parent_parameter, inst.send(:parent_parameter)
+    assert_equal [], inst.send(:builded_args)
+    assert_equal [], inst.send(:params_stack)
   end
 
   def stub_cli_spec
@@ -60,7 +60,7 @@ class ArgumentsBuilderTest < Minitest::Test
     cli_spec.responds_like(stub_cli_spec)
     cli_spec.expects(:parameters).returns(:parameters)
     inst = cls.new cli_spec
-    assert_equal :parameters, inst.defined_parameters
+    assert_equal :parameters, inst.send(:defined_parameters)
   end
 
   def test_binary_wrapper
@@ -68,7 +68,7 @@ class ArgumentsBuilderTest < Minitest::Test
     cli_spec.responds_like(stub_cli_spec)
     cli_spec.expects(:current_binary_wrapper).returns(:binary_wrapper)
     inst = cls.new cli_spec
-    assert_equal :binary_wrapper, inst.binary_wrapper
+    assert_equal :binary_wrapper, inst.send(:binary_wrapper)
   end
 
   def test_run_mode
@@ -76,7 +76,7 @@ class ArgumentsBuilderTest < Minitest::Test
     cli_spec.responds_like(stub_cli_spec)
     cli_spec.expects(:current_run_mode).returns(:run_mode)
     inst = cls.new cli_spec
-    assert_equal :run_mode, inst.run_mode
+    assert_equal :run_mode, inst.send(:run_mode)
   end
 
   def test_nested_builder
@@ -98,7 +98,7 @@ class ArgumentsBuilderTest < Minitest::Test
     param.responds_like(param_stub)
     param.expects(:full_name).returns('fullname')
     inst = cls.new(nil)
-    inst.params_stack << param
+    inst.send(:params_stack) << param
     assert_raises AssLauncher::Enterprise::Cli::ArgumentsBuilder::BuildError do
       inst.send(:fail_if_parameter_exist, param)
     end
@@ -110,7 +110,7 @@ class ArgumentsBuilderTest < Minitest::Test
     param.expects(:full_name).never
     inst = cls.new(nil)
     assert_equal [ param ],  inst.send(:fail_if_parameter_exist, param)
-    assert_equal [ param ],  inst.params_stack
+    assert_equal [ param ],  inst.send(:params_stack)
   end
 
   def test_fail_no_parameter_error
@@ -238,10 +238,10 @@ class ArgumentsBuilderTest < Minitest::Test
     good_param.expects(:to_args).with([:args]).returns(['/good_param', 'args'])
     inst = moked_inst(good_param)
     inst.expects(:nested_builder).never
-    inst.builded_args << 1
-    inst.builded_args << 2
+    inst.send(:builded_args) << 1
+    inst.send(:builded_args) << 2
     inst.good_param(:args)
-    assert_equal [1, 2, '/good_param', 'args'], inst.builded_args
+    assert_equal [1, 2, '/good_param', 'args'], inst.send(:builded_args)
   end
 
   def test_method_missing_with_block
@@ -258,17 +258,17 @@ class ArgumentsBuilderTest < Minitest::Test
       z << 1
       z << 5
     end
-    assert_equal ['/good_param', 'args', 1, 5], inst.builded_args
+    assert_equal ['/good_param', 'args', 1, 5], inst.send(:builded_args)
   end
 end
 
-class InspectConnectionStringTest < Minitest::Test
+class IncludeConnectionStringTest < Minitest::Test
   include AssLauncher::Api
   def inst(cli_spec)
     Class.new(AssLauncher::Enterprise::Cli::ArgumentsBuilder) do
       def initialize(cli_spec)
         super cli_spec,  nil
-        extend AssLauncher::Enterprise::Cli::ArgumentsBuilder::InspectConnectionString
+        extend AssLauncher::Enterprise::Cli::ArgumentsBuilder::IncludeConnectionString
       end
 
       def builded_args

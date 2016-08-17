@@ -4,14 +4,69 @@ module AssLauncher
   module Enterprise
     module Cli
       # @api private
+      # Provides DSL for build arguments for run 1C:Enterprise clients.
+      #
+      # DSL dynamically generated based on CLI specifications {Cli::CliSpec}
+      # For each CLI parameter is assigned a DSL method called
+      # like a parameter but whitout parameter key such as
+      # {TOP_LEVEL_PARAM_KEY} or {NESTED_LEVEL_PARAM_KEY}.
+      # DSL methods may be prefixed +_+ char for
+      # escape uppercase name of method. DSL method +_SomeParameter+ and
+      # +someParameter+ equal and assigned for +/SomParameter+ or
+      # +-SomeParameter+ CLI parameter. DLS methods case insensitive.
+      # Top level builder have method
+      # {IncludeConnectionString#connection_string} for pass connection
+      # string and convert him into arguments array.
+      # @example
+      #  client = AssLauncher::Enterprise.thick_clients('> 0').sort.last
+      #  # Builds arguments for check configuration:
+      #
+      #  # 1) Use #connection_string DLS method
+      #  args = AssLauncher::Enterprise::Cli::ArgumentsBuilder.build_args(
+      #           client, :designer) do
+      #    connection_string 'File="tmp/new.ib";Usr="user";Pwd="password";'
+      #    checkConfig do            # top level CLI parameter '/CheckConfig'
+      #       unreferenceProcedures  # nested parameter '-UnreferenceProcedures'
+      #     end
+      #  end
+      #  args #=> ["/N", "user",\
+      #  # "/P", "password",
+      #  # "/F", "C:/cygwin/home/vlv/workspace/ass_launcher/tmp/new.ib",
+      #  # "/CheckConfig", "", "-UnreferenceProcedures", ""]
+      #
+      #  # 2) Without #connection_string DLS method
+      #  args = AssLauncher::Enterprise::Cli::ArgumentsBuilder.build_args(
+      #            client, :designer) do
+      #    _N 'user'
+      #    _P 'password'
+      #    _F 'tmp/new.ib'
+      #    _CheckConfig do
+      #      _UnreferenceProcedures
+      #    end
+      #  end
+      #  args #=> ["/N", "user",
+      #  # "/P", "password",
+      #  # "/F", "C:/cygwin/home/vlv/workspace/ass_launcher/tmp/new.ib",
+      #  # "/CheckConfig", "", "-UnreferenceProcedures", ""]
+      #
+      # @raise (see #method_missing )
       class ArgumentsBuilder
         class BuildError < StandardError; end
         METHOD_TO_PARAM_NAME = /^_/i
         TOP_LEVEL_PARAM_KEY = '/'
         NESTED_LEVEL_PARAM_KEY = '-'
 
-        # Heler for top lever parameter builder
-        module InspectConnectionString
+        # DSL method {#connection_string} for top level arguments builder
+        # @api public
+        module IncludeConnectionString
+          # DLS method for convert connection string into 1C:Enterprise cli
+          # arguments and add them on the head of arguments array.
+          #
+          # @param conn_str [String
+          #  AssLauncher::Support::ConnectionString::Server
+          #  AssLauncher::Support::ConnectionString::File
+          #  AssLauncher::Support::ConnectionString::Http] connection string
+          #
           def connection_string(conn_str)
             conn_str = AssLauncher::Support::ConnectionString\
                        .new(conn_str) if conn_str.is_a? String
@@ -26,12 +81,18 @@ module AssLauncher
           private :conn_str_to_args
         end
 
+        # @param binary_wrapper [AssLauncher::Enterprise::BinaryWrapper]
+        #  subclass
+        # @param run_mode [Symbol]
+        # @return [Array] arguments for run 1C:Enterprise client
         def self.build_args(binary_wrapper, run_mode, &block)
           new(binary_wrapper.cli_spec(run_mode)).build_args(&block)
         end
 
         attr_reader :cli_spec, :params_stack, :parent_parameter
+        private :cli_spec, :params_stack, :parent_parameter
         attr_accessor :builded_args
+        protected :builded_args, :builded_args=
 
         # @param cli_spec [CliSpec]
         # @param parent_parameter [Cli::Parameters] parent for nested params
@@ -45,20 +106,23 @@ module AssLauncher
         def run_mode
           cli_spec.current_run_mode
         end
+        private :run_mode
 
         def defined_parameters
           cli_spec.parameters
         end
+        private :defined_parameters
 
         def binary_wrapper
           cli_spec.current_binary_wrapper
         end
+        private :binary_wrapper
 
         # Evaluate &block return array of arguments
         # @raise [ArgumentError] unless block given
         def build_args(&block)
           fail ArgumentError, 'Block require' unless block_given?
-          extend InspectConnectionString unless parent_parameter
+          extend IncludeConnectionString unless parent_parameter
           instance_eval(&block)
           builded_args
         end
@@ -68,6 +132,9 @@ module AssLauncher
         end
         private :nested_builder
 
+        # @raise [BuildError] if could not find parameter
+        # @raise [BuildError] if argument already build
+        # @raise [ArgumentError] if invlid value passed in parameter
         def method_missing(method, *args, &block)
           param = param_find(method)
           fail_no_parameter_error(method) unless param
