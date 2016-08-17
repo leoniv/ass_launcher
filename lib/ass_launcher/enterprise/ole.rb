@@ -61,7 +61,7 @@ module AssLauncher
         end
 
         # Set 1C Ole server properties
-        def __configure_com_connector__(**opts)
+        def __configure_com_connector__(opts)
           opts.each do |k, v|
             __ole_binary__.ole.setproperty(k, v)
           end

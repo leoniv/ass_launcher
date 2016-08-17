@@ -128,7 +128,7 @@ module AssLauncher
         # @note It work not correct. If old version ole object is loded in
         # memory new registred version will be ignored.
         class COMConnector < AbstractAssOleBinary
-          require 'english'
+          require 'English'
           BINARY = 'comcntr.dll'
           def binary
             BINARY

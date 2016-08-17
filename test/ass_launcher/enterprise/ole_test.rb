@@ -121,7 +121,7 @@ class IbConnection < Minitest::Test
   def test_configure_com_connector
     ole = mock
     ole.expects(:ole).returns(ole)
-    opts = {}
+    opts = mock
     opts.expects(:each).yields(:key, :value)
     ole.expects(:setproperty).with(:key, :value).returns(:success)
     inst = cls.new(nil)

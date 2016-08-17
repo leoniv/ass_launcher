@@ -24,7 +24,7 @@ class WIN32OLE
       args[1]
     end
   else
-    require 'win32ole'
+    require 'win32ole' unless AssLauncher::Platform.linux?
     @win32ole_loaded = true # for tests zonde
   end
   # :nocov:
