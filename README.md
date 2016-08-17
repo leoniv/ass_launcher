@@ -1,3 +1,4 @@
+[![Code Climate](https://codeclimate.com/github/leoniv/ass_launcher/badges/gpa.svg)](https://codeclimate.com/github/leoniv/ass_launcher)
 # AssLauncher
 
 Ruby wrapper for 1C:Enterprise platform. Don't ask why this necessary. Believe this necessary!
