@@ -350,7 +350,7 @@ class CliPathParameterTest < Minitest::Test
   def test_to_args_fail_if_not_exists
     inst = cls.new('/PathParameter',nil,nil,nil,nil,:mast_be => :exist)
     assert_raises ArgumentError do
-      inst.to_args('./tmp/fake_path')
+      inst.to_args('./fake_path')
     end
   end
 end

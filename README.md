@@ -3,6 +3,8 @@
 
 Ruby wrapper for 1C:Enterprise platform. Don't ask why this necessary. Believe this necessary!
 
+**Ruby ~> 2.0 require**
+
 ## Installation
 
 Add this line to your application's Gemfile:
