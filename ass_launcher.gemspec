@@ -20,7 +20,6 @@ Gem::Specification.new do |spec|
   spec.license       = 'MIT'
 
   spec.add_dependency "inifile"
-  spec.add_dependency "ffi"
   spec.add_dependency "methadone"
 
   spec.add_development_dependency "bundler", "~> 1.10"

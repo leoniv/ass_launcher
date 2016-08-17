@@ -1,11 +1,39 @@
 # encoding: utf-8
 
-require 'ffi'
-
-module FFI
-  # Monkey patch of [FFI::Platform]
+module AssLauncher
+  # Code partly copied from sources {FFI::Platform} module
+  # Module provides some functional like {FFI::Platform}
+  # Gem +ffi+ builds binary extension and decided don't use it
   module Platform
+    OS = case RbConfig::CONFIG['host_os'].downcase
+         when /linux/
+           "linux"
+         when /darwin/
+           "darwin"
+         when /freebsd/
+           "freebsd"
+         when /netbsd/
+           "netbsd"
+         when /openbsd/
+           "openbsd"
+         when /sunos|solaris/
+           "solaris"
+         when /mingw|mswin/
+           "windows"
+         else
+           RbConfig::CONFIG['host_os'].downcase
+         end
+
+    # @param [String) os
+    # @return [Boolean]
+    # Test if current OS is +os+.
+    def self.is_os(os)
+      OS == os
+    end
+
     IS_CYGWIN = is_os('cygwin')
+    IS_WINDOWS = is_os('windows')
+    IS_LINUX = is_os('linux')
 
     def self.cygwin?
       IS_CYGWIN
@@ -14,10 +42,12 @@ module FFI
     def self.linux?
       IS_LINUX
     end
-  end
-end
 
-module AssLauncher
+    def self.windows?
+      IS_WINDOWS
+    end
+  end
+
   module Support
     # OS-specific things
     # Mixin module help work with things as paths and env in other plases
@@ -50,19 +80,19 @@ module AssLauncher
     module Platforms
       # True if run in Cygwin
       def cygwin?
-        FFI::Platform.cygwin?
+        Platform.cygwin?
       end
       module_function :cygwin?
 
       # True if run in MinGW
       def windows?
-        FFI::Platform.windows?
+        Platform.windows?
       end
       module_function :windows?
 
       # True if run in Linux
       def linux?
-        FFI::Platform.linux?
+        Platform.linux?
       end
       module_function :linux?
 

@@ -104,7 +104,7 @@ class WIN32OLETest < Minitest::Test
   end
 
   def test_smoky
-    skip('NotImplemented in Linux') if FFI::Platform.linux?
+    skip('NotImplemented in Linux') if AssLauncher::Platform.linux?
     app = WIN32OLE.new('Scripting.Dictionary')
     assert_equal [], app.__objects__
   end

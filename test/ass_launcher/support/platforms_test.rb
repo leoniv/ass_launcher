@@ -2,12 +2,12 @@ require 'test_helper'
 
 class PlatformsTest < Minitest::Test
   def test_ffi_platform
-    assert_respond_to FFI::Platform, :cygwin?
-    assert_equal FFI::Platform::IS_CYGWIN, FFI::Platform.cygwin?
-    assert_respond_to FFI::Platform, :windows?
-    assert_equal FFI::Platform::IS_WINDOWS, FFI::Platform.windows?
-    assert_respond_to FFI::Platform, :linux?
-    assert_equal FFI::Platform::IS_LINUX, FFI::Platform.linux?
+    assert_respond_to AssLauncher::Platform, :cygwin?
+    assert_equal AssLauncher::Platform::IS_CYGWIN, AssLauncher::Platform.cygwin?
+    assert_respond_to AssLauncher::Platform, :windows?
+    assert_equal AssLauncher::Platform::IS_WINDOWS, AssLauncher::Platform.windows?
+    assert_respond_to AssLauncher::Platform, :linux?
+    assert_equal AssLauncher::Platform::IS_LINUX, AssLauncher::Platform.linux?
   end
 
   def mod
@@ -22,14 +22,14 @@ class PlatformsTest < Minitest::Test
 
   def test_class_include_mod_metods?
     %w(cygwin? windows? linux?).map(&:to_sym).each do |method|
-      FFI::Platform.expects(method).returns('fake value')
+      AssLauncher::Platform.expects(method).returns('fake value')
       assert_equal 'fake value', cls_include_mod.send(method)
     end
   end
 
   def test_mod_metods?
     %w(cygwin? windows? linux?).map(&:to_sym).each do |method|
-      FFI::Platform.expects(method).returns('fake value')
+      AssLauncher::Platform.expects(method).returns('fake value')
       assert_equal 'fake value', mod.send(method)
     end
   end
