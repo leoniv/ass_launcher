@@ -1,8 +1,8 @@
 # encoding: utf-8
 
 module AssLauncher
-  # Code partly copied from sources {FFI::Platform} module
-  # Module provides some functional like {FFI::Platform}
+  # Code partly copied from sources [FFI::Platform] module
+  # Module provides some functional like [FFI::Platform]
   # Gem +ffi+ builds binary extension and decided don't use it
   module Platform
     OS = case RbConfig::CONFIG['host_os'].downcase
