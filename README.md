@@ -134,9 +134,7 @@ To install this gem onto your local machine, run `bundle exec rake install`. To 
 
 ### Testing
 
-```sh
- export SIMPLECOV=YES rake test
-```
+    $ export SIMPLECOV=YES rake test
 
 ## Contributing
 
