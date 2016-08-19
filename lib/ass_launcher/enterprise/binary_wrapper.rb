@@ -179,106 +179,8 @@ module AssLauncher
 
       # Wrapper for 1C thick client binary
       # @api public
-      #
-      # @example
-      #
-      #  script = cl.script(:createinfobase, 'File="path\\new.ib"')
-      #  ph = script.run # this waiting until process executing
-      #  ph.result.expected_assout = /\("File="path\\new.ib";.*"\)/i
-      #  ph.result.verify!
-      #
-      # @example
-      #
-      #  # Get 1C:Enterprise last release for 8.3.6 version:
-      #
-      #  cl = AssLauncher::Enterprise.thick_clients('~> 8.3.6').last
-      #  raise 'Can\'t find 1C binary' if cl.nil?
-      #
-      # @example
-      #
-      #  # Run 1C:Enterprise designer
-      #  # Directly pass parameters:
-      #
-      #  args = ['/F', 'path/to/file/infobase']
-      #  ph = cl.command(:designer, args).run
-      #
-      #  ph.wait.result.assout # => "Информационная база не обнаружена!"
-      #  ph.result.exitstatus # => 0
-      #
-      #  # Fucking 1C: "Информационная база не обнаружена!" but exit with 0 ????
-      #
-      # @example
-      #
-      #  # Dump infobase
-      #  # Directly pass parameters:
-      #
-      #  args = ['/F', 'path/infobase', '/DumpIB', 'dump/path/file.dt']
-      #  cm = cl.command(:designer, args)
-      #
-      #  cm.run.wait.result.verify!
-      #  #=> RunAssResult::RunAssError: Информационная база не обнаружена!
-      #
-      # @example
-      #
-      #  TODO `verify' exaples:
-      #
-      #  # Dump infobase
-      #  # Uses Cli::ArgumentsBuilder:
-      #
-      #  conn_str = AssLauncher::Support::ConnectionString.\
-      #    new('File="//host/infobase"')
-      #
-      #  command = cl.command(:designer) do
-      #    connection_string conn_str
-      #    DumpIB './infobase.dt'
-      #  end
-      #  ph = command.run.wait
-      #
-      #  ph.result.verify!
-      #
-      #  # Crete info base
-      #
-      #  ph = cl.command(:createinfobase) do
-      #    connection_string "File='//host/new.ib';"
-      #    _UseTemplate './application.cf'
-      #    _AddInList
-      #  end.run.wait
-      #
-      #  ph.result.verify!
-      #
-      #  # Check configuration
-      #
-      #  ph = cl.command(:designer) do
-      #    _S '1c-server/infobase'
-      #    _N 'admin'
-      #    _P 'password'
-      #    _CheckConfig do
-      #      _ConfigLogIntegrity
-      #      _IncorrectReferences
-      #      _Extension :all
-      #    end
-      #  end.run.wait
-      #
-      #  ph.result.verify!
-      #
-      #  # Run enterprise Hello World
-      #
-      #  # Prepare external data processor 'processor.epf'
-      #  # Make OnOpen form handler for main form of processor:
-      #  # procedure OnOpen(Cansel)
-      #  #   message("Ass listen:  " + LaunchParameter)
-      #  #   exit()
-      #  # endprocedure
-      #
-      #  ph = cl.command(:enterprise) do
-      #    connection_string 'File="./infobase";Usr="admin";Pwd="password"'
-      #    _Execute './processor.epf'
-      #    _C 'Hello World'
-      #  end.run.wait
-      #
-      #  ph.result.verify!
-      #
-      #  puts ph.result.assout #=> 'Ass listen: Hello World'
+      # @example (see #script)
+      # @example (see #command)
       #
       class ThickClient < BinaryWrapper
         # (see ThinClient#accepted_connstr)
@@ -302,6 +204,70 @@ module AssLauncher
         # @param args (see BinaryWrapper#to_command)
         # @option options (see BinaryWrapper#to_command)
         # @return (see #to_command)
+        # @example
+        #
+        #  # Get 1C:Enterprise last release for 8.3.6 version:
+        #
+        #  cl = AssLauncher::Enterprise.thick_clients('~> 8.3.6').last
+        #  raise 'Can\'t find 1C binary' if cl.nil?
+        #
+        # @example
+        #
+        #  # Run 1C:Enterprise designer
+        #  # Directly pass parameters:
+        #
+        #  args = ['/F', 'path/to/file/infobase', '/L', 'en']
+        #  ph = cl.command(:designer, args).run
+        #
+        #  ph.wait.result.assout # => "Infobase not found!"
+        #  ph.result.exitstatus # => 0
+        #
+        #  # Fucking 1C: "Infobase not found!" but exit with 0 ????
+        #
+        # @example
+        #
+        #  # Dump infobase
+        #  # Directly pass parameters:
+        #
+        #  args = ['/F', 'path/infobase', '/DumpIB', 'dump/path/file.dt', '/L',
+        #         'en']
+        #  cm = cl.command(:designer, args)
+        #
+        #  cm.run.wait.result.verify!
+        #  #=> RunAssResult::RunAssError: Infobase not found!
+        #
+        # @example
+        #
+        #  # Dump infobase
+        #  # Uses Cli::ArgumentsBuilder:
+        #
+        #  conn_str = AssLauncher::Support::ConnectionString.\
+        #    new('File="//host/infobase"')
+        #
+        #  command = cl.command(:designer) do
+        #    connection_string conn_str
+        #    DumpIB './infobase.dt'
+        #  end
+        #  ph = command.run.wait
+        #
+        #  ph.result.verify!
+        # @example
+        #  # Open thick client and attache into debuger
+        #
+        #  conn_str = AssLauncher::Support::ConnectionString.\
+        #    new('srvr="localhost"; ref="infobase"')
+        #
+        #  command = cl.command(:enterprise) do
+        #    connection_string conn_str
+        #    debug
+        #    debuggerUrl 'localhost'
+        #  end
+        #  ph = command.run.wait # Fucking 1C: If infobase not exists
+        #  #will be opened GUI window with info similar 'Inforamation base
+        #  #not found. Create new?" and exit whith status 0
+        #
+        #  #Fucking 1C:
+        #  #USES GUI DIALOG FOR ERROR REPORTING WHEN RUN IN NO GUI MODE
         def command(run_mode, args = [], **options, &block)
           args_ = args.dup
           args_.unshift mode(run_mode)
@@ -318,6 +284,14 @@ module AssLauncher
         # @param run_mode (see #command)
         # @param args (see #to_script)
         # @option options (see #to_script)
+        # @example
+        #
+        #  cl = AssLauncher::Enterprise.thick_clients('~> 8.3.6').last
+        #  script = cl.script(:createinfobase, 'File="path\\new.ib"')
+        #  ph = script.run # this waiting until process executing
+        #  ph.result.expected_assout = /\("File="path\\new.ib";.*"\)/i
+        #  ph.result.verify!
+        #
         # @return (see #to_script)
         def script(run_mode, args = '', **options)
           args_ = "#{mode(run_mode)} #{args}"
@@ -327,6 +301,9 @@ module AssLauncher
 
       # Wrapper for 1C thin client binary
       # @api public
+      # @example (see #script)
+      # @example (see #command)
+      #
       class ThinClient < ThickClient
         # Define type of connection_string
         # suitable for 1C binary
@@ -340,6 +317,32 @@ module AssLauncher
         # @param args (see ThickClient#command)
         # @option options (see ThickClient#command)
         # @return (see ThickClient#command)
+        # @example
+        #
+        #  cl = AssLauncher::Enterprise.thin_clients('~> 8.3.6').last
+        #  args = ['/F', 'path/to/file/infobase']
+        #  ph = cl.command(args).run # Fucking 1C: If infobase not exists
+        #  #will be opened GUI window with error info similar 'Inforamation base
+        #  #not found"
+        #
+        #  ph.wait # => waiting wile execiting
+        #  ph.result.exitstatus # => 0
+        #
+        #  # Uses Cli::ArgumentsBuilder:
+        #
+        #  conn_str = AssLauncher::Support::ConnectionString.\
+        #    new('File="//host/infobase"')
+        #
+        #  command = cl.command do
+        #    connection_string conn_str
+        #    debug
+        #    debuggerUrl 'localhost'
+        #  end
+        #  ph = command.run.wait # Fucking 1C: If infobase not exists
+        #  #will be opened GUI window with error info similar 'Inforamation base
+        #  #not found"
+        #
+
         def command(args = [], **options, &block)
           super(:enterprise, args, options, &block)
         end
@@ -349,6 +352,12 @@ module AssLauncher
         # @param args (see ThickClient#script)
         # @option options (see ThickClient#script)
         # @return (see ThickClient#script)
+        # @example
+        #  cl = AssLauncher::Enterprise.thin_clients('~> 8.3.6').last
+        #  script = cl.script('File="path\\new.ib"')
+        #  ph = script.run # this waiting until process executing
+        #  # Fucking 1C: if infobase not exists will be opened GUI window
+        #  #for infobase choice!
         def script(args = '', **options)
           super(:enterprise, args, options)
         end
