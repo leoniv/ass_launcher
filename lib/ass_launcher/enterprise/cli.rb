@@ -15,11 +15,12 @@ module AssLauncher
       require 'ass_launcher/enterprise/cli/parameters'
       require 'ass_launcher/enterprise/cli/spec_dsl'
 
-      # Run modes defined for 1C Enterprise binary client
+      # Run modes defined for 1C Enterprise clients
       DEFINED_MODES = [
         :createinfobase,
         :enterprise,
-        :designer
+        :designer,
+        :webclient
       ].freeze
 
       # Return suitable run_mode see {DEFINED_MODES} for

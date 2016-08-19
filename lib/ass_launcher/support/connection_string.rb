@@ -18,7 +18,7 @@ module AssLauncher
       class Error < StandardError; end
       class ParseError < StandardError; end
       # Commonn connection string fields
-      COMMON_FIELDS = %w(Usr Pwd LicDstr prmod Locale)
+      COMMON_FIELDS = %w(Usr Pwd LicDstr prmod Locale Zn)
       # Fields for server-infobase
       SERVER_FIELDS = %w(Srvr Ref)
       # Fields for file-infobase
@@ -121,6 +121,7 @@ module AssLauncher
         r += ['/P', pwd] if pwd
         r += ['/UsePrivilegedMode', ''] if prmod.to_s == '1'
         r += ['/L', locale] if locale
+        r += ['/Z', zn] if zn
         r
       end
       private :to_args_common
@@ -394,8 +395,22 @@ module AssLauncher
           uri = URI(ws)
           uri.user = wsn
           uri.password = wsp
+          uri.query = uri_query
           uri
         end
+
+        def uri_query
+          r = ''
+          r << "N=#{usr}&" if usr
+          r << "P=#{pwd}&" if pwd
+          r << "L=#{locale}&" if locale
+          r << "Z=#{zn}&" if zn
+          r << "UsePrivilegedMode&" if prmod
+          r.gsub!(/&$/i, '')
+          return nil if r.empty?
+          r
+        end
+        private :uri_query
 
         # Convert connection string to array of 1C:Enterprise parameters.
         # @return [Array] of 1C:Enterprise CLI parameters.
@@ -416,6 +431,7 @@ module AssLauncher
           r += ['-PPwd', wsppwd] if wsppwd
           r
         end
+        private :to_args_private_proxy
       end
     end
   end

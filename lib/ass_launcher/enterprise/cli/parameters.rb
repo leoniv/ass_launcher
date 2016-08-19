@@ -135,8 +135,7 @@ module AssLauncher
         private :auto_binary_matcher
 
         def auto_client
-          # return :thick if modes.include?(:createinfobase) ||
-          #                 modes.include?(:designer)
+          return :web if modes == [:webclient]
           return :thick unless modes.include?(:enterprise)
           :all
         end

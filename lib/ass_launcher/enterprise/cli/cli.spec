@@ -28,6 +28,7 @@ enterprise_version '8.2.17'
 describe_mode :enterprise, 'Запуск в режиме предприятия', 'ENTERPRISE [parameters]'
 describe_mode :designer, 'Запуск в режиме конфигуратора', 'DESIGNER [parameters]'
 describe_mode :createinfobase, 'Создание информационной базы', 'CREATEINFOBASE <connection_string> [parameters]'
+describe_mode :webclient, 'Запуск в режиме web клиента', 'WEB [parameters] URL'
 
 # ==== Определения групп параметров ====
 
@@ -56,22 +57,63 @@ mode :enterprise, :designer, :createinfobase do
   end
 end
 
-mode :enterprise, :designer do
-  group :connection do
-    path_exist '/F', 'путь к файловой информационной базе'
-    string '/S', 'адрес информационной базы, хранящейся на сервере "1С:Предприятие 8". Имеет вид "host:port/ib_name"'
+mode :webclient do
+  group :debug do
   end
 
+  group :other do
+    chose  '/O', 'определяет скорость соединения', chose_list: chose_list(Normal: 'обычная', Low: 'низкая')
+  end
+
+  group :authentication do
+    switch '/WA', 'аутентификация средствами операционной системы', switch_list: switch_list(:"+" => 'обязательное применение (значение по умолчанию)', :"-" => 'запрет применения')
+    switch '/OIDA', 'применение OpenID аутентификации ', switch_list: switch_list(
+    :'+' => 'использовать OpenID-аутентификацию (по умолчанию)',
+    :'-' => 'не использовать OpenID-аутентификацию'
+    )
+    flag '/Authoff', 'выполняет OpenID logout'
+  end
+end
+
+mode :enterprise, :designer, :webclient do
   group :authentication do
     string '/N', 'имя пользователя информационной базы'
     string '/P', 'пароль пользователя информационной базы'
   end
 
   group :other do
-    switch '/UseHwLicenses', 'определяет режим поиска локального ключа защиты', switch_list: switch_list(:"+" => 'поиск выполняется', :"-" => 'поиск не выполняется')
     string '/L', 'указывается код языка интерфейса платформы: ru - Русский, en - Английский, uk - Украинский и т.д. Полный список см. в документации 1С'
-    skip '/RunShortcut', 'позволяет запустить систему со списком баз из указанного файла v8i'
     string '/Z', 'установка разделителей', all_client('>= 8.2.17')
+  end
+end
+
+mode :enterprise, :webclient do
+  group :debug do
+    url '/DebuggerURL', 'url отладчика'
+    flag '/DisplayPerformance', 'показать количество вызовов сервера и объем данных, отправляемых на сервер и принимаемых с сервера'
+  end
+
+  group :other do
+    string '/C', 'передача строкового значения в экземпляр 1С приложения.'\
+      ' Значение доступно в глобальной переменной `ПараметрЗапуска`.'\
+      ' Если в строке есть двойные кавычки работает криво.',
+      value_validator: (Proc.new do |value|
+        fail ArgumentError, 'In /C parameter char `\"` forbidden for use' if /"/ =~ value
+      end)
+    string '/VL', 'код локализации сеанса'
+    flag '/UsePrivilegedMode', 'запуск в режиме привилегированного сеанса'
+  end
+end
+
+mode :enterprise, :designer do
+  group :connection do
+    path_exist '/F', 'путь к файловой информационной базе'
+    string '/S', 'адрес информационной базы, хранящейся на сервере "1С:Предприятие 8". Имеет вид "host:port/ib_name"'
+  end
+
+  group :other do
+    switch '/UseHwLicenses', 'определяет режим поиска локального ключа защиты', switch_list: switch_list(:"+" => 'поиск выполняется', :"-" => 'поиск не выполняется')
+    skip '/RunShortcut', 'позволяет запустить систему со списком баз из указанного файла v8i'
   end
 end
 
@@ -100,13 +142,6 @@ mode :enterprise do
     skip '/AppAutoCheckVersion'
     skip '/AppAutoCheckMode'
     skip '/LogUI'
-    string '/VL', 'код локализации сеанса'
-    string '/C', 'передача строкового значения в экземпляр 1С приложения.'\
-      ' Значение доступно в глобальной переменной `ПараметрЗапуска`.'\
-      ' Если в строке есть двойные кавычки работает криво.',
-      value_validator: (Proc.new do |value|
-        fail ArgumentError, 'In /C parameter char `\"` forbidden for use' if /"/ =~ value
-      end)
     flag '/RunModeOrdinaryApplication', 'запуск толстого клиента в режиме обычного приложения  не зависимо от настроек', thick_client('>= 8.2')
     flag '/RunModeManagedApplication', 'запуск толстого клиента в режиме управляемого приложения  не зависимо от настроек', thick_client('>= 8.2')
     string '/UC', 'код доступа для установки соединения с заблокированной базой'
@@ -114,13 +149,11 @@ mode :enterprise do
     path_exist '/Execute', 'запуска внешней обработки в режиме 1С:Предприятие непосредственно после старта системы'
     skip '/ClearCache'
     skip '/@'
-    flag '/UsePrivilegedMode', 'запуск в режиме привилегированного сеанса'
     skip '/TComp'
     flag '/itdi', 'режим интерфейса с использованием закладок'
   end
 
   group :debug do
-    flag '/Debug', 'запуск сессии отладки'
     url '/DebuggerURL', 'url отладчика'
   end
 end
