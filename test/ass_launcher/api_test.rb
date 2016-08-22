@@ -54,4 +54,8 @@ class ApiTest < Minitest::Test
       ole)
     assert_equal ole, inst.ole(:type, :requiremet)
   end
+
+  def test_web_client
+    assert_instance_of AssLauncher::Enterprise::WebClient, inst.web_client
+  end
 end

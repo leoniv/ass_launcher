@@ -181,11 +181,21 @@ class CliParametersTest < Minitest::Test
       inst.send(:auto_binary_matcher, nil)
   end
 
-  def test_auto_client
+  def test_auto_client_web
     inst = param
-    inst.expects(:modes).returns([:createinfobase, :designer])
+    inst.expects(:modes).returns([:webclient])
+    assert_equal :web, inst.send(:auto_client)
+  end
+
+  def test_auto_client_thick
+    inst = param
+    inst.expects(:modes).returns([:createinfobase, :designer]).twice
     assert_equal :thick, inst.send(:auto_client)
-    inst.expects(:modes).returns([:enterprise, :createinfobase, :designer])
+  end
+
+  def test_auto_client_all
+    inst = param
+    inst.expects(:modes).returns([:enterprise, :createinfobase, :designer]).twice
     assert_equal :all, inst.send(:auto_client)
   end
 end

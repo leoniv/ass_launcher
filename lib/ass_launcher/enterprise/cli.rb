@@ -99,9 +99,12 @@ module AssLauncher
               run_mode)
         end
 
+        # :nocov:
+        # @todo Implemets this
         def usage(run_mode = nil)
           raise NotImplementedError
         end
+        # :nocov:
       end
 
       # @api private

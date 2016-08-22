@@ -18,7 +18,7 @@ class TestEnetrpriseCli < Minitest::Test
   end
 
   def test_const
-    expect = [:createinfobase, :enterprise, :designer]
+    expect = [:createinfobase, :enterprise, :designer, :webclient]
     assert_equal expect, AssLauncher::Enterprise::Cli::DEFINED_MODES
   end
 

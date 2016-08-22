@@ -91,7 +91,9 @@ module AssLauncher
       end.compact
     end
 
-    # (see WebClient#initialize)
+    # @param uri (see WebClient#initialize)
+    # @param version (see WebClient#initialize)
+    # @return [AssLauncher::Enterprise::WebClient]
     def self.web_client(uri = nil, version = nil)
       WebClient.new(uri, version)
     end

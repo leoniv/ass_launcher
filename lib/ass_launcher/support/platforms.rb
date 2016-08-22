@@ -5,35 +5,37 @@ module AssLauncher
   # Module provides some functional like [FFI::Platform]
   # Gem +ffi+ builds binary extension and decided don't use it
   module Platform
+    # :nocov:
     OS = case RbConfig::CONFIG['host_os'].downcase
          when /linux/
-           "linux"
+           'linux'
          when /darwin/
-           "darwin"
+           'darwin'
          when /freebsd/
-           "freebsd"
+           'freebsd'
          when /netbsd/
-           "netbsd"
+           'netbsd'
          when /openbsd/
-           "openbsd"
+           'openbsd'
          when /sunos|solaris/
-           "solaris"
+           'solaris'
          when /mingw|mswin/
-           "windows"
+           'windows'
          else
            RbConfig::CONFIG['host_os'].downcase
          end
+    # :nocov:
 
     # @param [String) os
     # @return [Boolean]
     # Test if current OS is +os+.
-    def self.is_os(os)
+    def self.os?(os)
       OS == os
     end
 
-    IS_CYGWIN = is_os('cygwin')
-    IS_WINDOWS = is_os('windows')
-    IS_LINUX = is_os('linux')
+    IS_CYGWIN = os?('cygwin')
+    IS_WINDOWS = os?('windows')
+    IS_LINUX = os?('linux')
 
     def self.cygwin?
       IS_CYGWIN

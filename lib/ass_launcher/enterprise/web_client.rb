@@ -12,7 +12,7 @@ module AssLauncher
       # Run mode defined for webclient
       RUN_MODE = :webclient
       DEFAULT_OPTIONS = { disable_startup_messages: true }
-      DEFAULT_VERSION = '999.999.999'
+      DEFAULT_VERSION = '999'
 
       # @return [URI] base uri location
       attr_accessor :uri
@@ -21,6 +21,7 @@ module AssLauncher
       # @return [WebClient]
       # @example
       #
+      #  # Get webclient usin connection string:
       #  connection_string =\
       #  AssLauncher::Support::ConnectionString.new(
       #    'ws="http://host:port/infobase"')
@@ -30,14 +31,15 @@ module AssLauncher
       #  wc = AssLauncher::Enterprise::WebClient.new('http://host/path')
       #
       # @param uri [String URI] base infobase location
-      # @param version [String] version 1C:Enterprise platform. The {#cli_spec}
-      #  depends on the {#version}. Default supposed max possable version.
-      #  {DEFAULT_VERSION}
+      # @param version [String] version 1C:Enterprise platform.
+      #  The {Enterprise::WebClient#cli_spec}
+      #  depends on the {Enterprise::WebClient#version}.
+      #  Default supposed max possable version.
+      #  {Enterprise::WebClient::DEFAULT_VERSION}
       #
       def initialize(uri = '', version = DEFAULT_VERSION)
-        @version = Gem::Version.new(version)
-        @uri ||= URI(uri)
-        instance_eval(&block) if block_given?
+        @version = Gem::Version.new(version || DEFAULT_VERSION)
+        @uri ||= URI(uri || '')
       end
 
       # @return [Cli::CliSpec]

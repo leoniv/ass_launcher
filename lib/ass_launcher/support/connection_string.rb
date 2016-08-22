@@ -395,7 +395,8 @@ module AssLauncher
           uri = URI(ws)
           uri.user = wsn
           uri.password = wsp
-          uri.query = uri_query
+          q = uri_query
+          uri.query = URI.escape q if q
           uri
         end
 

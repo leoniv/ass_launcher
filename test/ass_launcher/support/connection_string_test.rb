@@ -429,8 +429,29 @@ class TestConnectionStringHttp < Minitest::Test
 
       end
     end.new
-    mock.expects(:ws).returns('http://exaple.com')
-    assert_kind_of ::URI, mock.uri
+    mock.expects(:ws).returns('http://example.com')
+    mock.expects(:wsn).returns('user')
+    mock.expects(:wsp).returns('pass')
+    mock.expects(:uri_query).returns('arg=value')
+    actual = mock.uri
+    assert_kind_of ::URI, actual
+    assert_equal 'http://user:pass@example.com?arg=value', actual.to_s
+  end
+
+  def test_uri_query_with_not_empty_query
+    inst = cls.new(ws: 'http://path/ib')
+    inst.usr = 'usr'
+    inst.pwd = 'pwd'
+    inst.locale = 'ru'
+    inst.zn = 'znvalue'
+    inst.prmod = 'Y'
+    assert_equal 'N=usr&P=pwd&L=ru&Z=znvalue&UsePrivilegedMode',
+      inst.send(:uri_query)
+  end
+
+  def test_uri_query_with_empty_query
+    inst = cls.new(ws: 'http://path/ib')
+    assert_nil inst.send(:uri_query)
   end
 
   def test_to_args_private_with_auto_proxy

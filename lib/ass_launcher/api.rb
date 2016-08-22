@@ -82,5 +82,32 @@ module AssLauncher
     def ole(type, requiremet = '>= 0')
       AssLauncher::Enterprise::Ole.ole_client(type).new(requiremet)
     end
+
+    # (see Enterprise.web_client)
+    # @example
+    #  include AssLauncher::Api
+    #
+    #  # Get web client instanse for connect to
+    #  # infobase 'http://host/port/path/infobase'
+    #  wc = web_client('http://host/path/infobase')
+    #
+    #  loc = wc.location do
+    #    _N 'user_name'
+    #    _P 'password'
+    #    _L 'en'
+    #  end # => URI
+    #
+    #  # Or do it with uses connecton string
+    #  connstr =  cs 'ws="http://host/path/infobase";usr="user";pwd="password"'
+    #  wc = web_client(cs.uri)
+    #  loc = wc.location do
+    #    _L 'en'
+    #  end # => URI
+    #
+    #  # And use given location URI with selenium driver:
+    #  # driver.navigate.to loc.to_s
+    def web_client(uri = nil, version = nil)
+      AssLauncher::Enterprise.web_client(uri, version)
+    end
   end
 end
