@@ -118,7 +118,7 @@ class EnterpriseTest < Minitest::Test
   end
 
   def test_web_client
-    AssLauncher::Enterprise::WebClients.expects(:client).with(:fake_client).returns(:fake_class)
-    assert_equal :fake_class, mod.web_client(:fake_client)
+    AssLauncher::Enterprise::WebClient.expects(:new).with(:uri, :version).returns(:webclient)
+    assert_equal :webclient, mod.web_client(:uri, :version)
   end
 end

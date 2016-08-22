@@ -9,7 +9,7 @@ module AssLauncher
   # 1C:Entrprise platform abstraction layer
   module Enterprise
     require 'ass_launcher/enterprise/binary_wrapper'
-    require 'ass_launcher/enterprise/web_clients'
+    require 'ass_launcher/enterprise/web_client'
     require 'ass_launcher/enterprise/ole'
 
     extend AssLauncher::Support::Platforms
@@ -91,9 +91,9 @@ module AssLauncher
       end.compact
     end
 
-    # (see WebClients.client)
-    def self.web_client(name)
-      WebClients.client(name)
+    # (see WebClient#initialize)
+    def self.web_client(uri = nil, version = nil)
+      WebClient.new(uri, version)
     end
 
     # Find and return all 1C:Entrprise binaries
