@@ -99,7 +99,7 @@ module AssLauncher
     #
     #  # Or do it with uses connecton string
     #  connstr =  cs 'ws="http://host/path/infobase";usr="user";pwd="password"'
-    #  wc = web_client(cs.uri)
+    #  wc = web_client(connstr.uri)
     #  loc = wc.location do
     #    _L 'en'
     #  end # => URI
