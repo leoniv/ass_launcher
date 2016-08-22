@@ -163,9 +163,24 @@ class ArgumentsBuilderTest < Minitest::Test
     end
   end
 
+  def test_build_args_top_for_webclient
+    zonde = {}
+    cli_spec = mock
+    cli_spec.expects(:current_run_mode).returns(:webclient)
+    inst = cls.new(cli_spec, nil)
+    actual = inst.build_args do
+      builded_args << 1
+      builded_args << 2
+    end
+    refute_respond_to inst, :connection_string
+    assert [1,2], actual
+  end
+
   def test_build_args_top
     zonde = {}
-    inst = cls.new(nil, nil)
+    cli_spec = mock
+    cli_spec.expects(:current_run_mode).returns(:enterprise)
+    inst = cls.new(cli_spec, nil)
     actual = inst.build_args do
       builded_args << 1
       builded_args << 2
@@ -174,9 +189,11 @@ class ArgumentsBuilderTest < Minitest::Test
     assert [1,2], actual
   end
 
-  def test_build_args_nestd
+  def test_build_args_nested
     zonde = {}
-    inst = cls.new(nil, :parent_parameter)
+    cli_spec = mock
+    cli_spec.expects(:current_run_mode).never
+    inst = cls.new(cli_spec, :parent_parameter)
     inst.build_args do
       zonde[:executed] = true
     end

@@ -2,137 +2,134 @@
 
 module AssLauncher
   module Enterprise
-    module WebClients
+    # Abstract 1C:Enterprise client. Provides {#location} method as URI
+    # generator for connection to
+    # 1C information base via web browser.
+    # @example (see #initialize)
+    # @example (see #location)
+    class WebClient
       require 'uri'
-      # Return object for run 1C webclent in required internet browser
-      # @param engine [Symbol] - engine required for run 1C webclent
+      # Run mode defined for webclient
+      RUN_MODE = :webclient
+      DEFAULT_OPTIONS = { disable_startup_messages: true }
+      DEFAULT_VERSION = '999.999.999'
+
+      # @return [URI] base uri location
+      attr_accessor :uri
+      # Version for 1C:Enterprise platform
+      attr_reader :version
       # @return [WebClient]
       # @example
-      #  wc = AssLauncher::Enterprise::WebClient.new(:firefox) do
-      #    connection_string = 'ws="http://host:port/infobase";'
-      #    #or without connection_string
-      #    uri = "http://user:password@host:port/path/to/infobase'
-      #    _O :low
-      #    _C 'passed string'
-      #    _N = '1cuser'
-      #    _P = '1cuser_password'
-      #    _WA :'-'
-      #    _OIDA :'-'
-      #    Authoff
-      #    _L 'en'
-      #    _WL
-      #    _TESTCLIENTID 'id'
-      #    _DebuggerURL 'localhost'
-      #    _UsePrivilegedMode
-      #  end
-      def self.new(engine, &block)
-        fail ArgumentError, "Invalid engine `#{engine}'"\
-          unless ENGINES.include? engine
-            cl = WebClient.new(ENGINES[engine].new)
-          cl.command(&block) if block_given?
-          cl
+      #
+      #  connection_string =\
+      #  AssLauncher::Support::ConnectionString.new(
+      #    'ws="http://host:port/infobase"')
+      #  wc = AssLauncher::Enterprise::WebClient.new(cs.uri)
+      #
+      #  #or without connection_string
+      #  wc = AssLauncher::Enterprise::WebClient.new('http://host/path')
+      #
+      # @param uri [String URI] base infobase location
+      # @param version [String] version 1C:Enterprise platform. The {#cli_spec}
+      #  depends on the {#version}. Default supposed max possable version.
+      #  {DEFAULT_VERSION}
+      #
+      def initialize(uri = '', version = DEFAULT_VERSION)
+        @version = Gem::Version.new(version)
+        @uri ||= URI(uri)
+        instance_eval(&block) if block_given?
       end
 
-      # @abstract
-      class WebClient
-        # TODO: Doc this
-        module Dsl
-          def connection_string(cs)
-            uri validate_connection_string(cs).uri
-          end
+      # @return [Cli::CliSpec]
+      def cli_spec
+        AssLauncher::Enterprise::Cli::CliSpec.for(self, RUN_MODE)
+      end
 
-          def validate_connection_string(cs)
-            conn_str = AssLauncher::Support::ConnectionString\
-              .new(cs.to_s)
-            fail ArgumentError unless conn_str.is?(VALID_CONNECTION_STRING)
-            conn_str
-          end
-          private :validate_connection_string
+      # (see RUN_MODE)
+      # @return [Array] see {RUN_MODE}
+      def run_modes
+        [RUN_MODE]
+      end
 
-          def uri(s)
-            @uri = URI(s.to_s)
-          end
+      def build_args(&block)
+        Cli::ArgumentsBuilder.new(cli_spec).build_args(&block)
+      end
+      private :build_args
+
+      # Build URI location for connect to web infobase.
+      #
+      # We can use {Cli::ArgumentsBuilder} for
+      # build connection string with validation parameters on defined in
+      # {#cli_spec} specifications.
+      #
+      # Or we can pass parameters as +args+ array directly.
+      # @example
+      #  wc = AssLauncher::Enterprise::WebClient.new('http://host/path')
+      #
+      #  # Without ArgumentsBulder
+      #  wc.location(['O', 'low', 'C', 'passed string',
+      #    'N', '1cuser',
+      #    'P', '1cpassw',
+      #    'Authoff', '']) #=> URI
+      #
+      #  # With ArgumentsBulder
+      #  wc.location do
+      #    _O :Low
+      #    _C 'passed string'
+      #    _N '1cuser'
+      #    _P '1cuser_password'
+      #    wA :-
+      #    oIDA :-
+      #    authOff
+      #    _L 'en'
+      #    vL 'en'
+      #    debuggerURL 'localhost'
+      #    _UsePrivilegedMode
+      #  end  #=> URI
+      #
+      # @param args [Arry]
+      # @option options [bool] :disable_startup_messages adds or not
+      #  '/DisableStartupMessages' flag parameter into +args+
+      #
+      def location(args = [], **options, &block)
+        options = DEFAULT_OPTIONS.merge options
+        args += ['DisableStartupMessages', '']\
+          if options[:disable_startup_messages]
+        args += build_args(&block) if block_given?
+        add_to_query uri.dup, args_to_query(args)
+      end
+
+      def add_to_query(uri, q)
+        if uri.query
+          uri.query += URI.escape "&#{q}" if q
+        else
+          uri.query = URI.escape "#{q}" if q
         end
+        uri
+      end
+      private :add_to_query
 
-        include Dsl
-        VALID_CONNECTION_STRING = :http
+      CLI_TO_WEB_PARAM_NAME = %r{^/}
 
-        def initialize(engine)
-          connection_string AssLauncher::Support::ConnectionString\
-            .new('ws="http://example.com"')
-          @engine = engine
-          yield self if block_given?
+      def args_to_query(args)
+        r = to_query(args)
+        r.gsub!(/&$/, '')
+        return nil if r.empty?
+        r
+      end
+      private :args_to_query
+
+      def to_query(args)
+        r = ''
+        args.each_with_index do |v, i|
+          next if (i + 1).even?
+          r << "#{v.gsub(CLI_TO_WEB_PARAM_NAME, '')}"
+          r << "=#{args[i + 1]}" unless args[i + 1].to_s.empty?
+          r << '&'
         end
-
-        def command(args = [], &block)
-          @args = args + ['DisableStartupMessages','']
-          @args += build_arags(&block)
-        end
-
-        def cli_spec
-          AssLauncher::Enterprise::Cli::CliSpec.for(self, :webclient)
-        end
-
-        def version
-          Gem::Version.new('8.2')
-        end
-
-        def run_modes
-          [:webclient]
-        end
-
-        def build_args
-          # TODO: build args like BinaryWrapper base on cli_spec
-          fail NotImplementedError
-        end
-        private :build_args
-
-        def args
-          @args ||= []
-        end
-        private :args
-
-        def uri_get
-          @uri
-        end
-        private :uri_get
-
-        def url
-          r = uri_get
-          q = args_to_query
-          r.query += "&#{q}" if q
-          r.to_s
-        end
-
-        def args_to_query
-          r = ''
-          args.each_with_index do |v, i|
-            next if i.even?
-            r << "#{v}"
-            r << "=#{args[i+1]}" if args[i+1]
-            r << "&"
-          end
-          r.gsub!(/&$/,'')
-          return nil if r.empty?
-          r
-        end
-        private :args_to_query
-
-        # @todo TODO: можно запускать как драйвер силениум
-        def run(args)
-          raise NotImplementedError
-        end
-      end # Client
-      class Firefox; end
-      class IE; end
-      class Chrome; end
-      class Safary; end
-
-      ENGINES = { firefox: Firefox,
-                   iexplore: IE,
-                   chrome: Chrome,
-                   safary: Safary
-      }.freeze
+        r
+      end
+      private :to_query
     end
   end
 end

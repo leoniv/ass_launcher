@@ -122,7 +122,8 @@ module AssLauncher
         # @raise [ArgumentError] unless block given
         def build_args(&block)
           fail ArgumentError, 'Block require' unless block_given?
-          extend IncludeConnectionString unless parent_parameter
+          extend IncludeConnectionString\
+            if (parent_parameter.nil? && run_mode != :webclient)
           instance_eval(&block)
           builded_args
         end
