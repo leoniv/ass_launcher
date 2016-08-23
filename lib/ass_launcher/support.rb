@@ -5,5 +5,6 @@ module AssLauncher
     require 'ass_launcher/support/connection_string'
     require 'ass_launcher/support/platforms'
     require 'ass_launcher/support/shell'
+    require 'ass_launcher/support/linux'
   end
 end
