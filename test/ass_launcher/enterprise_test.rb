@@ -52,10 +52,14 @@ class EnterpriseTest < Minitest::Test
 
   def test_find_clients
     mock_klass = mock()
-    mod.expects(:find_binaries).with('fake_binary_name').returns(%w'bp1 bp2 pb3')
+    mod.expects(:find_binaries).with('fake_binary_name').returns(%w'bp1 bp2 bp3')
     mod.expects(:binaries).with(mock_klass).returns('fake_binary_name')
-    mock_klass.expects(:new).returns('bin_wrapper').times(3)
-    assert_equal Array.new(3, 'bin_wrapper'), mod.send(:find_clients, mock_klass)
+    mod.instance_variable_set(:@binary_wrappers_cache, {'bp1'=>'cached_wrapper'})
+    mock_klass.expects(:new).returns('bin_wrapper').times(2)
+    assert_equal ['cached_wrapper'] + Array.new(2, 'bin_wrapper'), mod.send(:find_clients, mock_klass)
+    assert_equal({'bp1' => 'cached_wrapper',
+                  'bp2' => 'bin_wrapper',
+                  'bp3' => 'bin_wrapper'}, mod.binary_wrappers_cache)
   end
 
   def test_requirement?
@@ -66,9 +70,9 @@ class EnterpriseTest < Minitest::Test
   end
 
   def test_find_binaries_empty
+    mod.expects(:search_paths).never
+    mod.expects(:glob_cache).never
     assert_equal [], mod.send(:find_binaries,'')
-    mod.expects(:search_paths).returns([])
-    assert_equal [], mod.send(:find_binaries,'basename')
   end
 
   def test_find_binaries
@@ -77,6 +81,19 @@ class EnterpriseTest < Minitest::Test
     mock_platform.expects(:glob).with('path/**/basename').returns(%w'path/path/basename').times(3)
     mod.expects(:search_paths).returns(%w'path path path')
     assert_equal Array.new(3, 'path/path/basename'), mod.send(:find_binaries, 'basename')
+    assert_equal Array.new(3, 'path/path/basename'), mod.glob_cache['basename']
+  end
+
+  def test_find_binaries_from_cache
+    mod.expects(:glob_cache).returns({'basename'=>'cache'}).twice
+    assert_equal 'cache', mod.send(:find_binaries, 'basename')
+  end
+
+  def test_clear_cache
+    mod.instance_variable_set(:@glob_cache,:glob_cache)
+    assert_equal :glob_cache, mod.glob_cache
+    mod.clear_glob_cache
+    assert_equal({}, mod.glob_cache)
   end
 
   def test_thin_clients

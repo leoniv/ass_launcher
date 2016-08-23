@@ -53,6 +53,16 @@ class LinuxUtilsTest < Minitest::Test
       mod.get_pkg_version(:path)
     end
   end
+
+  def test_rpm?
+    mod.expects(:pkg_manager).returns(rpm)
+    assert mod.rpm?
+  end
+
+  def test_deb?
+    mod.expects(:pkg_manager).returns(deb)
+    assert mod.deb?
+  end
 end
 
 module LinuxPkgManagerTest

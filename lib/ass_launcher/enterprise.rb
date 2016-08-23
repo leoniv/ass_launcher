@@ -57,9 +57,20 @@ module AssLauncher
       end
     end
 
+    # Caching {WinaryWrappers} instances
+    # @api private
+    # @return [Hash]
+    def self.binary_wrappers_cache
+      @binary_wrappers_cache ||= {}
+    end
+
     def self.find_clients(klass)
       find_binaries(binaries(klass)).map do |binpath|
-        klass.new(binpath)
+        if binary_wrappers_cache.key?(binpath)
+          binary_wrappers_cache[binpath]
+        else
+          binary_wrappers_cache[binpath] = klass.new(binpath)
+        end
       end
     end
     private_class_method :find_clients
@@ -98,15 +109,29 @@ module AssLauncher
       WebClient.new(uri, version)
     end
 
+    # Find binaries in Cygwin work slow.
+    # For rapid get binaries uses catch
+    # @return [Hash]
+    # @api private
+    def self.glob_cache
+      @glob_cache ||= {}
+    end
+
+    # Cliar {.glob_cache}
+    def self.clear_glob_cache
+      @glob_cache = nil
+    end
+
     # Find and return all 1C:Entrprise binaries
     # @return [Array<BinaryWrapper>]
     def self.find_binaries(basename)
       return [] if basename.to_s.empty?
+      return glob_cache[basename] if glob_cache.key?(basename)
       r = []
       search_paths.flatten.each do |sp|
         r += platform.glob("#{sp}/**/#{basename}")
       end
-      r
+      glob_cache[basename] = r
     end
     private_class_method :find_binaries
   end

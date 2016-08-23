@@ -29,7 +29,9 @@ module AssLauncher
       # @return [Array<Symbol>]
       def self.defined_modes_for(cl)
         return [DEFINED_MODES[1]] if cl.instance_of? BinaryWrapper::ThinClient
-        return DEFINED_MODES if cl.instance_of? BinaryWrapper::ThickClient
+        return DEFINED_MODES - [:webclient]\
+          if cl.instance_of? BinaryWrapper::ThickClient
+        return [DEFINED_MODES.last] if cl.instance_of? WebClient
       end
 
       # Load and 1C Enterprise cli specifications

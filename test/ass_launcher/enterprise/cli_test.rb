@@ -31,13 +31,27 @@ class TestEnetrpriseCli < Minitest::Test
     assert_equal expect, mod.defined_modes_for(cl)
   end
   def test_defined_modes_for_thick_client
-    expect = AssLauncher::Enterprise::Cli::DEFINED_MODES
+    expect = [:createinfobase, :enterprise, :designer]
     cl = mock
     cl.expects(:instance_of?)
       .with(AssLauncher::Enterprise::BinaryWrapper::ThinClient)
       .returns(false)
     cl.expects(:instance_of?)
       .with(AssLauncher::Enterprise::BinaryWrapper::ThickClient)
+      .returns(true)
+    assert_equal expect, mod.defined_modes_for(cl)
+  end
+  def test_defined_modes_for_web_client
+    expect = [:webclient]
+    cl = mock
+    cl.expects(:instance_of?)
+      .with(AssLauncher::Enterprise::BinaryWrapper::ThinClient)
+      .returns(false)
+    cl.expects(:instance_of?)
+      .with(AssLauncher::Enterprise::BinaryWrapper::ThickClient)
+      .returns(false)
+    cl.expects(:instance_of?)
+      .with(AssLauncher::Enterprise::WebClient)
       .returns(true)
     assert_equal expect, mod.defined_modes_for(cl)
   end
@@ -61,11 +75,6 @@ class TestEnetrpriseCliSpec < Minitest::Test
 
       end
     end.new
-  end
-
-  def test_for
-    skip
-
   end
 
   def test_smoky_test_for
