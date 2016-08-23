@@ -36,14 +36,25 @@ class BinaryWrapperTest < Minitest::Test
     assert_equal :arch, inst.arch, 'return @arch value'
   end
 
-  def test_extract_version
+  def test_extract_version_in_windows
+    windows = mock
+    windows.expects(:linux?).returns(false).twice
     inst = inst_
+    inst.expects(:platform).returns(windows).twice
     assert_equal Gem::Version.new('1.2.3.4'),
       inst.send(:extract_version, 'bla/bla/1cv8/1.2.3.4/bin/1cv8.exe')
     assert_equal Gem::Version.new('0'),
       inst.send(:extract_version, 'path/have/not/include/version/1cv8.exe')
-    assert_equal Gem::Version.new('8.3'),
-      inst.send(:extract_version, '/opt/1C/v8.3/i386/1cv8')
+  end
+
+  def test_extract_version_in_linux
+    linux = mock
+    linux.expects(:linux?).returns(true)
+    inst = inst_
+    inst.expects(:platform).returns(linux)
+    AssLauncher::Support::Linux.expects(:get_pkg_version)\
+      .with(:path).returns(:version)
+    assert_equal :version, inst.send(:extract_version, :path)
   end
 
   def test_extract_arch_in_linux

@@ -50,11 +50,13 @@ module AssLauncher
       end
 
       # Define version of 1C platform.
-      # @note version parsed from path and may content incorrect value - not
-      #  real 1C platform version see {#extract_version}. In windows,
-      #  if 1C platform instaled in standart directories it work correctly.
-      #  In Linux it have only 2 major
-      #  digits.
+      # @note In Windows version parsed from path and may
+      #  content incorrect value - not
+      #  real 1C platform version see {#extract_version}. For platform > 8.2
+      #  if 1C platform instaled in standart directories it works correctly.
+      #
+      #  In linux version returns from method
+      #  {AssLauncher::Support::Linux.get_pkg_version}
       #
       # @api public
       # @return [Gem::Version]
@@ -77,6 +79,8 @@ module AssLauncher
       #  - In Linux 1V default install into path:
       #    +/opt/1C/v8.3/i386/1cv8+
       def extract_version(realpath)
+        return AssLauncher::Support::Linux.get_pkg_version(realpath)\
+          if platform.linux?
         extracted = realpath.to_s.split('/')[-3]
         extracted =~ /(\d+\.\d+\.?\d*\.?\d*)/i
         extracted = (Regexp.last_match(1).to_s.split('.')\
