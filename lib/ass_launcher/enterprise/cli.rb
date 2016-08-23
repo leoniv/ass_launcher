@@ -25,7 +25,8 @@ module AssLauncher
 
       # Return suitable run_mode see {DEFINED_MODES} for
       # 1c client
-      # @param cl [BinaryWrapper::ThinClient, BinaryWrapper::ThickClient]
+      # @param cl [BinaryWrapper::ThinClient, BinaryWrapper::ThickClient,
+      #  WebClient]
       # @return [Array<Symbol>]
       def self.defined_modes_for(cl)
         return [DEFINED_MODES[1]] if cl.instance_of? BinaryWrapper::ThinClient

@@ -45,7 +45,7 @@ module AssLauncher
           `dpkg -S #{file}`.strip.split(':')[0]
         end
 
-        # (see Rpm.version)
+        # (see Rpm.manager?)
         def self.manager?
           `dpkg --version`
           return true

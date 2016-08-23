@@ -57,7 +57,7 @@ module AssLauncher
       end
     end
 
-    # Caching {WinaryWrappers} instances
+    # Caching {BinaryWrapper} instances
     # @api private
     # @return [Hash]
     def self.binary_wrappers_cache
