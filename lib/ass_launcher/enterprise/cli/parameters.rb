@@ -129,17 +129,10 @@ module AssLauncher
 
         def auto_binary_matcher(arg)
           return arg if arg.is_a? BinaryMatcher
-          return BinaryMatcher.new(auto_client, arg) if arg.is_a? String
-          BinaryMatcher.new auto_client
+          return BinaryMatcher.auto(modes, arg) if arg.is_a? String
+          BinaryMatcher.auto modes
         end
         private :auto_binary_matcher
-
-        def auto_client
-          return :web if modes == [:webclient]
-          return :thick unless modes.include?(:enterprise)
-          :all
-        end
-        private :auto_client
 
         # Parameter expects string value
         class StringParam

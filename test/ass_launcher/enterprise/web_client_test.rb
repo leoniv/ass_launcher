@@ -2,7 +2,6 @@ require 'test_helper'
 
 class WebClientTest < Minitest::Test
   def test_const
-    assert_equal :webclient, AssLauncher::Enterprise::WebClient::RUN_MODE
     assert_equal({ disable_startup_messages: true },
       AssLauncher::Enterprise::WebClient::DEFAULT_OPTIONS)
     assert_equal '999',
@@ -22,13 +21,13 @@ class WebClientTest < Minitest::Test
   def test_cli_spec
     inst = cls.new
     AssLauncher::Enterprise::Cli::CliSpec.expects(:for)\
-      .with(inst, AssLauncher::Enterprise::WebClient::RUN_MODE).returns(:cli_spec)
+      .with(inst, :webclient).returns(:cli_spec)
     assert_equal :cli_spec, inst.cli_spec
   end
 
   def test_runmodes
     inst = cls.new
-    assert_equal([AssLauncher::Enterprise::WebClient::RUN_MODE], inst.run_modes)
+    assert_equal([:webclient], inst.run_modes)
   end
 
   def builder_stub

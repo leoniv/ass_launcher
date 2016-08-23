@@ -139,7 +139,7 @@ class BinaryWrapperTest < Minitest::Test
 
   def test_run_modes
     inst = inst_
-    AssLauncher::Enterprise::Cli.expects(:defined_modes_for).with(inst).\
+    AssLauncher::Enterprise::Cli.expects(:defined_modes_for).with(inst.class).\
       returns(:defined_modes_for)
     assert_equal :defined_modes_for, inst.run_modes
   end

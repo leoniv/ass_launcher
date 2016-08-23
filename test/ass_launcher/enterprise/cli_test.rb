@@ -24,36 +24,18 @@ class TestEnetrpriseCli < Minitest::Test
 
   def test_defined_modes_for_thin_client
     expect = [:enterprise]
-    cl = mock
-    cl.expects(:instance_of?)
-      .with(AssLauncher::Enterprise::BinaryWrapper::ThinClient)
-      .returns(true)
-    assert_equal expect, mod.defined_modes_for(cl)
+    klass = AssLauncher::Enterprise::BinaryWrapper::ThinClient
+    assert_equal expect, mod.defined_modes_for(klass)
   end
   def test_defined_modes_for_thick_client
     expect = [:createinfobase, :enterprise, :designer]
-    cl = mock
-    cl.expects(:instance_of?)
-      .with(AssLauncher::Enterprise::BinaryWrapper::ThinClient)
-      .returns(false)
-    cl.expects(:instance_of?)
-      .with(AssLauncher::Enterprise::BinaryWrapper::ThickClient)
-      .returns(true)
-    assert_equal expect, mod.defined_modes_for(cl)
+    klass = AssLauncher::Enterprise::BinaryWrapper::ThickClient
+    assert_equal expect, mod.defined_modes_for(klass)
   end
   def test_defined_modes_for_web_client
     expect = [:webclient]
-    cl = mock
-    cl.expects(:instance_of?)
-      .with(AssLauncher::Enterprise::BinaryWrapper::ThinClient)
-      .returns(false)
-    cl.expects(:instance_of?)
-      .with(AssLauncher::Enterprise::BinaryWrapper::ThickClient)
-      .returns(false)
-    cl.expects(:instance_of?)
-      .with(AssLauncher::Enterprise::WebClient)
-      .returns(true)
-    assert_equal expect, mod.defined_modes_for(cl)
+    klass = AssLauncher::Enterprise::WebClient
+    assert_equal expect, mod.defined_modes_for(klass)
   end
 end
 

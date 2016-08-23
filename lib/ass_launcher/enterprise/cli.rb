@@ -14,6 +14,7 @@ module AssLauncher
       require 'ass_launcher/enterprise/cli/arguments_builder'
       require 'ass_launcher/enterprise/cli/parameters'
       require 'ass_launcher/enterprise/cli/spec_dsl'
+      require 'ass_launcher/enterprise/cli/binary_matcher'
 
       # Run modes defined for 1C Enterprise clients
       DEFINED_MODES = [
@@ -25,14 +26,14 @@ module AssLauncher
 
       # Return suitable run_mode see {DEFINED_MODES} for
       # 1c client
-      # @param cl [BinaryWrapper::ThinClient, BinaryWrapper::ThickClient,
+      # @param klass [BinaryWrapper::ThinClient, BinaryWrapper::ThickClient,
       #  WebClient]
       # @return [Array<Symbol>]
-      def self.defined_modes_for(cl)
-        return [DEFINED_MODES[1]] if cl.instance_of? BinaryWrapper::ThinClient
+      def self.defined_modes_for(klass)
+        return [DEFINED_MODES[1]] if klass == BinaryWrapper::ThinClient
         return DEFINED_MODES - [:webclient]\
-          if cl.instance_of? BinaryWrapper::ThickClient
-        return [DEFINED_MODES.last] if cl.instance_of? WebClient
+          if klass == BinaryWrapper::ThickClient
+        return [DEFINED_MODES.last] if klass == WebClient
       end
 
       # Load and 1C Enterprise cli specifications
@@ -109,7 +110,6 @@ module AssLauncher
         end
         # :nocov:
       end
-      require 'ass_launcher/enterprise/cli/binary_matcher'
     end
   end
 end

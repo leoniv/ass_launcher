@@ -9,8 +9,7 @@ module AssLauncher
     # @example (see #location)
     class WebClient
       require 'uri'
-      # Run mode defined for webclient
-      RUN_MODE = :webclient
+      require 'ass_launcher/enterprise/cli'
       DEFAULT_OPTIONS = { disable_startup_messages: true }
       DEFAULT_VERSION = '999'
 
@@ -44,13 +43,18 @@ module AssLauncher
 
       # @return [Cli::CliSpec]
       def cli_spec
-        AssLauncher::Enterprise::Cli::CliSpec.for(self, RUN_MODE)
+        AssLauncher::Enterprise::Cli::CliSpec.for(self, run_modes[0])
       end
 
-      # (see RUN_MODE)
-      # @return [Array] see {RUN_MODE}
+      # Defined run modes fo client
+      # @return (see Cli.defined_modes_for)
+      def self.run_modes
+        Cli.defined_modes_for(self)
+      end
+
+      # (see .run_modes)
       def run_modes
-        [RUN_MODE]
+        self.class.run_modes
       end
 
       def build_args(&block)

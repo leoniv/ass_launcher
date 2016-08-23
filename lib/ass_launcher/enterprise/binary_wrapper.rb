@@ -165,8 +165,14 @@ module AssLauncher
 
       # @api public
       # @return (see Cli.defined_modes_for)
-      def run_modes
+      def self.run_modes
         Cli.defined_modes_for(self)
+      end
+
+      # @api public
+      # @return (see Cli.defined_modes_for)
+      def run_modes
+        self.class.run_modes
       end
 
       # @api public
