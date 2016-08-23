@@ -154,7 +154,7 @@ mode :enterprise do
   end
 
   group :debug do
-    url '/DebuggerURL', 'url отладчика'
+    url '/Debug', 'указывает, что запуск 1С:Предприятия выполняется в отладочном режиме'
   end
 end
 
