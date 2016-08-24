@@ -12,8 +12,8 @@ module AssLauncher
 
         # Define 1C:Enterprise version for defined CLI specifications
         # @param v [String] 1C:Enterprise verion string
-        def enterprise_version(v = '0')
-          @enterprise_version ||= Gem::Version.new(v)
+        def enterprise_version(v)
+          enterprise_versions << Gem::Version.new(v)
         end
 
         # Describe run modes specifications
@@ -35,28 +35,19 @@ module AssLauncher
             { desc: _t(desc), priority: priority }
         end
 
-        # Binary matcher for 1C:Enterprise thick client for which CLI parameter
-        # defined
-        # @param v [String] version of 1C:Enterprise client
-        # @return [Cli::BinaryMatcher]
-        def thick_client(v = '>= 0')
-          BinaryMatcher.new(:thick, v)
+
+        # Return 1C client identifier see {BinaryMatcher::ALL_CLIENTS}
+        # @return [Symbol] :thin
+        def thick
+          :thick
         end
 
-        # Binary matcher for 1C:Enterprise thin client for which CLI parameter
-        # defined
-        # @param (see #thick_client)
-        # @return (see #thick_client)
-        def thin_client(v = '>= 0')
-          BinaryMatcher.new(:thin, v)
+        def thin
+          :thin
         end
 
-        # Binary matcher for 1C:Enterprise thin and thick clients for
-        # which CLI parameter defined
-        # @param (see #thick_client)
-        # @return (see #thick_client)
-        def all_client(v = '>= 0')
-          BinaryMatcher.new(:all, v)
+        def web
+          :web
         end
 
         # Block to define CLI parameters for run modes
@@ -99,23 +90,22 @@ module AssLauncher
         # @param name [String] name of 1C:Enterprise CLI parameter
         # @param desc [String] description of 1C:Enterprise CLI parameter for
         #   build help message
-        # @param binary_matcher [Cli::BinaryMatcher] uses DSL:
-        #  {#thick_client}, {#thin_client} or {#all_client}. If +nil+ uses
-        #  {Cli::BinaryMatcher} for all 1C clients and all client's
-        #  verions like returns {#all_client} method
+        # @param clients [Array] uses DSL:
+        #  {#thick}, {#thin} or {#web}. On default uses
+        #  array for all 1C clients {BinaryMatcher::ALL_CLIENTS}
         # @param options (see Cli::Parameters::StringParam#initialize)
         # @return [Cli::Parameters::Path]
-        def path(name, desc, binary_matcher = nil, **options, &block)
+        def path(name, desc, *clients, **options, &block)
           new_param(Parameters::Path, name, desc,
-                    binary_matcher, **options, &block)
+                    clients, **options, &block)
         end
 
         # Path with exist validation.
         # @see #path
         # @param (see #path)
         # @return (see #path)
-        def path_exist(name, desc, binary_matcher = nil, **options, &block)
-          path(name, desc, binary_matcher, options.merge(mast_be: :exist),
+        def path_exist(name, desc, *clients, **options, &block)
+          path(name, desc, clients, options.merge(mast_be: :exist),
                &block)
         end
 
@@ -123,8 +113,8 @@ module AssLauncher
         # @see #path
         # @param (see #path)
         # @return (see #path)
-        def path_not_exist(name, desc, binary_matcher = nil, **options, &block)
-          path(name, desc, binary_matcher,
+        def path_not_exist(name, desc, *clients, **options, &block)
+          path(name, desc, clients,
                options.merge(mast_be: :not_exist),
                &block)
         end
@@ -133,18 +123,18 @@ module AssLauncher
         # Subparameters defines in the block.
         # @param (see #path)
         # @return [Cli::Parameters::StringParam]
-        def string(name, desc, binary_matcher = nil, **options, &block)
+        def string(name, desc, *clients, **options, &block)
           new_param(Parameters::StringParam, name, desc,
-                    binary_matcher, **options, &block)
+                    clients, **options, &block)
         end
 
         # Define {Cli::Parameters::Flag} parameter and him subparameters.
         # Subparameters defines in the block.
         # @param (see #path)
         # @return [Cli::Parameters::Flag]
-        def flag(name, desc, binary_matcher = nil, **options, &block)
+        def flag(name, desc, *clients, **options, &block)
           new_param(Parameters::Flag, name, desc,
-                    binary_matcher, **options, &block)
+                    clients, **options, &block)
         end
 
         # Define {Cli::Parameters::Switch} parameter and him subparameters.
@@ -152,9 +142,9 @@ module AssLauncher
         # @note use helper {#switch_list} for build +:switch_list+ option
         # @param (see #path)
         # @return [Cli::Parameters::Switch]
-        def switch(name, desc, binary_matcher = nil, **options, &block)
+        def switch(name, desc, *clients, **options, &block)
           new_param(Parameters::Switch, name, desc,
-                    binary_matcher, **options, &block)
+                    clients, **options, &block)
         end
 
         # Define {Cli::Parameters::Chose} parameter and him subparameters.
@@ -162,9 +152,9 @@ module AssLauncher
         # @note use helper {#chose_list} for build +:chose_list+ option
         # @param (see #path)
         # @return [Cli::Parameters::Chose]
-        def chose(name, desc, binary_matcher = nil, **options, &block)
+        def chose(name, desc, *clients, **options, &block)
           new_param(Parameters::Chose, name, desc,
-                    binary_matcher, **options, &block)
+                    clients, **options, &block)
         end
 
         # Define {Cli::Parameters::StringParam} parameter suitable for
@@ -172,9 +162,9 @@ module AssLauncher
         # @note It initialize +:value_validator+ option with +Proc+
         # @param (see #path)
         # @return [Cli::Parameters::StringParam]
-        def url(name, desc, binary_matcher = nil, **options, &block)
+        def url(name, desc, *clients, **options, &block)
           options[:value_validator] = url_value_validator(name)
-          string(name, desc, binary_matcher, **options, &block)
+          string(name, desc, clients, **options, &block)
         end
 
         def url_value_validator(n)
@@ -195,9 +185,9 @@ module AssLauncher
         # @note It initialize +:value_validator+ option with +Proc+
         # @param (see #path)
         # @return [Cli::Parameters::StringParam]
-        def num(name, desc, binary_matcher = nil, **options, &block)
+        def num(name, desc, *clients, **options, &block)
           options[:value_validator] = num_value_validator(name)
-          string(name, desc, binary_matcher, **options, &block)
+          string(name, desc, clients, **options, &block)
         end
 
         def num_value_validator(n)
@@ -213,13 +203,20 @@ module AssLauncher
         end
         private :num_value_validator
 
+        # Restrict parameter
+        # @param name (see #path)
+        # @return (see DslHelpers#restrict_params)
+        def restrict(name)
+          restrict_params(name)
+        end
+
         # Stub for skipped parameter. Many 1C:Enterprise CLI parameters is not
         # imprtant for describe in {Cli::CliSpec}. For define it fact, you can
         # use this method.
         # @todo may be registring skipped parameter for worning?
         # @param (see #path)
         # @return [nil]
-        def skip(name, desc = '', binary_matcher = nil, **options, &block)
+        def skip(name, desc = '', *clients, **options, &block)
           # nop
         end
       end # SpecDsl
