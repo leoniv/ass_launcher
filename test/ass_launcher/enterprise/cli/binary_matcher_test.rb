@@ -106,4 +106,14 @@ class TestBinaryMatcher < Minitest::Test
     inst.expects(:match_version?).with(:bw).returns(false)
     refute inst.match?(:bw)
   end
+
+  def test_attr_writer
+    inst = cls.new
+    assert_raises ArgumentError do
+      inst.requirement = :requirement
+    end
+    expected = Gem::Version::Requirement.new('~> 9999')
+    inst.requirement = expected
+    assert_equal expected, inst.requirement
+  end
 end

@@ -34,9 +34,14 @@ module AssLauncher
         private_class_method :satisfied?
 
         attr_reader :clients, :requirement
-        def initialize(clients = ALL_CLIENTS, version = '>= 0')
-          @clients = clients
+        def initialize(clients = nil, version = '>= 0')
+          @clients = clients || ALL_CLIENTS
           @requirement = Gem::Requirement.new version
+        end
+
+        def requirement=(r)
+          fail ArgumentError unless r.is_a? Gem::Version::Requirement
+          @requirement = r
         end
 
         def match?(binary_wrapper)
