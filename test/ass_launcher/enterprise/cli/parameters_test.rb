@@ -48,6 +48,26 @@ class CliParametersTest < Minitest::Test
     refute inst.match?(:binary_wrapper, :run_mode)
   end
 
+  def stub_binary_matcher
+    Class.new(AssLauncher::Enterprise::Cli::BinaryMatcher) do
+      def initialize
+
+      end
+    end.new
+  end
+
+  def test_match_version?
+    requirement = mock
+    requirement.responds_like Gem::Version::Requirement.new '> 0'
+    requirement.expects(:satisfied_by?).with(:version).returns(:satisfied)
+    binary_matcher = mock
+    binary_matcher.responds_like stub_binary_matcher
+    binary_matcher.expects(:requirement).returns(requirement)
+    inst = param
+    inst.expects(:binary_matcher).returns(binary_matcher)
+    assert_equal :satisfied, inst.match_version?(:version)
+  end
+
   def test_to_sym
     inst = param
     inst.expects(:name).returns('Name')
@@ -174,29 +194,29 @@ class CliParametersTest < Minitest::Test
     end
   end
 
-  def test_auto_binary_matcher
-    inst = param
-    inst.expects(:auto_client).returns(:all)
-    assert_instance_of AssLauncher::Enterprise::Cli::BinaryMatcher,
-      inst.send(:auto_binary_matcher, nil)
+  def cls_binary_matcher
+    AssLauncher::Enterprise::Cli::BinaryMatcher
   end
 
-  def test_auto_client_web
+  def test_auto_binary_matcher_by_matcher
+    cls_binary_matcher.expects(:auto).never
     inst = param
-    inst.expects(:modes).returns([:webclient])
-    assert_equal :web, inst.send(:auto_client)
+    expects = cls_binary_matcher.new
+    assert_equal expects, inst.send(:auto_binary_matcher, expects)
   end
 
-  def test_auto_client_thick
+  def test_auto_binary_matcher_by_string
+    cls_binary_matcher.expects(:auto).with(:modes, 'string').returns(:matcher)
     inst = param
-    inst.expects(:modes).returns([:createinfobase, :designer]).twice
-    assert_equal :thick, inst.send(:auto_client)
+    inst.expects(:modes).returns(:modes)
+    assert_equal :matcher, inst.send(:auto_binary_matcher, 'string')
   end
 
-  def test_auto_client_all
+  def test_auto_binary_matcher_by_not_string
+    cls_binary_matcher.expects(:auto).with(:modes).returns(:matcher)
     inst = param
-    inst.expects(:modes).returns([:enterprise, :createinfobase, :designer]).twice
-    assert_equal :all, inst.send(:auto_client)
+    inst.expects(:modes).returns(:modes)
+    assert_equal :matcher, inst.send(:auto_binary_matcher, :not_string)
   end
 end
 
@@ -418,9 +438,12 @@ class CliAllParametersTest < Minitest::Test
 
   def test_add
     inst = new_inst
-    inst << 1
-    inst << 2
-    inst << 3
+    inst.expects(:fail_if_difined).with(1, :version)
+    inst.expects(:fail_if_difined).with(2, :version)
+    inst.expects(:fail_if_difined).with(3, :version)
+    inst.add 1, :version
+    inst.add 2, :version
+    inst.add 3, :version
     assert_equal [1,2,3], inst.parameters
   end
 
@@ -441,9 +464,9 @@ class CliAllParametersTest < Minitest::Test
     list.expects(:'<<').with(p).twice
     inst = new_inst
     inst.expects(:new_list).returns(list)
-    inst.add p
-    inst + p
-    inst << p
+    3.times do
+      inst.parameters << p
+    end
     actual = inst.to_parameters_list(:binary_wrapper, :run_mode)
     assert_equal list, actual
   end
@@ -463,8 +486,49 @@ class CliAllParametersTest < Minitest::Test
     p.expects(:parent).returns(:other_parent)
     inst = new_inst
     4.times do
-      inst << p
+      inst.parameters << p
     end
     assert_equal [p,p], inst.find(:Pname.to_s, :parent)
+  end
+
+  def test_fail_if_defined
+    p = mock
+    p.responds_like pstub
+    p.expects(:full_name).returns(:name)
+    inst = new_inst
+    inst.expects(:param_defined?).with(p, :v).returns(true)
+    assert_raises ArgumentError do
+      assert_nil inst.send(:fail_if_difined, p, :v)
+    end
+  end
+
+  def test_not_fail_if_not_defined
+    p = mock
+    p.responds_like pstub
+    inst = new_inst
+    inst.expects(:param_defined?).with(p, :v).returns(false)
+    assert_nil inst.send(:fail_if_difined, p, :v)
+  end
+
+  def test_param_defined?
+    p = mock
+    p.responds_like pstub
+    p.expects(:match_version?).with(:version).returns(true)
+    p.expects(:name).returns(:name)
+    p.expects(:parent).returns(:parent)
+    inst = new_inst
+    inst.expects(:find).with(:name, :parent).returns([p, p])
+    assert inst.param_defined? p, :version
+  end
+
+  def test_param_not_defined?
+    p = mock
+    p.responds_like pstub
+    p.expects(:match_version?).with(:version).returns(false).twice
+    p.expects(:name).returns(:name)
+    p.expects(:parent).returns(:parent)
+    inst = new_inst
+    inst.expects(:find).with(:name, :parent).returns([p, p])
+    refute inst.param_defined? p, :version
   end
 end

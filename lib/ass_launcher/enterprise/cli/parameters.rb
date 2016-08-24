@@ -51,6 +51,10 @@ module AssLauncher
           binary_matcher.match?(binary_wrapper) && modes.include?(run_mode)
         end
 
+        def match_version?(version)
+          binary_matcher.requirement.satisfied_by? version
+        end
+
         def to_sym
           name.downcase.to_sym
         end
@@ -323,11 +327,24 @@ module AssLauncher
             @parameters ||= []
           end
 
-          def <<(p)
+          def add(p, version)
+            fail_if_difined(p, version)
             self.parameters << p
           end
-          alias_method :"+", :"<<"
-          alias_method :add, :"<<"
+
+          def fail_if_difined(p, version)
+            fail ArgumentError,
+                 "Parameter #{p.full_name} alrady defined for version"\
+                 " #{version}" if param_defined? p, version
+          end
+          private :fail_if_difined
+
+          def param_defined?(p, version)
+            find(p.name, p.parent).each do |p|
+              return true if p.match_version? version
+            end
+            false
+          end
 
           def to_parameters_list(binary_wrapper, run_mode)
             r = new_list
