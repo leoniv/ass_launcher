@@ -317,6 +317,39 @@ module AssLauncher
             fail NotImplementedError
           end
         end
+
+        class AllParameters
+          def parameters
+            @parameters ||= []
+          end
+
+          def <<(p)
+            self.parameters << p
+          end
+          alias_method :"+", :"<<"
+          alias_method :add, :"<<"
+
+          def to_parameters_list(binary_wrapper, run_mode)
+            r = new_list
+            parameters.each do |p|
+              r << p if p.match? binary_wrapper, run_mode
+            end
+            r
+          end
+
+          def new_list
+             ParametersList.new
+          end
+          private :new_list
+
+          # @return [Array] of parameters
+          def find(name, parent)
+            parameters.select do |p|
+              p.to_sym == name.downcase.to_sym &&
+              p.parent == parent
+            end
+          end
+        end
       end
     end
   end

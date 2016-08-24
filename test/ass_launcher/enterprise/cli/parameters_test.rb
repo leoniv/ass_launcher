@@ -406,3 +406,65 @@ class CliStringParamTest < Minitest::Test
     end
   end
 end
+
+class CliAllParametersTest < Minitest::Test
+  def new_inst
+    AssLauncher::Enterprise::Cli::Parameters::AllParameters.new
+  end
+
+  def test_parameters
+    assert_equal [], new_inst.parameters
+  end
+
+  def test_add
+    inst = new_inst
+    inst << 1
+    inst << 2
+    inst << 3
+    assert_equal [1,2,3], inst.parameters
+  end
+
+  def pstub
+    Class.new(AssLauncher::Enterprise::Cli::Parameters::StringParam) do
+      def initialize
+
+      end
+    end.new
+  end
+
+  def test_to_parmeters_list
+    p = mock
+    p.responds_like pstub
+    p.expects(:match?).with(:binary_wrapper, :run_mode).returns(true).twice
+    p.expects(:match?).with(:binary_wrapper, :run_mode).returns(false)
+    list = mock
+    list.expects(:'<<').with(p).twice
+    inst = new_inst
+    inst.expects(:new_list).returns(list)
+    inst.add p
+    inst + p
+    inst << p
+    actual = inst.to_parameters_list(:binary_wrapper, :run_mode)
+    assert_equal list, actual
+  end
+
+  def test_new_list
+    assert_instance_of AssLauncher::Enterprise::Cli::Parameters::ParametersList,
+      new_inst.send(:new_list)
+  end
+
+  def test_find
+    p = mock
+    p.responds_like pstub
+    p.expects(:to_sym).returns(:pname).twice
+    p.expects(:parent).returns(:parent).twice
+    p.expects(:to_sym).returns(:other_name)
+    p.expects(:to_sym).returns(:pname)
+    p.expects(:parent).returns(:other_parent)
+    inst = new_inst
+    4.times do
+      inst << p
+    end
+    assert_equal [p,p], inst.find(:Pname.to_s, :parent)
+  end
+end
