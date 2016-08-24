@@ -33,7 +33,7 @@ class DslHelpersTest < Minitest::Test
   end
 
   def test_parameters
-    assert_instance_of AssLauncher::Enterprise::Cli::Parameters::ParametersList,
+    assert_instance_of AssLauncher::Enterprise::Cli::Parameters::AllParameters,
       dsl_helpered.parameters
   end
 
@@ -62,22 +62,7 @@ class DslHelpersTest < Minitest::Test
     assert_equal :c, dh.send(:current_parent)
   end
 
-  def test_new_param_not_matched
-    p = mock
-    p.expects(:match?).with(:binary_wrapper, :run_mode).returns(false)
-    klass = mock
-    klass.expects(:new).with(:name, :desc, :binary_matcher,
-                            :current_group, :current_modes,
-                            :current_parent, {options:''}).returns(p)
-    dh = dsl_helpered
-    dh.expects(:current_modes).returns(:current_modes)
-    dh.expects(:current_group).returns(:current_group)
-    dh.expects(:current_parent).returns(:current_parent)
-    dh.expects(:parameters).never
-    dh.send(:new_param, klass, :name, :desc, :binary_matcher, {options:''})
-  end
-
-  def test_new_param_matched
+  def test_new_param
     p = mock
     p.expects(:match?).with(:binary_wrapper, :run_mode).returns(true)
     klass = mock
@@ -92,10 +77,10 @@ class DslHelpersTest < Minitest::Test
     parameters.expects(:<<).with(p)
     dh.expects(:parameters).returns(parameters)
     dh.expects(:eval_sub_params).never
-    dh.send(:new_param, klass, :name, :desc, :binary_matcher, {options:''})
+    dh.send(:new_param, klass, :name, :desc, :clients, {options:''})
   end
 
-  def test_new_param_matched_with_subparameters_block
+  def test_new_param_with_subparameters_block
     p = mock
     p.expects(:match?).with(:binary_wrapper, :run_mode).returns(true)
     klass = mock
@@ -130,5 +115,53 @@ class DslHelpersTest < Minitest::Test
       z[:value] = :set
     end
     assert_equal({:value=>:set}, zonde)
+  end
+
+  def test_new_binary_matcher_with_clients
+    skip
+  end
+
+  def test_new_binary_matcher_without_clients
+    skip
+  end
+
+  def test_from_version
+    skip
+  end
+
+  def test_to_version
+    skip
+  end
+
+  def test_to_current_version
+    skip
+  end
+
+  def test_from_current_version
+    skip
+  end
+
+  def test_current_version
+    skip
+  end
+
+  def test_eneterprise_verions
+    skip
+  end
+
+  def test_get_parameters
+    skip
+  end
+
+  def test_restrict_parameter_from_version
+    skip
+  end
+
+  def test_restrict_params
+    skip
+  end
+
+  def test_add_parameter
+    skip
   end
 end
