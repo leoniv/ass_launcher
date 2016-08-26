@@ -218,6 +218,48 @@ class CliParametersTest < Minitest::Test
     inst.expects(:modes).returns(:modes)
     assert_equal :matcher, inst.send(:auto_binary_matcher, :not_string)
   end
+
+  def test_childs
+    assert_equal [], param.childs
+  end
+
+  def test_add_child
+    array = mock
+    array.expects(:'<<').with(:param).returns(:child)
+    inst = param
+    inst.expects(:childs).returns(array)
+    assert_equal :child, inst.add_child(:param)
+  end
+
+  def test_restrict_from
+    binary_matcher = mock
+    binary_matcher.expects(:requirement).returns(:requirement)
+    binary_matcher.expects(:requirement=).with(:new_requirement).returns(:new_requirement)
+    inst = param
+    inst.expects(:binary_matcher).returns(binary_matcher).twice
+    inst.expects(:restrict_childs).with(:version)
+    inst.expects(:match_version?).with(:version).returns(:true)
+    inst.expects(:restrict_v).with(:requirement, :version).returns(:new_requirement)
+    assert_equal :new_requirement, inst.restrict_from(:version)
+  end
+
+  def test_restrict_childs
+    p = mock
+    p.responds_like param
+    p.expects(:restrict_from).with(:version).times(3)
+    childs = [p, p, p]
+    inst = param
+    inst.expects(:childs).returns(childs)
+    assert_equal childs, inst.send(:restrict_childs, :version)
+  end
+
+  def test_restrict_v
+    inst = param
+    expects = Gem::Version::Requirement.new('>= 1', '< 12')
+    r = Gem::Version::Requirement.new('>= 1')
+    v = Gem::Version.new('12')
+    assert_equal expects, inst.send(:restrict_v, r, v)
+  end
 end
 
 class CliChoseParameterTest < Minitest::Test
@@ -361,7 +403,8 @@ class CliPathParameterTest < Minitest::Test
   end
 
   def test_def_options
-    assert cls.new('',nil ,nil, nil, nil, nil).default_options.key? :mast_be
+    assert cls.new('',nil ,nil, nil, nil, nil).send(:default_options)
+      .key? :mast_be
   end
 
   def test_to_args
@@ -392,6 +435,14 @@ class CliStringParamTest < Minitest::Test
     AssLauncher::Enterprise::Cli::Parameters::StringParam
   end
 
+  def parameter_stub
+    Class.new(cls) do
+      def initialize
+
+      end
+    end.new
+  end
+
   def test_initialize
     def_options = mock
     def_options.responds_like({})
@@ -399,14 +450,27 @@ class CliStringParamTest < Minitest::Test
     cls.any_instance.expects(:def_options).returns(def_options)
     cls.any_instance.expects(:auto_binary_matcher).with(:binary_matcher)\
       .returns(:binary_matcher)
-    inst = cls.new(:name, :desc, :binary_matcher, :group, :modes, :parent, {})
+    parent = mock
+    parent.responds_like parameter_stub
+    parent.expects(:add_child).with(is_a(cls))
+    inst = cls.new(:name, :desc, :binary_matcher, :group, :modes, parent, {})
     assert_equal :name, inst.name
     assert_equal :desc, inst.desc
     assert_equal :binary_matcher, inst.binary_matcher
     assert_equal :group, inst.group
     assert_equal :modes, inst.modes
-    assert_equal :parent, inst.parent
+    assert_equal parent, inst.parent
     assert_equal :options, inst.options
+  end
+
+  def test_initialize_with_nil_parent
+    cls.any_instance.expects(:auto_binary_matcher).with(:binary_matcher)
+    parent_nil = mock
+    parent_nil.responds_like parameter_stub
+    parent_nil.expects(:nil?).returns(true)
+    parent_nil.expects(:add_child).never
+    inst = cls.new(:name, :desc, :binary_matcher, :group, :modes, parent_nil)
+    assert_equal [], inst.childs
   end
 
   def test_to_args
@@ -530,5 +594,26 @@ class CliAllParametersTest < Minitest::Test
     inst = new_inst
     inst.expects(:find).with(:name, :parent).returns([p, p])
     refute inst.param_defined? p, :version
+  end
+
+  def test_opps!
+    inst = new_inst
+    assert_equal :p, inst.send(:oops!, nil, :p, :v)
+    p = mock
+    p.responds_like pstub
+    p.expects(:full_name)
+    assert_raises do
+      inst.send(:oops!, :not_nil, p, :v)
+    end
+  end
+
+  def test_find_for_version
+    p = mock
+    p.responds_like pstub
+    p.stubs(:match_version?).with(:version).returns(true, false)
+    inst = new_inst
+    inst.expects(:find).with(:name, :parent).returns([p, p])
+    inst.expects(:oops!).with(nil, p, :version).returns(p)
+    assert_equal p, inst.find_for_version(:name, :parent, :version)
   end
 end
