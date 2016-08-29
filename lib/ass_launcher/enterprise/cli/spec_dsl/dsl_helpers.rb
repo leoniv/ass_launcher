@@ -45,6 +45,8 @@ module AssLauncher
           private :current_parent
 
           def new_param(klass, name, desc, clients = [], **options, &block)
+            fail 'Group must be specifed' if current_group.nil?
+            fail 'Modes must be specifed' if current_modes.nil?
             p = klass.new(name, desc,
                           new_binary_matcher(clients),
                           current_group,
@@ -53,6 +55,27 @@ module AssLauncher
             eval_sub_params(p, &block) if block_given?
           end
           private :new_param
+
+          def change_param(name, &block)
+            p = get_parameter(name)
+            old_g = current_group
+            old_m = current_modes
+            self.current_group = p.group
+            self.current_modes = p.modes
+            eval_sub_params(p, &block) if block_given?
+            self.current_group = old_g
+            self.current_modes = old_m
+          end
+          private :change_param
+
+          def get_parameter(name)
+            p = parameters.find_for_version(name,
+                                            current_parent,
+                                            current_version)
+            fail "Parameter #{name} not found for #{current_version}." unless p
+            p
+          end
+          private :get_parameter
 
           def new_binary_matcher(clients)
             clients = nil if clients.size == 0
@@ -63,26 +86,20 @@ module AssLauncher
           def add_parameter(p)
             parameters.add p, current_version
           end
-          :add_parameter
+          private :add_parameter
 
           # @return [nil]
-          def restrict_params(name)
+          def restrict_params(name, v)
             get_parameters(name).each do |p|
-              restrict_parameter_from_version(p, current_version)
+              p.restrict_from(v)
             end
             nil
           end
           private :restrict_params
 
-          def restrict_parameter_from_version(p, v)
-            p.binary_matcher.requirement = to_version(p.requirement, v) if\
-              p.binary_matcher.requrement.satisfied_by? v
-          end
-          private :restrict_parameter_from_version
-
           def get_parameters(name)
             p = parameters.find(name, current_parent)
-            fail "Parameter #{name} not found." unless p.size == 0
+            fail "Parameter #{name} not found." if p.size == 0
             p
           end
           private :get_parameters
@@ -98,6 +115,29 @@ module AssLauncher
             @enterprise_versions ||= []
           end
 
+          def add_enterprise_versions(v)
+            fail ArgumentError, 'Invalid version sequences. Expects version >'\
+              " #{current_version} but given #{v}" unless v > current_version
+            enterprise_versions << v
+          end
+          private :add_enterprise_versions
+
+          def reset_all
+            reset_group
+            reset_modes
+          end
+          private :reset_all
+
+          def reset_group
+            self.current_group = nil
+          end
+          private :reset_group
+
+          def reset_modes
+            self.current_modes = nil
+          end
+          private :reset_modes
+
           def current_version
             enterprise_versions.last
           end
@@ -107,16 +147,6 @@ module AssLauncher
             from_version current_version
           end
           private :from_current_version
-
-          def to_current_version(requirement)
-            to_version(requirement, current_version)
-          end
-          private :to_current_version
-
-          def to_version(r, v)
-            Gem::Version::Requirement.new r.to_s.split(','), "< #{v}"
-          end
-          private :to_version
 
           def from_version(v)
             Gem::Version::Requirement.new ">= #{v}"

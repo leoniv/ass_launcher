@@ -13,7 +13,8 @@ module AssLauncher
         # Define 1C:Enterprise version for defined CLI specifications
         # @param v [String] 1C:Enterprise verion string
         def enterprise_version(v)
-          enterprise_versions << Gem::Version.new(v)
+          reset_all
+          add_enterprise_versions Gem::Version.new(v)
         end
 
         # Describe run modes specifications
@@ -59,6 +60,7 @@ module AssLauncher
           fail 'method `mode` block required' unless block_given?
           self.current_modes = modes
           instance_eval(&block)
+          reset_modes
         end
 
         # Block to grouping CLI parameters into parameters group.
@@ -72,6 +74,7 @@ module AssLauncher
           fail 'method `group` block required' unless block_given?
           self.current_group = key
           instance_eval(&block)
+          reset_group
         end
 
         # Build switch or chose list for CLI parameters clases:
@@ -203,11 +206,16 @@ module AssLauncher
         end
         private :num_value_validator
 
-        # Restrict parameter
+        # Restrict parameter recursively with all subparameters
         # @param name (see #path)
         # @return (see DslHelpers#restrict_params)
         def restrict(name)
-          restrict_params(name)
+          restrict_params(name, current_version)
+        end
+
+        # Change specifications of subparameters for parameter +name+
+        def change(name, &block)
+          change_param name, &block
         end
 
         # Stub for skipped parameter. Many 1C:Enterprise CLI parameters is not
