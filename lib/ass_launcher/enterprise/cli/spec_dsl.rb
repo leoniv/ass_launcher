@@ -38,15 +38,19 @@ module AssLauncher
 
 
         # Return 1C client identifier see {BinaryMatcher::ALL_CLIENTS}
-        # @return [Symbol] :thin
+        # @return [Symbol] :thick
         def thick
           :thick
         end
 
+        # Return 1C client identifier see {BinaryMatcher::ALL_CLIENTS}
+        # @return [Symbol] :thin
         def thin
           :thin
         end
 
+        # Return 1C client identifier see {BinaryMatcher::ALL_CLIENTS}
+        # @return [Symbol] :web
         def web
           :web
         end
@@ -56,12 +60,17 @@ module AssLauncher
         # @raise if passed invalid 1C:Enterprise run mode
         # @raise if call without block
         def mode(*modes, &block)
-          fail "Undefined modes #{modes}" if (defined_modes & modes).size == 0
-          fail 'method `mode` block required' unless block_given?
+          fail_if_wrong_modes modes
+          fail 'Block required' unless block_given?
           self.current_modes = modes
           instance_eval(&block)
           reset_modes
         end
+
+        def fail_if_wrong_modes(modes)
+          fail "Undefined modes #{modes}" if (defined_modes & modes).size == 0
+        end
+        private :fail_if_wrong_modes
 
         # Block to grouping CLI parameters into parameters group.
         # Group must be defined as {#define_group}
@@ -69,13 +78,18 @@ module AssLauncher
         # @raise if passed undefined group
         # @raise if call without block
         def group(key, &block)
-          fail "Undefined parameters group #{key}"\
-            unless parameters_groups.key? key
-          fail 'method `group` block required' unless block_given?
+          fail_if_wrong_group(key)
+          fail 'Block required' unless block_given?
           self.current_group = key
           instance_eval(&block)
           reset_group
         end
+
+        def fail_if_wrong_group(key)
+          fail "Undefined parameters group #{key}" unless parameters_groups
+            .key? key
+        end
+        private :fail_if_wrong_group
 
         # Build switch or chose list for CLI parameters clases:
         # {Cli::Parameters::Switch} or {Cli::Parameters::Chose}
@@ -108,7 +122,7 @@ module AssLauncher
         # @param (see #path)
         # @return (see #path)
         def path_exist(name, desc, *clients, **options, &block)
-          path(name, desc, clients, options.merge(mast_be: :exist),
+          path(name, desc, *clients, options.merge(must_be: :exist),
                &block)
         end
 
@@ -117,8 +131,8 @@ module AssLauncher
         # @param (see #path)
         # @return (see #path)
         def path_not_exist(name, desc, *clients, **options, &block)
-          path(name, desc, clients,
-               options.merge(mast_be: :not_exist),
+          path(name, desc, *clients,
+               options.merge(must_be: :not_exist),
                &block)
         end
 
@@ -147,7 +161,7 @@ module AssLauncher
         # @return [Cli::Parameters::Switch]
         def switch(name, desc, *clients, **options, &block)
           new_param(Parameters::Switch, name, desc,
-                    clients, **options, &block)
+                    clients, options, &block)
         end
 
         # Define {Cli::Parameters::Chose} parameter and him subparameters.
@@ -157,7 +171,7 @@ module AssLauncher
         # @return [Cli::Parameters::Chose]
         def chose(name, desc, *clients, **options, &block)
           new_param(Parameters::Chose, name, desc,
-                    clients, **options, &block)
+                    clients, options, &block)
         end
 
         # Define {Cli::Parameters::StringParam} parameter suitable for
@@ -167,7 +181,7 @@ module AssLauncher
         # @return [Cli::Parameters::StringParam]
         def url(name, desc, *clients, **options, &block)
           options[:value_validator] = url_value_validator(name)
-          string(name, desc, clients, **options, &block)
+          string(name, desc, clients, options, &block)
         end
 
         def url_value_validator(n)
@@ -190,7 +204,7 @@ module AssLauncher
         # @return [Cli::Parameters::StringParam]
         def num(name, desc, *clients, **options, &block)
           options[:value_validator] = num_value_validator(name)
-          string(name, desc, clients, **options, &block)
+          string(name, desc, clients, options, &block)
         end
 
         def num_value_validator(n)
@@ -206,14 +220,16 @@ module AssLauncher
         end
         private :num_value_validator
 
-        # Restrict parameter recursively with all subparameters
+        # Restrict already specified parameter +name+
+        # recursively with all subparameters
         # @param name (see #path)
         # @return (see DslHelpers#restrict_params)
         def restrict(name)
           restrict_params(name, current_version)
         end
 
-        # Change specifications of subparameters for parameter +name+
+        # Change specifications of subparameters for already
+        # specified parameter +name+
         def change(name, &block)
           change_param name, &block
         end

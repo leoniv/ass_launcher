@@ -180,8 +180,14 @@ class DslHelpersTest < Minitest::Test
 
   def test_current_version
     dh = dsl_helpered
-    dh.expects(:enterprise_versions).returns([1,2,3,:last])
+    dh.expects(:enterprise_versions).returns([1,2,3,:last]).twice
     assert_equal :last, dh.send(:current_version)
+  end
+
+  def test_current_version_deafult
+    dh = dsl_helpered
+    dh.expects(:enterprise_versions).returns([])
+    assert_equal Gem::Version.new('0'), dh.send(:current_version)
   end
 
   def test_enterprise_versions

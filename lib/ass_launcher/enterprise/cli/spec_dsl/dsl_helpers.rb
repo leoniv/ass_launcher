@@ -44,7 +44,7 @@ module AssLauncher
           end
           private :current_parent
 
-          def new_param(klass, name, desc, clients = [], **options, &block)
+          def new_param(klass, name, desc, clients = [], options = {}, &block)
             fail 'Group must be specifed' if current_group.nil?
             fail 'Modes must be specifed' if current_modes.nil?
             p = klass.new(name, desc,
@@ -139,6 +139,7 @@ module AssLauncher
           private :reset_modes
 
           def current_version
+            return Gem::Version.new('0') if enterprise_versions.last.nil?
             enterprise_versions.last
           end
           private :current_version
