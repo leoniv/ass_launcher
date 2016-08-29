@@ -244,11 +244,11 @@ module AssLauncher
         class Path < StringParam
           # Extends for {Parameters::DEFAULT_OPTIONS}.
           #
-          # Option: +:mast_be+ expects +:exist+ or +:not_exist+ values.
+          # Option: +:must_be+ expects +:exist+ or +:not_exist+ values.
           #
           # If +:exist+ given verified for path must be exists and
           # if +:not_exist+ given verified for pat must be not exists
-          DEFAULT_OPTIONS = Parameters::DEFAULT_OPTIONS.merge(mast_be: nil)
+          DEFAULT_OPTIONS = Parameters::DEFAULT_OPTIONS.merge(must_be: nil)
           include AssLauncher::Support::Platforms
 
           def default_options
@@ -257,8 +257,8 @@ module AssLauncher
           private :default_options
 
           # (see #switch_list)
-          def mast_be
-            options[:mast_be]
+          def must_be
+            options[:must_be]
           end
 
           def value(value)
@@ -270,7 +270,7 @@ module AssLauncher
           private :value
 
           def verify(path)
-            case mast_be
+            case must_be
             when :exist then mast_exists(path)
             when :not_exist then mast_not_exists(path)
             end

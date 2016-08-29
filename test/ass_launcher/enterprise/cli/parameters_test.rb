@@ -404,7 +404,7 @@ class CliPathParameterTest < Minitest::Test
 
   def test_def_options
     assert cls.new('',nil ,nil, nil, nil, nil).send(:default_options)
-      .key? :mast_be
+      .key? :must_be
   end
 
   def test_to_args
@@ -414,14 +414,14 @@ class CliPathParameterTest < Minitest::Test
   end
 
   def test_to_args_fail_if_exists
-    inst = cls.new('/PathParameter',nil,nil,nil,nil,:mast_be => :not_exist)
+    inst = cls.new('/PathParameter',nil,nil,nil,nil,:must_be => :not_exist)
     assert_raises ArgumentError do
       inst.to_args('.')
     end
   end
 
   def test_to_args_fail_if_not_exists
-    inst = cls.new('/PathParameter',nil,nil,nil,nil,:mast_be => :exist)
+    inst = cls.new('/PathParameter',nil,nil,nil,nil,:must_be => :exist)
     assert_raises ArgumentError do
       inst.to_args('./fake_path')
     end
