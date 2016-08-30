@@ -1,17 +1,5 @@
 require 'test_helper'
 
-class TestConfiguration < Minitest::Test
-  def config_
-    AssLauncher::Configuration.new
-  end
-  def test_platform_cli_cpec
-    config = config_
-    AssLauncher::Enterprise::Cli::CliSpec.expects(:load).returns(:cli_spec)
-    assert_equal :cli_spec, config.platform_cli_spec
-    assert_equal :cli_spec, config.platform_cli_spec
-  end
-end
-
 class TestEnetrpriseCli < Minitest::Test
   def mod
     AssLauncher::Enterprise::Cli
@@ -44,25 +32,47 @@ class TestEnetrpriseCliSpec < Minitest::Test
     AssLauncher::Enterprise::Cli::CliSpec
   end
 
-  def test_loader
-    loader = cls.send(:loader, :binary_wrapper, :run_mode)
-    assert_includes loader.class.included_modules, AssLauncher::Enterprise::Cli::SpecDsl
-    assert_equal :binary_wrapper, loader.binary_wrapper
-    assert_equal :run_mode, loader.run_mode
+  def test_initialize
+    inst = cls.new(:binary_wrapper, :run_mode)
+    assert_equal :binary_wrapper, inst.binary_wrapper
+    assert_equal :run_mode, inst.run_mode
   end
 
-  def stub_loader
-    Class.new do
-      def initialize
-
-      end
-    end.new
+  def test_for
+    cls.expects(:new).with(:binary_wrapper, :run_mode).returns(:cli_spec)
+    assert_equal :cli_spec, cls.for(:binary_wrapper, :run_mode)
   end
 
-  def test_smoky_test_for
-    fake_binary = stub({run_modes:[]})
-    AssLauncher::Enterprise::Cli::Parameters::StringParam\
-      .any_instance.expects(:match?).at_least_once.returns(false)
-    assert_instance_of cls, cls.for(fake_binary, :fake_mode)
+  def test_cli_def
+    inst = cls.new(nil, nil)
+    cls.expects(:cli_def).returns(:cli_def)
+    assert_equal :cli_def, inst.cli_def
+  end
+
+  def test_class_cli_def
+    cls.expects(:load_cli_def).returns(:cli_def)
+    assert_equal :cli_def, cls.cli_def
+    assert_equal :cli_def, cls.cli_def
+  end
+
+  def all_parameters_stub
+    AssLauncher::Enterprise::Cli::Parameters::AllParameters.new
+  end
+
+  def test_parameters
+    parameters = mock
+    parameters.responds_like all_parameters_stub
+    parameters.expects(:to_parameters_list).with(:binary_wrapper, :run_mode)
+      .returns(:parameters_for_binary_wrapper)
+    cli_def = mock
+    cli_def.expects(:parameters).returns(parameters)
+    inst = cls.new(:binary_wrapper, :run_mode)
+    inst.expects(:cli_def).returns(cli_def)
+    assert_equal :parameters_for_binary_wrapper, inst.parameters
+  end
+
+  def test_smoky_load_cli_def
+    actual = cls.send(:load_cli_def)
+    assert_equal AssLauncher::Enterprise::CliDef, actual
   end
 end

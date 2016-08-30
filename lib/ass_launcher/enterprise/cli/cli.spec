@@ -19,10 +19,6 @@
 # @example
 #  define_group :grou_name, 'grop description', 10 # => grou_name: {desc: 'grop description', priority: 10}
 
-# ==== Определение максимальной версии платформы для котророй определены параметры
-# При изменении спецификации требуется установить актуальный номер версии
-enterprise_version '8.2.17'
-
 # ==== Описание режимов запуска ====
 
 describe_mode :enterprise, 'Запуск в режиме предприятия', 'ENTERPRISE [parameters]'
@@ -39,6 +35,9 @@ define_group :packge_mode, 'Пакетный режим конфигуратор
 define_group :repository, 'Работа с хранилищем конфигурации', 50
 define_group :distribution, 'Cоздание файлов поставки и обновления', 60
 define_group :other, 'Прочие', 100
+
+# ==== Определение версии платформы для котророй определены параметры
+enterprise_version '8.2.17'
 
 # ==== Определения параметров ====
 
@@ -58,15 +57,7 @@ mode :enterprise, :designer, :createinfobase do
 end
 
 mode :webclient do
-  group :debug do
-  end
-
-  group :other do
-    chose  '/O', 'определяет скорость соединения', chose_list: chose_list(Normal: 'обычная', Low: 'низкая')
-  end
-
   group :authentication do
-    switch '/WA', 'аутентификация средствами операционной системы', switch_list: switch_list(:"+" => 'обязательное применение (значение по умолчанию)', :"-" => 'запрет применения')
     switch '/OIDA', 'применение OpenID аутентификации ', switch_list: switch_list(
     :'+' => 'использовать OpenID-аутентификацию (по умолчанию)',
     :'-' => 'не использовать OpenID-аутентификацию'
@@ -83,7 +74,7 @@ mode :enterprise, :designer, :webclient do
 
   group :other do
     string '/L', 'указывается код языка интерфейса платформы: ru - Русский, en - Английский, uk - Украинский и т.д. Полный список см. в документации 1С'
-    string '/Z', 'установка разделителей', all_client('>= 8.2.17')
+    string '/Z', 'установка разделителей'
   end
 end
 
@@ -102,6 +93,12 @@ mode :enterprise, :webclient do
       end)
     string '/VL', 'код локализации сеанса'
     flag '/UsePrivilegedMode', 'запуск в режиме привилегированного сеанса'
+    chose  '/O', 'определяет скорость соединения', thin, web, chose_list: chose_list(Normal: 'обычная', Low: 'низкая')
+  end
+
+  group :authentication do
+    switch '/WA', 'аутентификация средствами операционной системы', thin, web,
+      switch_list: switch_list(:"+" => 'обязательное применение (значение по умолчанию)', :"-" => 'запрет применения')
   end
 end
 
@@ -119,10 +116,10 @@ end
 
 mode :enterprise do
   group :connection do
-    url '/WS', 'url соединения c базой опубликованной через web сервер', thin_client('>= 8.2')
+    url '/WS', 'url соединения c базой опубликованной через web сервер', thin
     flag '/SAOnRestart', 'указывает на обязательность запроса пароля при перезапуске системы из данного сеанса работы'
-    flag '/NoProxy', 'запретить использование прокси', thin_client('>= 8.2')
-    flag '/Proxy', 'использовать указанные настройки прокси', thin_client('>= 8.2') do
+    flag '/NoProxy', 'запретить использование прокси', thin
+    flag '/Proxy', 'использовать указанные настройки прокси', thin do
       url '-PSrv', 'адрес прокси', required: true
       num '-PPort', 'порт прокси', required: true
       string '-PUser', 'имя пользователя прокси'
@@ -131,19 +128,17 @@ mode :enterprise do
   end
 
   group :authentication do
-    switch '/WA', 'аутентификация средствами операционной системы', switch_list: switch_list(:"+" => 'обязательное применение (значение по умолчанию)', :"-" => 'запрет применения')
     skip '/WSA'
-    string '/WSN', 'имя пользователя для аутентификации на веб-сервере', thin_client('>= 8.2')
-    string '/WSP', 'пароль пользователя для аутентификации на веб-сервере', thin_client('>= 8.2')
+    string '/WSN', 'имя пользователя для аутентификации на веб-сервере', thin
+    string '/WSP', 'пароль пользователя для аутентификации на веб-сервере', thin
   end
 
   group :other do
-    chose  '/O', 'определяет скорость соединения', thin_client('>= 8.2'), chose_list: chose_list(Normal: 'обычная', Low: 'низкая')
     skip '/AppAutoCheckVersion'
     skip '/AppAutoCheckMode'
     skip '/LogUI'
-    flag '/RunModeOrdinaryApplication', 'запуск толстого клиента в режиме обычного приложения  не зависимо от настроек', thick_client('>= 8.2')
-    flag '/RunModeManagedApplication', 'запуск толстого клиента в режиме управляемого приложения  не зависимо от настроек', thick_client('>= 8.2')
+    flag '/RunModeOrdinaryApplication', 'запуск толстого клиента в режиме обычного приложения  не зависимо от настроек', thick
+    flag '/RunModeManagedApplication', 'запуск толстого клиента в режиме управляемого приложения  не зависимо от настроек', thick
     string '/UC', 'код доступа для установки соединения с заблокированной базой'
     skip '/SLev'
     path_exist '/Execute', 'запуска внешней обработки в режиме 1С:Предприятие непосредственно после старта системы'

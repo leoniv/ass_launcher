@@ -1,12 +1,6 @@
 # encoding: utf-8
 
 module AssLauncher
-  class Configuration
-    # 1C Enterprise cli specifications text written on Cli::SpecDsl
-    def platform_cli_spec
-      @platform_cli_spec ||= Enterprise::Cli::CliSpec.load
-    end
-  end
   module Enterprise
     # @api private
     # 1C:Enterprise cli api wrapper
@@ -36,71 +30,58 @@ module AssLauncher
         return [DEFINED_MODES.last] if klass == WebClient
       end
 
-      # Load and 1C Enterprise cli specifications
-      # for buld cli api and cli api help
+      # 1C Enterprise cli specifications
+      # for {BinaryWrapper::ThinClient}, {BinaryWrapper::ThickClient}
+      # or for {WebClient} and specified +run_mode+
+      # TODO: refactoring delete run_mode
+      # @api public
       class CliSpec
-        def self.loader(binary, run_mode)
-          Class.new do
-            include AssLauncher::Enterprise::Cli::SpecDsl
-            attr_reader :run_mode, :binary_wrapper
-            def initialize(binary_wrapper, run_mode)
-              @binary_wrapper = binary_wrapper
-              @run_mode = run_mode
-            end
-          end.new(binary, run_mode)
-        end
-        private_class_method :loader
 
-        # @api private
-        # @todo In future, may be, should extract +cli.spec+ and use
-        #  configurable +cli.spec+ path
-        def self.load
-          spec = File.read(File.expand_path('../cli/cli.spec',__FILE__))
+        # TODO: refactoring delete run_mode
+        attr_reader :run_mode
+        alias_method :current_run_mode, :run_mode
+
+        # see +binary_wrapper+ parameter for {#initialize}
+        attr_reader :binary_wrapper
+        alias_method :current_binary_wrapper, :binary_wrapper
+
+        # @param (see Cli::Parameters::AllParameters#to_parameters_list)
+        # TODO: refactoring initialize(binary_wrapper)
+        def initialize(binary_wrapper, run_mode)
+          @run_mode = run_mode
+          @binary_wrapper = binary_wrapper
         end
 
-        # Max 1C Enterprise version
-        # for which defined parameters
-        # @return [Gem::Version]
-        attr_reader :enterprise_version
-        # Defined 1C Enterprise cli parameters
-        # @return [Parameters::ParamtersList]
-        attr_reader :parameters
-        # 1C Enterprise run modes descriptions for build cli api help
-        # @return (see Cli::SpecDsl#described_modes)
-        attr_reader :run_modes
-        # Description for 1C Enterprise cli parameters group for group
-        #  parameters in cli help
-        # @return (see Cli::SpecDsl#described_modes)
-        attr_reader :groups
-
-        attr_reader :current_run_mode
-
-        attr_reader :current_binary_wrapper
-
-        # @api private
-        def initialize(parameters, modes, groups,
-                       enterprise_version, binary_wrapper, run_mode)
-          @run_modes = modes.select { |k, v| binary_wrapper.run_modes.include? k }
-          @groups = groups
-          @enterprise_version = enterprise_version
-          @current_run_mode = run_mode
-          @current_binary_wrapper = binary_wrapper
-          @parameters = parameters
+        # Return parameters specified for
+        # 1C:Enterprise client wrappend into {#binary_wrapper}
+        # @return [Cli::Parameters::ParametersList]
+        def parameters
+          # TODO: refactoring parameters(run_mode)
+          # TODO: validate run_mode
+          cli_def.parameters.to_parameters_list(binary_wrapper, run_mode)
         end
+
+        # @return [CliDef]
+        def self.cli_def
+          @cli_def ||= load_cli_def
+        end
+
+        # (see .cli_def)
+        def cli_def
+          self.class.cli_def
+        end
+
+        def self.load_cli_def
+          require 'ass_launcher/enterprise/cli_def'
+          CliDef
+        end
+        private_class_method :load_cli_def
 
         # Build suitable cli specifications for 1C Enterprise binary type,
         # version and run mode
-        # @param binary [BinaryWrapper::ThinClient, BinaryWrapper::ThickClient]
-        # @param run_mode [Symbol] see {Cli::DEFINED_MODES}
-        def self.for(binary, run_mode)
-          l = loader(binary, run_mode)
-          l.instance_eval(AssLauncher.config.platform_cli_spec)
-          new(l.parameters,
-              l.described_modes,
-              l.parameters_groups,
-              l.enterprise_version,
-              binary,
-              run_mode)
+        # @param (see #initialize)
+        def self.for(binary_wrapper, run_mode)
+          new(binary_wrapper, run_mode)
         end
 
         # :nocov:
