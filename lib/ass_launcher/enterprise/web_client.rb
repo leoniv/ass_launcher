@@ -43,7 +43,7 @@ module AssLauncher
 
       # @return [Cli::CliSpec]
       def cli_spec
-        AssLauncher::Enterprise::Cli::CliSpec.for(self, run_modes[0])
+        @cli_spec ||= AssLauncher::Enterprise::Cli::CliSpec.for(self)
       end
 
       # Defined run modes fo client

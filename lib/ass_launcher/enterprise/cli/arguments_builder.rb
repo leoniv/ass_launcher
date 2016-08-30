@@ -86,35 +86,31 @@ module AssLauncher
         # @param run_mode [Symbol]
         # @return [Array] arguments for run 1C:Enterprise client
         def self.build_args(binary_wrapper, run_mode, &block)
-          new(binary_wrapper.cli_spec(run_mode)).build_args(&block)
+          new(binary_wrapper.cli_spec, run_mode).build_args(&block)
         end
 
-        attr_reader :cli_spec, :params_stack, :parent_parameter
-        private :cli_spec, :params_stack, :parent_parameter
+        attr_reader :cli_spec, :params_stack, :parent_parameter, :run_mode
+        private :cli_spec, :params_stack, :parent_parameter, :run_mode
         attr_accessor :builded_args
         protected :builded_args, :builded_args=
 
         # @param cli_spec [CliSpec]
         # @param parent_parameter [Cli::Parameters] parent for nested params
-        def initialize(cli_spec, parent_parameter = nil)
+        def initialize(cli_spec, run_mode, parent_parameter = nil)
           @builded_args = []
           @cli_spec = cli_spec
           @parent_parameter = parent_parameter
           @params_stack = []
+          @run_mode = run_mode
         end
-
-        def run_mode
-          cli_spec.current_run_mode
-        end
-        private :run_mode
 
         def defined_parameters
-          cli_spec.parameters
+          cli_spec.parameters(run_mode)
         end
         private :defined_parameters
 
         def binary_wrapper
-          cli_spec.current_binary_wrapper
+          cli_spec.binary_wrapper
         end
         private :binary_wrapper
 
@@ -129,7 +125,7 @@ module AssLauncher
         end
 
         def nested_builder(parent_parameter)
-          self.class.new(cli_spec, parent_parameter)
+          self.class.new(cli_spec, run_mode, parent_parameter)
         end
         private :nested_builder
 

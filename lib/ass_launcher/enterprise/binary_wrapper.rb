@@ -176,10 +176,9 @@ module AssLauncher
       end
 
       # @api public
-      # @param run_mode [Symbol] run mode 1C binary.
       # @return [Cli::CliSpec]
-      def cli_spec(run_mode = :enterprise)
-        Cli::CliSpec.for(self, fail_if_wrong_mode(run_mode))
+      def cli_spec
+        @cli_spec ||= Cli::CliSpec.for(self)
       end
 
       def build_args(run_mode, &block)

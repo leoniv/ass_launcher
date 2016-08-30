@@ -21,7 +21,8 @@ class WebClientTest < Minitest::Test
   def test_cli_spec
     inst = cls.new
     AssLauncher::Enterprise::Cli::CliSpec.expects(:for)\
-      .with(inst, :webclient).returns(:cli_spec)
+      .with(inst).returns(:cli_spec)
+    assert_equal :cli_spec, inst.cli_spec
     assert_equal :cli_spec, inst.cli_spec
   end
 

@@ -144,28 +144,12 @@ class BinaryWrapperTest < Minitest::Test
     assert_equal :defined_modes_for, inst.run_modes
   end
 
-  def cli_spec_stub
-    Class.new(AssLauncher::Enterprise::Cli::CliSpec) do
-      def initialize
-
-      end
-    end
-  end
-
   def test_cli_spec
     inst = inst_
-    inst.expects(:fail_if_wrong_mode).with(:run_mode).returns(:run_mode)
-    AssLauncher::Enterprise::Cli::CliSpec.expects(:for).with(inst, :run_mode).\
+    AssLauncher::Enterprise::Cli::CliSpec.expects(:for).with(inst).\
       returns(:cli_spec)
-    assert_equal :cli_spec, inst.cli_spec(:run_mode)
-  end
-
-  def builder_stub
-    Class.new(AssLauncher::Enterprise::Cli::ArgumentsBuilder) do
-      def initialize
-
-      end
-    end
+    assert_equal :cli_spec, inst.cli_spec
+    assert_equal :cli_spec, inst.cli_spec
   end
 
   def test_build_args

@@ -33,18 +33,17 @@ class TestEnetrpriseCliSpec < Minitest::Test
   end
 
   def test_initialize
-    inst = cls.new(:binary_wrapper, :run_mode)
+    inst = cls.new(:binary_wrapper)
     assert_equal :binary_wrapper, inst.binary_wrapper
-    assert_equal :run_mode, inst.run_mode
   end
 
   def test_for
-    cls.expects(:new).with(:binary_wrapper, :run_mode).returns(:cli_spec)
-    assert_equal :cli_spec, cls.for(:binary_wrapper, :run_mode)
+    cls.expects(:new).with(:binary_wrapper).returns(:cli_spec)
+    assert_equal :cli_spec, cls.for(:binary_wrapper)
   end
 
   def test_cli_def
-    inst = cls.new(nil, nil)
+    inst = cls.new(nil)
     cls.expects(:cli_def).returns(:cli_def)
     assert_equal :cli_def, inst.cli_def
   end
@@ -66,9 +65,9 @@ class TestEnetrpriseCliSpec < Minitest::Test
       .returns(:parameters_for_binary_wrapper)
     cli_def = mock
     cli_def.expects(:parameters).returns(parameters)
-    inst = cls.new(:binary_wrapper, :run_mode)
+    inst = cls.new(:binary_wrapper)
     inst.expects(:cli_def).returns(cli_def)
-    assert_equal :parameters_for_binary_wrapper, inst.parameters
+    assert_equal :parameters_for_binary_wrapper, inst.parameters(:run_mode)
   end
 
   def test_smoky_load_cli_def
