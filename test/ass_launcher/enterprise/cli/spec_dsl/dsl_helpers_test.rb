@@ -5,13 +5,6 @@ class DslHelpersTest < Minitest::Test
   def dsl_helpered
     Class.new do
       include AssLauncher::Enterprise::Cli::SpecDsl::DslHelpers
-      def binary_wrapper
-        :binary_wrapper
-      end
-
-      def run_mode
-        :run_mode
-      end
     end.new
   end
 

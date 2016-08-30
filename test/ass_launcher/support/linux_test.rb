@@ -88,10 +88,12 @@ module LinuxPkgManagerTest
     assert_equal @pkg_version_result, mod.version(@file_path)
   end
 
+  # :nocov:
   def test_smoky
     skip "Isn\'t #{mod.name} Linux disrib" unless mod.manager?
     assert_instance_of Gem::Version, mod.version('/bin/ls')
   end
+  # :nocov:
 end
 
 class LinuxiDebTest < Minitest::Test
