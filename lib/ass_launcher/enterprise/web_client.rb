@@ -14,7 +14,7 @@ module AssLauncher
       DEFAULT_VERSION = '999'
 
       # @return [URI] base uri location
-      attr_accessor :uri
+      attr_reader :uri
       # Version for 1C:Enterprise platform
       attr_reader :version
       # @return [WebClient]
@@ -41,6 +41,10 @@ module AssLauncher
         @uri ||= URI(uri || '')
       end
 
+      def uri=(uri)
+        @uri = URI(uri)
+      end
+
       # @return [Cli::CliSpec]
       def cli_spec
         @cli_spec ||= AssLauncher::Enterprise::Cli::CliSpec.for(self)
@@ -58,9 +62,14 @@ module AssLauncher
       end
 
       def build_args(&block)
-        Cli::ArgumentsBuilder.new(cli_spec).build_args(&block)
+        args_builder.build_args(&block)
       end
       private :build_args
+
+      def args_builder
+        Cli::ArgumentsBuilder.new(cli_spec, run_modes[0])
+      end
+      private :args_builder
 
       # Build URI location for connect to web infobase.
       #

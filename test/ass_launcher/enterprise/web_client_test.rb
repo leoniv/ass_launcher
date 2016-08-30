@@ -39,20 +39,35 @@ class WebClientTest < Minitest::Test
     end.new
   end
 
+  def test_uri=
+    inst = cls.new
+    assert_equal URI(''), inst.uri
+    inst.uri = URI('http://example.com')
+    assert_equal URI('http://example.com'), inst.uri
+  end
+
   def test_build_args
     zonde = {}
     inst = cls.new
-    inst.expects(:cli_spec).returns(:cli_spec)
     builder = mock
     builder.responds_like(builder_stub)
     builder.expects(:build_args).yields(zonde).returns(:args)
-    AssLauncher::Enterprise::Cli::ArgumentsBuilder.expects(:new).with(:cli_spec)\
-      .returns(builder)
+    inst.expects(:args_builder).returns(builder)
     actual = inst.send(:build_args) do |zonde|
       zonde[:called] = true
     end
     assert_equal :args, actual
     assert zonde[:called]
+  end
+
+  def test_arg_builder
+    inst = cls.new
+    inst.expects(:cli_spec).returns(:cli_spec)
+    actual = inst.send(:args_builder)
+    assert_instance_of AssLauncher::Enterprise::Cli::ArgumentsBuilder,
+      actual
+    assert_equal :cli_spec, actual.send(:cli_spec)
+    assert_equal :webclient, actual.send(:run_mode)
   end
 
   def location(zonde = nil, &block)
