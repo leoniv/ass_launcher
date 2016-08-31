@@ -269,8 +269,12 @@ class CliChoseParameterTest < Minitest::Test
   end
 
   def test_to_args
-    inst = cls.new('/ChoseList',nil,nil,nil,nil,{chose_list: {ch1:'', ch2:''}})
+    inst = cls.new('/ChoseList',nil,nil,nil,nil,{chose_list: {ch1:'', ch2:'',
+    0 => ''}})
     assert_equal ['/ChoseList', 'ch2'], inst.to_args('ch2')
+    assert_equal ['/ChoseList', 'Ch2'], inst.to_args('Ch2')
+    assert_equal ['/ChoseList', 'Ch2'], inst.to_args(:Ch2)
+    assert_equal ['/ChoseList', '0'], inst.to_args(0)
   end
 
   def test_to_args_invalid_value
@@ -364,7 +368,8 @@ class CliSwitchParameterTest < Minitest::Test
     inst = cls.new('/Fucking1C?',nil,nil,nil,nil,
                    {switch_list:{:yes=>'Is true', :true=>'Is true true'}})
     assert_equal ['/Fucking1C?yes',''], inst.to_args('yes')
-    assert_equal ['/Fucking1C?true',''], inst.to_args('true')
+    assert_equal ['/Fucking1C?True',''], inst.to_args('True')
+    assert_equal ['/Fucking1C?True',''], inst.to_args(:True)
     assert_raises ArgumentError do
       inst.to_args('not')
     end

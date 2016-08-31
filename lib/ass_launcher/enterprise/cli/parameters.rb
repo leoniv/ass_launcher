@@ -290,15 +290,6 @@ module AssLauncher
           private :mast_not_exists
         end
 
-        # Chose parameter expects argunment value from chose_list
-        class Chose < StringParam
-          def validate(value)
-            fail ArgumentError, "Wrong value `#{value}' for #{name} parameter"\
-              unless chose_list.key? value.to_sym
-          end
-          private :validate
-        end
-
         # Flag parameter not expects argument
         class Flag < StringParam
           # Returns self as 1C:Enterprise CLI argumets array like
@@ -314,6 +305,21 @@ module AssLauncher
             false
           end
         end
+
+        # Chose parameter expects argunment value from chose_list
+        class Chose < StringParam
+          def validate(value)
+            fail ArgumentError, "Wrong value `#{value}' for #{name} parameter"\
+              unless valid?(value)
+          end
+          private :validate
+
+          def valid?(value)
+            chose_list.keys.map(&:to_s).map(&:downcase).include?\
+              value.to_s.downcase
+          end
+        end
+
 
         # Switch parameter is most stupid CLI parameter of 1C:Enterprise.
         # Switch parameter expects argument value from +:switch_list+ or
@@ -343,12 +349,17 @@ module AssLauncher
           def switch_value(value)
             if switch_list
               fail ArgumentError, "Wrong value #{value} for parameter #{name}"\
-                unless switch_list.key? value.to_sym
+                unless valid?(value)
             end
             validate(value)
             options[:switch_value].call(value)
           end
           private :switch_value
+
+          def valid?(value)
+            switch_list.keys.map(&:to_s).map(&:downcase).include?\
+              value.to_s.downcase
+          end
         end
 
         # List of parameters defined for one version
