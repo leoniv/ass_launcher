@@ -16,10 +16,10 @@ module AssLauncher
         # Options for parameter
         DEFAULT_OPTIONS = {
           required: false,
-          value_validator: proc { |value| value },
+          value_validator: nil,
           switch_list: nil,
           chose_list: nil,
-          switch_value: proc { |value| value }
+          switch_value: nil
         }.freeze
 
         # Parameter name like it define in 1C cli api
@@ -127,7 +127,12 @@ module AssLauncher
 
         # (see #switch_list)
         def value_validator
-          options[:value_validator]
+          options[:value_validator] ||  proc { |value| value }
+        end
+
+        # (see #switch_list)
+        def switch_value
+          options[:switch_value] || proc { |value| value }
         end
 
         # (see #switch_list)
@@ -342,19 +347,19 @@ module AssLauncher
           private :value
 
           def key(value)
-            "#{name}#{switch_value(value)}"
+            "#{name}#{switch_value_get(value)}"
           end
           private :key
 
-          def switch_value(value)
+          def switch_value_get(value)
             if switch_list
               fail ArgumentError, "Wrong value #{value} for parameter #{name}"\
                 unless valid?(value)
             end
             validate(value)
-            options[:switch_value].call(value)
+            switch_value.call(value)
           end
-          private :switch_value
+          private :switch_value_get
 
           def valid?(value)
             switch_list.keys.map(&:to_s).map(&:downcase).include?\

@@ -56,6 +56,24 @@ module AssLauncher
           end
           private :new_param
 
+          def new_binary_matcher(clients)
+            return (inherid_binary_matcher || auto_binary_matcher) if\
+              clients.size == 0
+            BinaryMatcher.new(clients, from_current_version)
+          end
+          private :new_binary_matcher
+
+          def auto_binary_matcher
+            BinaryMatcher.auto(current_modes, from_current_version)
+          end
+          private :auto_binary_matcher
+
+          def inherid_binary_matcher
+            current_parent.binary_matcher if\
+              current_parent
+          end
+          private :inherid_binary_matcher
+
           def change_param(name, &block)
             p = get_parameter(name)
             old_g = current_group
@@ -76,12 +94,6 @@ module AssLauncher
             p
           end
           private :get_parameter
-
-          def new_binary_matcher(clients)
-            clients = nil if clients.size == 0
-            BinaryMatcher.new(clients, from_current_version)
-          end
-          private :new_binary_matcher
 
           def add_parameter(p)
             parameters.add p, current_version

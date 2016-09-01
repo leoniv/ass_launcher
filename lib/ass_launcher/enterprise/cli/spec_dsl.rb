@@ -181,7 +181,7 @@ module AssLauncher
         # @return [Cli::Parameters::StringParam]
         def url(name, desc, *clients, **options, &block)
           options[:value_validator] = url_value_validator(name)
-          string(name, desc, clients, options, &block)
+          string(name, desc, *clients, **options, &block)
         end
 
         def url_value_validator(n)
@@ -204,7 +204,7 @@ module AssLauncher
         # @return [Cli::Parameters::StringParam]
         def num(name, desc, *clients, **options, &block)
           options[:value_validator] = num_value_validator(name)
-          string(name, desc, clients, options, &block)
+          string(name, desc, *clients, **options, &block)
         end
 
         def num_value_validator(n)

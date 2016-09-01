@@ -25,7 +25,27 @@ class TestBinaryMatcher < Minitest::Test
     assert_equal [:web, :thin], cls.send(:auto_client, :modes)
   end
 
+  def test_auto_client_smoky
+    expected = {
+      [:enterprise] => [:thick, :thin],
+      [:designer] => [:thick],
+      [:createinfobase] => [:thick],
+      [:webclient] => [:web],
+      [:enterprise, :designer] => [:thick, :thin],
+      [:enterprise, :webclient] => [:web, :thick, :thin],
+      [:enterprise, :designer, :webclient] => [:web, :thick, :thin],
+      [:enterprise, :designer, :createinfobase] => [:thick, :thin]
+    }
+    expected.each do |modes, clients|
+      assert_equal clients, cls.send(:auto_client, modes)
+    end
+  end
+
   def test_satisfied?
+    assert cls.send(:satisfied?, [:enterprise], :thick)
+    assert cls.send(:satisfied?, [:enterprise], :thin)
+    refute cls.send(:satisfied?, [:enterprise], :web)
+
     assert cls.send(:satisfied?, [:webclient, :enterprise], :web)
     assert cls.send(:satisfied?, [:webclient, :enterprise], :thin)
     assert cls.send(:satisfied?, [:webclient, :enterprise], :thick)
@@ -51,6 +71,13 @@ class TestBinaryMatcher < Minitest::Test
     inst = cls.new(:client, '> 12')
     assert_instance_of Gem::Requirement, inst.requirement
     assert_equal :client, inst.clients
+  end
+
+  def test_initialize_nil_clients
+    inst = cls.new()
+    assert_instance_of Gem::Requirement, inst.requirement
+    assert_equal AssLauncher::Enterprise::Cli::BinaryMatcher::ALL_CLIENTS,
+      inst.clients
   end
 
   def test_initialize_def

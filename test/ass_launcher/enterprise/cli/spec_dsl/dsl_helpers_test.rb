@@ -141,19 +141,32 @@ class DslHelpersTest < Minitest::Test
     assert_equal [3, 4, 5], dh.enterprise_versions
   end
 
-  def test_new_binary_matcher_with_clients
+  def test_new_binary_matcher_without_clients_for_root_parameter
     AssLauncher::Enterprise::Cli::BinaryMatcher
-      .expects(:new).with(nil, :current_version).returns(:new_binary_matcher)
+      .expects(:auto).with(:modes, :from_current_version).returns(:new_binary_matcher)
     dh = dsl_helpered
-    dh.expects(:from_current_version).returns(:current_version)
+    dh.expects(:from_current_version).returns(:from_current_version)
+    dh.expects(:current_modes).returns(:modes)
+    dh.expects(:current_parent).returns(nil)
     assert_equal :new_binary_matcher, dh.send(:new_binary_matcher, [])
   end
 
-  def test_new_binary_matcher_without_clients
+  def test_new_binary_matcher_without_clients_for_sub_parameter
     AssLauncher::Enterprise::Cli::BinaryMatcher
-      .expects(:new).with([:web, :thin], :current_version).returns(:new_binary_matcher)
+      .expects(:auto).never
+    param = mock
+    param.responds_like param_stub
+    param.expects(:binary_matcher).returns(:inherid_binary_matcher)
     dh = dsl_helpered
-    dh.expects(:from_current_version).returns(:current_version)
+    dh.expects(:current_parent).returns(param).twice
+    assert_equal :inherid_binary_matcher, dh.send(:new_binary_matcher, [])
+  end
+
+  def test_new_binary_matcher_with_clients
+    AssLauncher::Enterprise::Cli::BinaryMatcher
+      .expects(:new).with([:web, :thin], :from_current_version).returns(:new_binary_matcher)
+    dh = dsl_helpered
+    dh.expects(:from_current_version).returns(:from_current_version)
     assert_equal :new_binary_matcher, dh.send(:new_binary_matcher, [:web, :thin])
   end
 

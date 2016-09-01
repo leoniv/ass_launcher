@@ -20,10 +20,26 @@ class CliParametersTest < Minitest::Test
 
   def test_default_opts
     refute default_options[:required]
-    assert_equal :value, default_options[:value_validator].call(:value)
+    assert_equal nil, default_options[:value_validator]
     assert_equal nil, default_options[:switch_list]
     assert_equal nil, default_options[:chose_list]
-    assert_equal :value, default_options[:switch_value].call(:value)
+    assert_equal nil, default_options[:switch_value]
+  end
+
+  def proc_options_test(option)
+    inst = param
+    inst.expects(:options).returns({}).twice
+    assert_instance_of Proc, inst.send(option)
+    assert_equal :value, inst.send(option).call(:value)
+
+  end
+
+  def test_switch_value
+    proc_options_test :switch_value
+  end
+
+  def test_value_validator
+    proc_options_test :value_validator
   end
 
   def test_attr_read_only

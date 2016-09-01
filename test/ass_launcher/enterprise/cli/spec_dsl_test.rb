@@ -163,10 +163,10 @@ class SpecDslTest < Minitest::Test
     dsl = spec_dsl
     dsl.expects(value_validator).returns(value_validator)
     dsl.expects(:string).
-      with(:name, :desc, [:clients],
+      with(:name, :desc, :client1, :client2,
            has_entries(:option=>'', :value_validator=>value_validator)).
       yields(zonde).returns(:p)
-    p = dsl.send(method, :name, :desc, :clients, options) do |z|
+    p = dsl.send(method, :name, :desc, :client1, :client2, **options) do |z|
       z[:value] = :set
     end
     assert_equal :p, p

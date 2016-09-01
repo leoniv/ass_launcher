@@ -15,8 +15,8 @@ module AssLauncher
         private_class_method :modes_for
 
         # Calculate matcher for +run_mode+
-        def self.auto(run_modes, version = '> 0')
-          new auto_client(run_modes), version
+        def self.auto(run_modes, requirement = '> 0')
+          new auto_client(run_modes), requirement
         end
 
         def self.auto_client(modes)
@@ -34,10 +34,16 @@ module AssLauncher
         private_class_method :satisfied?
 
         attr_reader :clients, :requirement
-        def initialize(clients = nil, version = '>= 0')
-          @clients = clients || ALL_CLIENTS
-          @requirement = Gem::Requirement.new version
+        def initialize(clients_array = nil, requirement = '>= 0')
+          @clients = nil_if_zsize(clients_array) || ALL_CLIENTS
+          @requirement = Gem::Requirement.new requirement.to_s
         end
+
+        def nil_if_zsize(array)
+          return nil if (array || []).size == 0
+          array
+        end
+        private :nil_if_zsize
 
         def requirement=(r)
           fail ArgumentError unless r.is_a? Gem::Version::Requirement
