@@ -1,0 +1,7 @@
+#!/usr/bin/env ruby
+
+require 'bundler/setup'
+require 'ass_launcher'
+require_relative '../test/test_helper/cmd'
+
+TestHelper::Cmd::Main.run
