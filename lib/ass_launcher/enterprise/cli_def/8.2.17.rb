@@ -127,7 +127,7 @@ module AssLauncher::Enterprise::CliDef
   end
 
   group :packge_mode do
-    mode :enterprise do
+    mode :designer do
       path '/DumpIB', 'выгрузка дампа информационной базы'
       path_exist '/RestoreIB', 'загрузка информационной базы из дампа'
       path '/DumpCfg', 'сохранение конфигурации в файл'
