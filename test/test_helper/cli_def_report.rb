@@ -17,13 +17,20 @@ module TestHelper
           s.split.map(&:to_sym).map(&:downcase)
         end
 
-        option ['-c', '--columns'], 'COLUMNS ...', 'specific report columns' do |s|
+        option ['-c', '--columns'], 'COLUMNS ...',
+          'specific report columns' do |s|
           s.split.map(&:to_sym).map(&:downcase)
         end
 
+        option ['-a', '--show-appiared-only'], :flag,
+          'show parameters which appiared in --version only'
+
         def execute
           $stdout.puts TestHelper::CliDefReport
-            .for(version, clients: clients, modes: modes).to_csv(columns)
+            .for(version, clients: clients, modes: modes,
+                 appiared_only: show_appiared_only?).to_csv(columns)
+        rescue ArgumentError => e
+          signal_usage_error e.message
         end
       end
     end
@@ -54,7 +61,10 @@ module TestHelper
     end
 
     DEF_FILER = {clients: nil,
-                 modes: nil}
+                 modes: nil,
+                 appiared_only: nil}
+
+    include TestHelper::CliDefValidator
 
     attr_reader :version
     def initialize(version = nil, **filter)
@@ -72,6 +82,10 @@ module TestHelper
       @filter[name] || instance_eval("valid_#{name}")
     end
 
+    def appiared_only
+      @filter[:appiared_only] || false
+    end
+
     def to_csv(columns = nil)
       _columns = columns || COLUMS
       r = "#{_columns.join(';')}\n"
@@ -82,24 +96,12 @@ module TestHelper
       r
     end
 
-    def valid_clients
-      AssLauncher::Enterprise::Cli::BinaryMatcher::ALL_CLIENTS
+    def clients
+      filter(:clients)
     end
 
-    def valid_modes
-      AssLauncher::Enterprise::Cli::DEFINED_MODES
-    end
-
-    def validate_clients
-      fail ArgumentError,
-        "Invalid clients. Expected #{valid_clients.map(&:to_s)}" if\
-        (filter(:clients) - valid_clients).size > 0
-    end
-
-    def validate_modes
-      fail ArgumentError,
-        "Invalid modes. Expected #{valid_modes.map(&:to_s)}" if\
-        (filter(:modes) - valid_modes).size > 0
+    def modes
+      filter(:modes)
     end
 
     def new_row(p)
@@ -159,14 +161,18 @@ module TestHelper
     def execute
       AssLauncher::Enterprise::Cli::CliSpec
         .cli_def.parameters.parameters.each do |p|
-        rows << new_row(p) if match_version? && not_filtred?(p)
+        rows << new_row(p) if match_version?(p) && not_filtred?(p)
       end
       self
     end
 
-    def match_version?
+    def match_version?(p)
       return true if version.nil?
-      p.match_version?(version)
+      if appiared_only
+        p.binary_matcher.requirement.to_s =~ /^>=\s*#{version}/
+      else
+        p.match_version?(version) unless appiared_only
+      end
     end
   end
 end
