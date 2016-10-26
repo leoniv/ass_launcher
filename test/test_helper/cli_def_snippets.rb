@@ -7,8 +7,30 @@ module TestHelper
   module CliDefSnippets
     require 'clamp'
     module Cmd
+      module Colorize
+        require 'coderay'
+        CodeRay::Encoders::Terminal::TOKEN_COLORS[:comment][:self] = "\e[1;34m"
+
+        def colorize_puts(str)
+          $stdout.puts colorize(str)
+        end
+
+        def colorize(str)
+          return CodeRay.scan(str, :ruby).terminal if colorize?
+          str
+        end
+        private :colorize
+
+        def self.included(klass)
+          klass.instance_eval do
+            option "--colorize", :flag, "colorize out"
+          end
+        end
+      end
+
       module SpecDsl
         class AbstractSpecDsl < Clamp::Command
+          include Colorize
           option ['-n', '--name'], 'NAME', 'parameter name', required: true
 
           def self.banner
@@ -27,13 +49,13 @@ module TestHelper
         class New < Clamp::Command
           BANNER = 'snippet for specification parameter'
           class Abstract < AbstractSpecDsl
-            option ['-s', '--subparameters'], 'NAMES ...',
+            option ['-s', '--subparameters'], 'SPECS ...',
               'generate reduced snippet'\
-              ' for subparameters like "fixme \'NAME\' ..."' do |s|
+              ' for subparameters like "type \'NAME\' ..."' do |s|
               s.split
             end
 
-              option ['-g', '--group'], 'GROUP', 'group of parameter.'\
+            option ['-g', '--group'], 'GROUP', 'group of parameter.'\
                 ' Uses with --modes' do |s|
               s.downcase.to_sym
             end
@@ -74,7 +96,8 @@ module TestHelper
               signal_usage_error 'Use --group & --modes together' if\
                 (group.nil? ^ modes.nil?)
               begin
-                $stdout.puts\
+                #$stdout.puts\
+                colorize_puts\
                   CliDefSnippets::SpecDsl::Param.new(dsl_method, **args)\
                   .to_snippet
               rescue ArgumentError => e
@@ -115,14 +138,29 @@ module TestHelper
             end
           end
 
-          subcommand 'string', String.banner, String
-          subcommand 'path', Path.banner, Path
-          subcommand 'path_exist', Path.banner, PathExist
-          subcommand 'path_not_exist', Path.banner, PathNotExist
-          subcommand 'url', Url.banner, Url
-          subcommand 'num', Num.banner, Num
-          subcommand 'switch', Switch.banner, Switch
-          subcommand 'chose', Chose.banner, Chose
+          DSL_METHODS = {
+            'string' => [String.banner, String],
+            'path' => [Path.banner, Path],
+            'path_exist' => [Path.banner, PathExist],
+            'path_not_exist' => [Path.banner, PathNotExist],
+            'url' => [Url.banner, Url],
+            'num' => [Num.banner, Num],
+            'switch' => [Switch.banner, Switch],
+            'chose' => [Chose.banner, Chose]
+          }
+
+          DSL_METHODS.each do |k,v|
+            subcommand k, *v
+          end
+
+#          subcommand 'string', String.banner, String
+#          subcommand 'path', Path.banner, Path
+#          subcommand 'path_exist', Path.banner, PathExist
+#          subcommand 'path_not_exist', Path.banner, PathNotExist
+#          subcommand 'url', Url.banner, Url
+#          subcommand 'num', Num.banner, Num
+#          subcommand 'switch', Switch.banner, Switch
+#          subcommand 'chose', Chose.banner, Chose
         end
 
         class Restrict < AbstractSpecDsl
@@ -130,9 +168,10 @@ module TestHelper
 
           def execute
             begin
-              $stdout.puts\
+              #$stdout.puts\
+              colorize_puts\
                 CliDefSnippets::SpecDsl::Restrict.new(name)\
-                .to_s
+                  .to_s
             rescue ArgumentError => e
               signal_usage_error e.message
             end
@@ -142,12 +181,33 @@ module TestHelper
         class Change < AbstractSpecDsl
           BANNER = 'snippet for change parameter specification'
 
+          option ['-s', '--subparameters'], 'SPECS ...',
+            'generate reduced snippet'\
+            ' for subparameters like "type \'NAME\' ..."' do |s|
+            s.split
+          end
+
+          def args
+            r = {}
+            r[:name] = name
+            r[:subparameters] = subparameters if subparameters
+#            r[:group] = group if group
+#            r[:modes] = modes if modes
+#            r[:desc] = desc if desc
+#            r[:clients] = clients if clients
+#            r[:value_validator] = validator? if validator?
+#            r[:required] = required? if required?
+            r
+          end
+
           def execute
             begin
-              $stdout.puts\
-                CliDefSnippets::SpecDsl::Restrict.new(name)\
-                .to_s
-              $stdout.puts fail('FIXME')
+#              colorize_puts\
+#                CliDefSnippets::SpecDsl::Restrict.new(name)\
+#                .to_s
+#              $stdout.puts fail('FIXME')
+              colorize_puts\
+                CliDefSnippets::SpecDsl::Change.new(name, **args).to_snippet
             rescue ArgumentError => e
               signal_usage_error e.message
             end
@@ -244,14 +304,32 @@ module TestHelper
           validate_clients if clients
         end
 
+        def DSL_METHODS
+          Cmd::SpecDsl::New::DSL_METHODS
+        end
+
+        def valid_dsl_method(method)
+          fail ArgumentError, "Invalid DSL method `#{method}'."\
+            " Expects: #{DSL_METHODS().keys.to_s}" unless\
+            DSL_METHODS().keys.include? method
+          method
+        end
+
         attr_reader :args, :dsl_method
+
+        def to_dsl_method(name)
+          signal_usage_error "--subparameters SPECS format:"\
+            " `ptype:pname' or `pname'" if name.split(':').size > 2
+          return '#FIXME: ptype' if name.split(':').size == 1
+          valid_dsl_method name.split(':')[0]
+        end
 
         def subparameters_to_s
           subparameters.map do |name|
-            Param.new('#FIXME: ptype',
-                      name: name,
+            Param.new(to_dsl_method(name),
+                      name: name.split(':').last,
                       desc: 'FIXME: description',
-                      clients: [:thin, :thick, :web],
+                      clients: clients,
                       required: '#FIXME: bool',
                       ).to_snippet
           end.join("\n")
@@ -294,8 +372,8 @@ module TestHelper
             h = ",#{nl(i)}chose_list: chose_list("
             r << "#{h}#{chose_list_stub(h.size - 3)})"\
           end
-          r << ",#{nl(i)}value_validator: proc {|value| fail 'FIXME'}"\
-            if value_validator
+          r << ",#{nl(i)}value_validator: proc {|value| fail 'FIXME'}" if\
+            value_validator
           r
         end
 
@@ -318,6 +396,27 @@ module TestHelper
         def to_snippet
           return wrrapp(to_s(subparameters_to_s)) if group
           to_s(subparameters_to_s)
+        end
+      end
+
+      class Change < Param
+        def subparameters_to_s
+          subparameters.map do |name|
+            r = ''
+            r << Restrict.new(name.split(':').last).to_s
+            r << "\n"
+            r << Param.new(to_dsl_method(name),
+                      name: name.split(':').last,
+                      desc: 'FIXME: description',
+                      clients: clients,
+                      required: '#FIXME: bool',
+                      ).to_snippet
+            r
+          end.join("\n")
+        end
+
+        def dsl_method
+          :change
         end
       end
     end

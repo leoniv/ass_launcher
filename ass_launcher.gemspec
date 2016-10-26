@@ -31,4 +31,5 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "mocha"
   spec.add_development_dependency "simplecov"
   spec.add_development_dependency "clamp"
+  spec.add_development_dependency "coderay"
 end
