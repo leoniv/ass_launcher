@@ -116,13 +116,18 @@ module AssLauncher
 
       def add_to_query(uri, q)
         if uri.query
-          uri.query += URI.escape "&#{q}" if q
+          uri.query += escape "&#{q}" if q
         else
-          uri.query = URI.escape "#{q}" if q
+          uri.query = escape "#{q}" if q
         end
         uri
       end
       private :add_to_query
+
+      def escape(s)
+        s.gsub(/\s/,'%20')
+      end
+      private :escape
 
       CLI_TO_WEB_PARAM_NAME = %r{^/}
 

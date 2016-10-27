@@ -397,9 +397,14 @@ module AssLauncher
           uri.user = wsn
           uri.password = wsp
           q = uri_query
-          uri.query = URI.escape q if q
+          uri.query = escape q if q
           uri
         end
+
+        def escape(s)
+          s.gsub(/\s/,'%20')
+        end
+        private :escape
 
         def uri_query
           r = ''

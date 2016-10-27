@@ -70,7 +70,7 @@ class WebClientTest < Minitest::Test
     assert_equal :webclient, actual.send(:run_mode)
   end
 
-  def location(zonde = nil, &block)
+  def location_(zonde = nil, &block)
     uri = mock
     uri.expects(:dup).returns(:uri)
     inst = cls.new
@@ -91,12 +91,12 @@ class WebClientTest < Minitest::Test
   end
 
   def test_location_without_block
-    assert_equal :new_uri, location
+    assert_equal :new_uri, location_
   end
 
   def test_location_with_block
     zonde = {}
-    actual = location(zonde) do |z|
+    actual = location_(zonde) do |z|
       z[:called] = true
     end
     assert_equal :new_uri, actual
