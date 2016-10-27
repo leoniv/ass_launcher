@@ -28,7 +28,7 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "rake", "~> 10.0"
   spec.add_development_dependency "minitest"
   spec.add_development_dependency "pry"
-  spec.add_development_dependency "mocha"
+  spec.add_development_dependency "mocha", "= 1.1.0"
   spec.add_development_dependency "simplecov"
   spec.add_development_dependency "clamp"
   spec.add_development_dependency "coderay"
