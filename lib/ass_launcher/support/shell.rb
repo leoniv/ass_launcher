@@ -31,7 +31,7 @@ module AssLauncher
 
   # Configuration for {AssLauncher}
   class Configuration
-    attr_accessor :logger
+    attr_reader :logger
 
     def initialize
       @logger = Loggining.default_logger
@@ -280,7 +280,7 @@ module AssLauncher
         class UnexpectedAssOut < StandardError; end
         class RunAssError < StandardError; end
         attr_reader :out, :assout, :exitstatus, :err
-        attr_accessor :expected_assout
+        attr_reader :expected_assout
         def initialize(exitstatus, out, err, assout)
           @err = err
           @out = out

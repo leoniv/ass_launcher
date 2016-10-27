@@ -153,7 +153,10 @@ module AssLauncher
 
       def self.included(base)
         base.fields.each do |f|
-          base.send(:attr_accessor, f.downcase.to_sym)
+          base.send(:attr_reader, f.downcase.to_sym) unless\
+            base.instance_methods.include? f.downcase.to_sym
+          base.send(:attr_writer, f.downcase.to_sym) unless\
+            base.instance_methods.include? "#{f.downcase}=".to_sym
         end
       end
 
@@ -232,8 +235,6 @@ module AssLauncher
           SERVER_FIELDS
         end
 
-        include ConnectionString
-
         def initialize(hash)
           fail ConnectionString::Error unless required_fields_received?(hash)
           _set_properties(hash)
@@ -310,6 +311,8 @@ module AssLauncher
           ['/S', "#{srvr}/#{ref}"]
         end
         private :to_args_private
+
+        include ConnectionString
       end
 
       # Connection string for file-infobases
@@ -322,8 +325,6 @@ module AssLauncher
         def self.fields
           required_fields | COMMON_FIELDS
         end
-
-        include ConnectionString
 
         def initialize(hash)
           fail ConnectionString::Error unless required_fields_received?(hash)
@@ -365,6 +366,8 @@ module AssLauncher
           ['/F', path.realpath.to_s]
         end
         private :to_args_private
+
+        include ConnectionString
       end
 
       # Connection string for infobases published on http server
@@ -377,8 +380,6 @@ module AssLauncher
         def self.fields
           required_fields | COMMON_FIELDS | HTTP_WEB_AUTH_FIELDS | PROXY_FIELDS
         end
-
-        include ConnectionString
 
         def initialize(hash)
           fail ConnectionString::Error unless required_fields_received?(hash)
@@ -433,6 +434,8 @@ module AssLauncher
           r
         end
         private :to_args_private_proxy
+
+        include ConnectionString
       end
     end
   end
