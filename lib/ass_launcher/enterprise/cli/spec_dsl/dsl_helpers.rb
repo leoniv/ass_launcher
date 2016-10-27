@@ -69,8 +69,8 @@ module AssLauncher
           private :auto_binary_matcher
 
           def inherid_binary_matcher
-            current_parent.binary_matcher if\
-              current_parent
+            BinaryMatcher.new(current_parent.binary_matcher.clients,
+                              from_current_version) if current_parent
           end
           private :inherid_binary_matcher
 

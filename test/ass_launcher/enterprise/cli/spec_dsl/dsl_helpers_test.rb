@@ -154,12 +154,19 @@ class DslHelpersTest < Minitest::Test
   def test_new_binary_matcher_without_clients_for_sub_parameter
     AssLauncher::Enterprise::Cli::BinaryMatcher
       .expects(:auto).never
+    binary_matcher = mock
+    binary_matcher.expects(:clients).returns([:thick, :thin])
     param = mock
     param.responds_like param_stub
-    param.expects(:binary_matcher).returns(:inherid_binary_matcher)
+    param.expects(:binary_matcher).returns(binary_matcher)
     dh = dsl_helpered
     dh.expects(:current_parent).returns(param).twice
-    assert_equal :inherid_binary_matcher, dh.send(:new_binary_matcher, [])
+    dh.expects(:from_current_version).returns('>= 12.3')
+
+    actual =  dh.send(:new_binary_matcher, [])
+
+    assert_equal [:thick, :thin], actual.clients
+    assert_equal '>= 12.3', actual.requirement.to_s
   end
 
   def test_new_binary_matcher_with_clients
