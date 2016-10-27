@@ -53,8 +53,8 @@ class WebClientTest < Minitest::Test
     builder.responds_like(builder_stub)
     builder.expects(:build_args).yields(zonde).returns(:args)
     inst.expects(:args_builder).returns(builder)
-    actual = inst.send(:build_args) do |zonde|
-      zonde[:called] = true
+    actual = inst.send(:build_args) do |z|
+      z[:called] = true
     end
     assert_equal :args, actual
     assert zonde[:called]

@@ -171,14 +171,14 @@ class BinaryWrapperTest < Minitest::Test
 
   def test_initialize_fail_path_not_file
     assert_raises ArgumentError do
-      inst = cls.new('.')
+      cls.new('.')
     end
   end
 
   def test_initialize_fail_unexpected_basename
     cls.any_instance.expects(:expects_basename).returns('v8i.exe')
     assert_raises ArgumentError do
-      inst = cls.new(__FILE__)
+      cls.new(__FILE__)
     end
   end
 end
@@ -244,7 +244,7 @@ class TestThickClient < Minitest::Test
 
   def test_to_command_with_block
     zonde = {}
-    block = lambda {|zonde| zonde[:call] = :yes}
+    block = lambda {|z| z[:call] = :yes}
     inst = inst_
     inst.expects(:mode).returns(:run_mode)
     inst.expects(:build_args).with(:run_mode).\

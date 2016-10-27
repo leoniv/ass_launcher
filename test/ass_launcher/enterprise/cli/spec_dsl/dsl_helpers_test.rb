@@ -129,7 +129,7 @@ class DslHelpersTest < Minitest::Test
     e = assert_raises ArgumentError do
       dh.send(:add_enterprise_versions, version)
     end
-    assert_match /Invalid version sequences\./, e.message
+    assert_match(/Invalid version sequences\./, e.message)
   end
 
   def test_add_enterprise_version

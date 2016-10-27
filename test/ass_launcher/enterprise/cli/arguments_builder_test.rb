@@ -158,7 +158,6 @@ class ArgumentsBuilderTest < Minitest::Test
   end
 
   def test_build_args_top_for_webclient
-    zonde = {}
     inst = cls.new(:cli_spec, nil, nil)
     inst.expects(:run_mode).returns(:webclient)
     actual = inst.build_args do
@@ -170,7 +169,6 @@ class ArgumentsBuilderTest < Minitest::Test
   end
 
   def test_build_args_top
-    zonde = {}
     cli_spec = mock
     inst = cls.new(cli_spec, nil, nil)
     inst.expects(:run_mode).returns(:enterprise)

@@ -42,7 +42,7 @@ class SpecDslTest < Minitest::Test
     e = assert_raises do
       dsl.send :mode, [5, 6, 7]
     end
-    assert_match /Undefined modes/, e.message
+    assert_match(/Undefined modes/, e.message)
   end
 
   def test_mode_fail_without_block
@@ -75,7 +75,7 @@ class SpecDslTest < Minitest::Test
     e = assert_raises do
       dsl.group(:bad_group)
     end
-    assert_match /Undefined parameters group/, e.message
+    assert_match(/Undefined parameters group/, e.message)
   end
 
   def test_group_fail_without_block
@@ -209,7 +209,6 @@ class SpecDslTest < Minitest::Test
   end
 
   def test_restrict
-    zonde = {}
     dsl = spec_dsl
     dsl.expects(:current_version).returns(:version)
     dsl.expects(:restrict_params).with(:name, :version).returns(nil)
