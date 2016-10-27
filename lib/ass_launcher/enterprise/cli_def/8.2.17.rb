@@ -8,7 +8,6 @@ module AssLauncher::Enterprise::CliDef
 
     mode :enterprise do
       url '/WS', 'url соединения c базой опубликованной через web сервер', thin
-      flag '/SAOnRestart', 'запрос пароля при перезапуске системы'
       flag '/NoProxy', 'запретить использование прокси', thin
       flag '/Proxy', 'использовать указанные настройки прокси', thin do
         url '-PSrv', 'адрес прокси', required: true
@@ -36,6 +35,7 @@ module AssLauncher::Enterprise::CliDef
     end
 
     mode :enterprise do
+      flag '/SAOnRestart', 'запрос пароля при перезапуске системы'
       switch '/WSA',
         'применение аутентификации пользователя на веб-сервере. Используется'\
         ' аутентификация средствами операционной системы',
@@ -73,7 +73,6 @@ module AssLauncher::Enterprise::CliDef
     mode :enterprise, :designer, :createinfobase do
       path_exist('/Out', 'файл используемый 1С вместо stdout и stderr.'\
                  ' Выводятся служебные сообщения и сообщения метода Сообщить()')
-      flag('/DisableStartupDialogs', 'подавляет gui диалоги')
       flag('/DisableStartupMessages', 'подавляет gui сообщения')
     end
 
@@ -297,4 +296,21 @@ module AssLauncher::Enterprise::CliDef
       end
     end
   end
+
+  skip '/AppAutoCheckVersion'
+  skip '/AppAutoCheckMode'
+  skip '/IBName'
+  skip '/IBConnectionString'
+  skip '/TComp'
+  skip '/DisplayAllFunctions'
+  skip '/SimulateServerCallDelay'
+  skip '/@'
+  skip '/DumpConfigFiles'
+  skip '/LoadConfigFiles'
+  skip '/ConvertFiles'
+  skip '/RunEnterprise'
+  skip '/DumpResult'
+  skip '/RegServer '
+  skip '/UnregServer'
+
 end
