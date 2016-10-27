@@ -47,7 +47,11 @@ module TestHelper
           end
 
           def tmp_ib_path
-            @tmp_ib_path ||= File.join(Dir.tmpdir, self.class.name.gsub('::','-'))
+            @tmp_ib_path ||= File.join(Dir.tmpdir, ib_dir_mame)
+          end
+
+          def ib_dir_mame
+            "#{self.class.name.gsub('::','-')}(#{version})"
           end
         end
 

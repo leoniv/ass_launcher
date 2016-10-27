@@ -107,6 +107,7 @@ module TestHelper
           end
 
           class String < New::Abstract; end
+          class Flag < String; end
           class Path < New::Abstract; end
           class PathExist < New::Abstract; end
           class PathNotExist < New::Abstract; end
@@ -140,6 +141,7 @@ module TestHelper
 
           DSL_METHODS = {
             'string' => [String.banner, String],
+            'flag' => [Flag.banner, Flag],
             'path' => [Path.banner, Path],
             'path_exist' => [Path.banner, PathExist],
             'path_not_exist' => [Path.banner, PathNotExist],
