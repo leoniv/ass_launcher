@@ -36,6 +36,7 @@ module TestHelper
   module Cmd
     require_relative './cli_def_report'
     require_relative './cli_def_snippets'
+    require_relative './designer'
 
     class Main < Clamp::Command
         subcommand 'cli-def-report',
@@ -45,6 +46,8 @@ module TestHelper
         subcommand 'cli-def-snippets',
           CliDefSnippets::Cmd::Main._banner,
           CliDefSnippets::Cmd::Main
+        subcommand 'designer', Designer::Cmd::Main.banner,
+          Designer::Cmd::Main
     end
   end
 
