@@ -312,5 +312,5 @@ module AssLauncher::Enterprise::CliDef
   skip '/DumpResult'
   skip '/RegServer '
   skip '/UnregServer'
-
+  skip 'WebclientMode'
 end

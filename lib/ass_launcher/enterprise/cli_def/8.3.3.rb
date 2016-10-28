@@ -4,8 +4,11 @@ module AssLauncher::Enterprise::CliDef
       flag('/DisableStartupDialogs', 'подавляет gui диалоги')
     end
 
-    mode :enterprise do
+    mode :enterprise, :webclient do
       flag '/iTaxi', 'режим интерфейса "Такси"'
+    end
+
+    mode :enterprise do
       chose '/AllowExecuteScheduledJobs',
         'управление запуском регламентных заданий для файловой информационной базы',
          chose_list: chose_list(:"-Off" => 'задания отключены для текущего сеанса',
@@ -14,6 +17,13 @@ module AssLauncher::Enterprise::CliDef
   end
 
   group :debug do
+    mode :webclient do
+      string 'TESTCLIENTID',
+        'запуск в качестве объекта автоматизированного тестирования.'\
+        ' Если значение идентификатора не указано или запущено несколько'\
+        ' клиентов с одним и тем же значением, то выбирается произвольный.'
+    end
+
     mode :enterprise do
       flag '/TESTMANAGER',
         'запуск в качестве менеджера автоматизированного тестирования'
@@ -27,7 +37,6 @@ module AssLauncher::Enterprise::CliDef
         num '-TPort', 'номер TCP порта. По умолчанию 1538'
         path '-File', 'журнал действий пользователя'
       end
-
     end
   end
 
