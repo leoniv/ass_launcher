@@ -54,6 +54,7 @@ module DevHelper
             fail ArgumentError,
               'specify designer cmd arguments like Ruby Array' unless\
               @args.is_a? Array
+            @args
           end
 
           def execute
