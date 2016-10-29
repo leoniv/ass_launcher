@@ -4,6 +4,9 @@ module AssLauncher::Enterprise::CliDef
       change '/DumpCfg' do
         string '-Extension', 'обработка расширения с указанным именем'
       end
+      change '/LoadCfg' do
+        string '-Extension', 'обработка расширения с указанным именем'
+      end
       change '/UpdateDBCfg' do
         switch '-Dynamic', 'признак использования динамического обновления',
                switch_list:\
