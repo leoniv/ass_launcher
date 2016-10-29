@@ -85,10 +85,10 @@ class RunAssResultTest < Minitest::Test
 
   def test_cut_ass_out
     inst = cls.new(0,'','','')
-    inst.expects(:assout).returns('X'*80).twice
-    assert_equal 'X'*80, inst.send(:cut_assout)
-    inst.expects(:assout).returns('X'*81).twice
-    assert_equal 'X'*80+'...', inst.send(:cut_assout)
+    inst.expects(:assout).returns('X'*640).twice
+    assert_equal 'X'*640, inst.send(:cut_assout)
+    inst.expects(:assout).returns('X'*641).twice
+    assert_equal 'X'*640+'...', inst.send(:cut_assout)
   end
 
   def test_sucsess_false_on_exitstatus

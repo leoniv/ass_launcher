@@ -299,9 +299,11 @@ module AssLauncher
           self
         end
 
+        CUT_ASSOUT_LENGTH = 640
+
         def cut_assout
-          return assout if assout.size <= 80
-          "#{assout[0, 80]}..."
+          return assout if assout.size <= CUT_ASSOUT_LENGTH
+          "#{assout[0, CUT_ASSOUT_LENGTH].strip}..."
         end
         private :cut_assout
 
