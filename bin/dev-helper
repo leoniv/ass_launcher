@@ -2,6 +2,6 @@
 
 require 'bundler/setup'
 require 'ass_launcher'
-require_relative '../test/test_helper/cmd'
+require_relative './lib/dev_helper'
 
-TestHelper::Cmd::Main.run
+DevHelper::Cmd::Main.run

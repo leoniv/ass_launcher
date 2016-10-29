@@ -1,4 +1,4 @@
-module TestHelper
+module DevHelper
   module Designer
     module Cmd
       require 'clamp'

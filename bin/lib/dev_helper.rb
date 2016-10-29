@@ -1,4 +1,4 @@
-module TestHelper
+module DevHelper
   module CliDefValidator
     require 'ass_launcher'
     def valid_clients
@@ -34,21 +34,26 @@ module TestHelper
   end
 
   module Cmd
-    require_relative './cli_def_report'
-    require_relative './cli_def_snippets'
-    require_relative './designer'
+    require_relative './dev_helper/cli_def_report'
+    require_relative './dev_helper/cli_def_snippets'
+    require_relative './dev_helper/designer'
 
     class Main < Clamp::Command
-        subcommand 'cli-def-report',
-          'generate, csv formatted, report on defined CLI parameters'\
-          ' and puts it into STDOUT. (see TestHelper::CliDefReport)',
-          CliDefReport::Cmd::Report
-        subcommand 'cli-def-snippets',
-          CliDefSnippets::Cmd::Main._banner,
-          CliDefSnippets::Cmd::Main
-        subcommand 'designer', Designer::Cmd::Main.banner,
-          Designer::Cmd::Main
+
+      subcommand 'show-version', 'show ass_launcher version' do
+        def execute
+          $stdout.puts AssLauncher::VERSION
+        end
+      end
+      subcommand 'cli-def-report',
+        'generate, csv formatted, report on defined CLI parameters'\
+        ' and puts it into STDOUT. (see DevHelper::CliDefReport)',
+        CliDefReport::Cmd::Report
+      subcommand 'cli-def-snippets',
+        CliDefSnippets::Cmd::Main._banner,
+        CliDefSnippets::Cmd::Main
+      subcommand 'designer', Designer::Cmd::Main.banner,
+        Designer::Cmd::Main
     end
   end
-
 end

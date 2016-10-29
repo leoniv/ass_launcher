@@ -1,5 +1,4 @@
-require 'ass_launcher'
-module TestHelper
+module DevHelper
   class CliDefReport
     module Cmd
       require 'clamp'
@@ -26,7 +25,7 @@ module TestHelper
           'show parameters which appiared in --version only'
 
         def execute
-          $stdout.puts TestHelper::CliDefReport
+          $stdout.puts DevHelper::CliDefReport
             .for(version, clients: clients, modes: modes,
                  appiared_only: show_appiared_only?).to_csv(columns)
         rescue ArgumentError => e
@@ -64,7 +63,7 @@ module TestHelper
                  modes: nil,
                  appiared_only: nil}
 
-    include TestHelper::CliDefValidator
+    include DevHelper::CliDefValidator
 
     attr_reader :version
     def initialize(version = nil, **filter)

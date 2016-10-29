@@ -3,7 +3,7 @@ class String
     gsub(/(.)([A-Z])/,'\1_\2').downcase
   end
 end
-module TestHelper
+module DevHelper
   module CliDefSnippets
     require 'clamp'
     module Cmd
@@ -230,7 +230,7 @@ module TestHelper
 
     module SpecDsl
       class Group
-        include TestHelper::CliDefValidator
+        include DevHelper::CliDefValidator
         attr_reader :name
         def initialize(name)
           @name = name
