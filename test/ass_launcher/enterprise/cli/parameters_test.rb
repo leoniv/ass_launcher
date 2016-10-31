@@ -449,6 +449,22 @@ class CliPathParameterTest < Minitest::Test
   end
 end
 
+class CliPathTwiceParameterTest < Minitest::Test
+  include PramArgumetRequire
+  include AssLauncher::Support::Platforms
+  def cls
+    AssLauncher::Enterprise::Cli::Parameters::PathTwice
+  end
+
+  def test_to_args
+    inst = cls.new('/PathTwiceParameter',nil,nil,nil,nil,nil)
+    assert_equal ['/PathTwiceParameter',
+                  platform.path('.').realdirpath.to_s,
+                  platform.path(__FILE__).realdirpath.to_s],
+      inst.to_args('.', __FILE__)
+  end
+end
+
 class CliStringParamTest < Minitest::Test
   include PramArgumetRequire
 

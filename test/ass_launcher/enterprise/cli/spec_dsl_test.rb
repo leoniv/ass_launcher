@@ -224,4 +224,9 @@ class SpecDslTest < Minitest::Test
     end
     assert zonde[:called]
   end
+
+  def test_path_twice
+    klass = AssLauncher::Enterprise::Cli::Parameters::PathTwice
+    param_dsl_method_test klass, :path_twice
+  end
 end

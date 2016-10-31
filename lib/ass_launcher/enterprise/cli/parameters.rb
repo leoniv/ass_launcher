@@ -237,7 +237,12 @@ module AssLauncher
 
           # Parameter require argumet
           def argument_require
-            true
+            arguments_count > 0
+          end
+
+          # Count of parameter argumets
+          def arguments_count
+            1
           end
         end
 
@@ -295,6 +300,20 @@ module AssLauncher
           private :mast_not_exists
         end
 
+        # In 8.3.8 platform add CLI parameters like as
+        # +/DumpExternalDataProcessorOrReportToFiles+ expects 2 argumetns
+        class PathTwice < StringParam
+          include AssLauncher::Support::Platforms
+          def to_args(p1, p2)
+            [key('').to_s, rdp_(p1).to_s, rdp_(p2).to_s]
+          end
+
+          def rdp_(p)
+            platform.path(p).realdirpath
+          end
+          private :rdp_
+        end
+
         # Flag parameter not expects argument
         class Flag < StringParam
           # Returns self as 1C:Enterprise CLI argumets array like
@@ -305,9 +324,9 @@ module AssLauncher
             super ''
           end
 
-          # Parameter not require argument
-          def argument_require
-            false
+          # Count of parameter argumets
+          def arguments_count
+            0
           end
         end
 

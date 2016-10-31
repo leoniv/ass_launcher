@@ -206,8 +206,9 @@ class ArgumentsBuilderTest < Minitest::Test
     inst = cls.new(nil, nil)
     param = mock
     param.responds_like(param_stub)
+    param.expects(:arguments_count).returns(0)
     param.expects(:argument_require).returns(false)
-    assert_nil inst.send(:param_argument_get, param, [])
+    assert_equal [], inst.send(:param_argument_get, param, [])
   end
 
   def test_param_argument_get_fail
@@ -215,6 +216,7 @@ class ArgumentsBuilderTest < Minitest::Test
     param = mock
     param.responds_like(param_stub)
     param.expects(:argument_require).returns(true)
+    param.expects(:arguments_count).returns(1).twice
     param.expects(:full_name)
     assert_raises ArgumentError do
       inst.send(:param_argument_get, param, [])
@@ -242,7 +244,7 @@ class ArgumentsBuilderTest < Minitest::Test
   def test_method_missing
     good_param = mock
     good_param.responds_like(param_stub)
-    good_param.expects(:to_args).with([:args]).returns(['/good_param', 'args'])
+    good_param.expects(:to_args).with(*[:args]).returns(['/good_param', 'args'])
     inst = moked_inst(good_param)
     inst.expects(:nested_builder).never
     inst.send(:builded_args) << 1
@@ -258,7 +260,7 @@ class ArgumentsBuilderTest < Minitest::Test
     nested_builder.expects(:build_args).yields(zonde).returns(zonde)
     good_param = mock
     good_param.responds_like(param_stub)
-    good_param.expects(:to_args).with([:args]).returns(['/good_param', 'args'])
+    good_param.expects(:to_args).with(*[:args]).returns(['/good_param', 'args'])
     inst = moked_inst(good_param)
     inst.expects(:nested_builder).with(good_param).returns(nested_builder)
     inst.good_param :args do |z|

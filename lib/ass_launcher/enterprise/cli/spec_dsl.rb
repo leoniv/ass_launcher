@@ -136,6 +136,12 @@ module AssLauncher
                &block)
         end
 
+        # @return [Cli::Parameters::PathTwice]
+        def path_twice(name, desc, *clients, **options, &block)
+          new_param(Parameters::PathTwice, name, desc,
+                    clients, **options, &block)
+        end
+
         # Define {Cli::Parameters::StringParam} parameter and him subparameters.
         # Subparameters defines in the block.
         # @param (see #path)

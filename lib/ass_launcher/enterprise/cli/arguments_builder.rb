@@ -136,7 +136,7 @@ module AssLauncher
           param = param_find(method)
           fail_no_parameter_error(method) unless param
           fail_if_parameter_exist(param)
-          add_args(param.to_args param_argument_get(param, args))
+          add_args(param.to_args *param_argument_get(param, args))
           self.builded_args += nested_builder(param).build_args(&block)\
             if block_given?
         end
@@ -149,12 +149,19 @@ module AssLauncher
         private :fail_if_parameter_exist
 
         def param_argument_get(param, args)
-          v = args[0]
-          fail ArgumentError, "Parameter #{param.full_name} require argument"\
-            if param.argument_require && v.nil?
+          v = args[0, param.arguments_count]
+          fail_wrong_number_arguments(param.full_name, param.arguments_count,
+                                      v.size) if param.argument_require
           v
         end
         private :param_argument_get
+
+        def fail_wrong_number_arguments(name, req, act)
+          fail ArgumentError, "Parameter #{name}"\
+            " wrong number of arguments (#{req} for #{act})" if req != act
+
+        end
+        private :fail_wrong_number_arguments
 
         def add_args(args)
           self.builded_args = builded_args + args
