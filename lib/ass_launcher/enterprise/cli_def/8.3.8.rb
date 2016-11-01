@@ -18,12 +18,13 @@ module AssLauncher::Enterprise::CliDef
   end
 
   group :connection do
-#    fail 'FIXME'
-#    switch '/AppAutoCheckVersion',
-#           'определяет использование подбора нужной версии для каждой базы',
-#           switch_list: switch_list(:+ => 'FIXME: description',
-#                                    :- => 'FIXME: description')
-#
+    mode :enterprise, :designer do
+      restrict '/AppAutoCheckVersion'
+      switch '/AppAutoCheckVersion',
+             'определяет использование подбора нужной версии для каждой базы',
+             switch_list: switch_list(:+ => 'выполняется',
+                                      :- => 'не выполняется')
+    end
   end
 
   group :packge_mode do
