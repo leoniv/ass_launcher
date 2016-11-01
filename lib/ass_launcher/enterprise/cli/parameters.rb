@@ -330,11 +330,26 @@ module AssLauncher
           end
         end
 
+        class SkippedError < StandardError; end
+
+        # Stub for define stupid or not importand parameters
+        # {#to_args} raises of {SkippedError}
+        class Skip < StringParam
+          def to_args(*values)
+            fail SkippedError, "Parameter #{full_name} skipped and restricted for use"
+          end
+
+          def skip?
+            true
+          end
+        end
+
         # Chose parameter expects argunment value from chose_list
         class Chose < StringParam
           def validate(value)
-            fail ArgumentError, "Wrong value `#{value}' for #{name} parameter"\
-              unless valid?(value)
+            fail ArgumentError,
+              "Wrong value `#{value}' for #{name} parameter" unless\
+              valid?(value)
           end
           private :validate
 
@@ -372,8 +387,9 @@ module AssLauncher
 
           def switch_value_get(value)
             if switch_list
-              fail ArgumentError, "Wrong value #{value} for parameter #{name}"\
-                unless valid?(value)
+              fail ArgumentError,
+                "Wrong value #{value} for parameter #{name}" unless\
+                valid?(value)
             end
             validate(value)
             switch_value.call(value)

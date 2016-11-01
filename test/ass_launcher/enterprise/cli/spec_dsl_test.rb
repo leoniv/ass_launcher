@@ -229,4 +229,16 @@ class SpecDslTest < Minitest::Test
     klass = AssLauncher::Enterprise::Cli::Parameters::PathTwice
     param_dsl_method_test klass, :path_twice
   end
+
+  def test_skip
+    klass = AssLauncher::Enterprise::Cli::Parameters::Skip
+    dsl = spec_dsl
+    dsl.expects(:add_parameter).with(is_a klass)
+    param = dsl.skip '/Name', 'Desc'
+    assert_instance_of klass, param
+    assert_equal '/Name', param.name
+    assert_equal 'Desc', param.desc
+    assert_equal :skip, param.group
+    assert_equal [:skip], param.modes
+  end
 end

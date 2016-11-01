@@ -136,7 +136,7 @@ module AssLauncher
           param = param_find(method)
           fail_no_parameter_error(method) unless param
           fail_if_parameter_exist(param)
-          add_args(param.to_args *param_argument_get(param, args))
+          add_args(param.to_args(*param_argument_get(param, args)))
           self.builded_args += nested_builder(param).build_args(&block)\
             if block_given?
         end

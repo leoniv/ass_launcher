@@ -513,7 +513,7 @@ class CliStringParamTest < Minitest::Test
   def test_to_args
     inst = cls.new('/StringParam','',nil,'',nil,nil)
     assert_equal ['/StringParam', 'string value'], inst.to_args('string value')
-  end
+   end
 
   def test_to_args_not_valid_value
     inst = cls.new('/S',nil,nil,nil,nil,
@@ -525,6 +525,28 @@ class CliStringParamTest < Minitest::Test
     assert_raises ArgumentError do
       inst.to_args 'invalid value'
     end
+  end
+end
+
+class SkipParamTest < Minitest::Test
+  def cls
+    AssLauncher::Enterprise::Cli::Parameters::Skip
+  end
+
+  def skipped_error
+    AssLauncher::Enterprise::Cli::Parameters::SkippedError
+  end
+
+  def test_to_args
+    inst = cls.new('/SkipParam','',nil,'',nil,nil)
+    assert_raises skipped_error do
+      inst.to_args ''
+    end
+  end
+
+  def test_skip?
+    inst = cls.new('/SkipParam','',nil,'',nil,nil)
+    assert inst.skip?
   end
 end
 

@@ -24,10 +24,14 @@ module DevHelper
         option ['-a', '--show-appiared-only'], :flag,
           'show parameters which appiared in --version only'
 
+        option ['-s', '--skipped-only'], :flag,
+          'show skipped parameters'
+
         def execute
           $stdout.puts DevHelper::CliDefReport
             .for(version, clients: clients, modes: modes,
-                 appiared_only: show_appiared_only?).to_csv(columns)
+                 appiared_only: show_appiared_only?,
+                 skipped_only: skipped_only?).to_csv(columns)
         rescue ArgumentError => e
           signal_usage_error e.message
         end
@@ -61,6 +65,7 @@ module DevHelper
 
     DEF_FILER = {clients: nil,
                  modes: nil,
+                 skipped_only: false,
                  appiared_only: nil}
 
     include DevHelper::CliDefValidator
@@ -79,6 +84,10 @@ module DevHelper
 
     def filter(name)
       @filter[name] || instance_eval("valid_#{name}")
+    end
+
+    def skipped_only?
+      @filter[:skipped_only]
     end
 
     def appiared_only
@@ -146,6 +155,7 @@ module DevHelper
     end
 
     def not_filtred?(p)
+      return skip?(p) if skipped_only?
       clients?(p) && modes?(p)
     end
 
@@ -155,6 +165,10 @@ module DevHelper
 
     def modes?(p)
       (p.modes & filter(:modes)).size > 0
+    end
+
+    def skip?(p)
+      p.is_a? AssLauncher::Enterprise::Cli::Parameters::Skip
     end
 
     def execute

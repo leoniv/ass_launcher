@@ -243,11 +243,15 @@ module AssLauncher
         # Stub for skipped parameter. Many 1C:Enterprise CLI parameters is not
         # imprtant for describe in {Cli::CliSpec}. For define it fact, you can
         # use this method.
-        # @todo may be registring skipped parameter for worning?
         # @param (see #path)
-        # @return [nil]
-        def skip(name, desc = '', *clients, **options, &block)
-          # nop
+        # @return [Cli::Parameters::Skip]
+        def skip(name, desc = '')
+          p = Parameters::Skip.new(name, desc,
+                                   new_binary_matcher([:skip]),
+                                   :skip,
+                                   [:skip], current_parent)
+          add_parameter p
+          p
         end
       end # SpecDsl
     end
