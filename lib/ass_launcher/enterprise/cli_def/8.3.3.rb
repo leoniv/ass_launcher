@@ -45,9 +45,9 @@ module AssLauncher::Enterprise::CliDef
       flag '/MAUpdatePublication', 'обновление публикации мобильного приложения'
       path '/MAWriteFile', 'записывает xml файл мобильного приложения'
       change '/CheckModules' do
-        flag '-MobileAppClient', 'в контексте клиента моб. приложнния'
-        flag '-MobileAppServer', 'в контексте сервера моб. приложнния'
-        flag '-ExtendedModulesCheck', 'расширинная проверка'
+        flag '-MobileAppClient', 'в контексте клиента моб. приложения'
+        flag '-MobileAppServer', 'в контексте сервера моб. приложения'
+        flag '-ExtendedModulesCheck', 'расширенная проверка'
       end
 
       change '/CheckConfig' do
