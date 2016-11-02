@@ -6,7 +6,7 @@ module AssLauncher::Enterprise::CliDef
       url '/URL',
         'переход по ссылке в формате e1c://'
       flag '/HttpsForceSSLv3',
-        'использование протокола SSL версии 3.0'
+        'использование протокола SSL версии 3.0', thin
     end
   end
 

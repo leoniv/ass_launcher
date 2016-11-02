@@ -68,7 +68,7 @@ module AssLauncher::Enterprise::CliDef
           ' предупреждений о применении настроек, дважды измененных свойствах,'\
           ' для которых не был выбран режим объединения, об удаляемых объектах,'\
           ' на которые найдены ссылки в объектах, не участвующие в объединении'
-        flag '--DumpListOfTwiceChangedProperties',
+        flag '-DumpListOfTwiceChangedProperties',
           'вывести список всех дважды изменных свойств'
       end
     end
