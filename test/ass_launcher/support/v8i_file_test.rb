@@ -9,7 +9,7 @@ class V8iTest < Minitest::Test
   end
 
   def teardown
-    FileUtils.rm_r @tmp_dir if File.exist? @tmp_dir
+    FileUtils.rm_rf @tmp_dir if File.exist? @tmp_dir
   end
 
   def write_file(filename, content)
