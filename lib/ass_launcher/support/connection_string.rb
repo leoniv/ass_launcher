@@ -402,7 +402,7 @@ module AssLauncher
         end
 
         def escape(s)
-          s.gsub(/\s/,'%20')
+          AssLauncher::Enterprise::WebClient.escape s
         end
         private :escape
 

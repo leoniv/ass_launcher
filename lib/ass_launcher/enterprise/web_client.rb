@@ -125,9 +125,18 @@ module AssLauncher
       private :add_to_query
 
       def escape(s)
-        s.gsub(/\s/,'%20')
+        self.class.escape(s)
       end
       private :escape
+
+      # Fuckin 1C is bad understand of CGI.escape.
+      # From escaping exclude: =&
+      # and ' ' replaced on '%20'
+      def self.escape(string)
+        string.gsub(/([^ a-zA-Z0-9_.\-=&]+)/) do
+          '%' + $1.unpack('H2' * $1.bytesize).join('%').upcase
+        end.gsub(' ', '%20')
+      end
 
       CLI_TO_WEB_PARAM_NAME = %r{^/}
 
