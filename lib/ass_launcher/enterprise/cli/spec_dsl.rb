@@ -7,7 +7,7 @@ module AssLauncher
       # @api public
       module SpecDsl
         require 'ass_launcher/enterprise/cli/spec_dsl/dsl_helpers'
-        require 'uri'
+        require 'addressable/uri'
         include DslHelpers
 
         # Define 1C:Enterprise version for defined CLI specifications
@@ -193,7 +193,7 @@ module AssLauncher
         def url_value_validator(n)
           proc do |value|
             begin
-              URI(value)
+              Addressable::URI.parse(value)
             rescue
               raise ArgumentError,
                     "Invalid URL for parameter `#{n}': `#{value}'"
