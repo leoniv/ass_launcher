@@ -4,8 +4,12 @@ module DevHelper
       require 'clamp'
       require 'ass_launcher'
       class Main < Clamp::Command
+        AssLauncher.config.search_path = ENV['ASSPATH'] if ENV['ASSPATH']
         def self.banner
-          '1C designer wrapper'
+          "1C designer wrapper.\n"\
+          "Current seaching paths of 1C:Enterprise installations:\n"\
+          "#{Paths.list}\n"\
+          "For add custom search path set env $ASSPATH"
         end
 
         class Designer < Clamp::Command
@@ -122,13 +126,46 @@ module DevHelper
         class Platforms < Clamp::Command
           include AssLauncher::Api
           def execute
-            $stdout.puts thicks.map {|c| c.version}.sort.join("\n")
+            $stdout.puts paths
+            $stdout.puts thicks_list
+            $stdout.puts thins_list
+          end
+
+          def paths
+            "Search paths:\n"\
+            "#{Paths.list}"
+          end
+
+          def thicks_list
+            "thik clients:\n"\
+            "#{list(thicks)}"
+          end
+
+          def thins_list
+            "thin clients:\n"\
+            "#{list(thins)}"
+          end
+
+          def list(clients)
+            " * #{clients.map {|c| c.version}.sort.join("\n * ")}"
+          end
+        end
+
+        class Paths < Clamp::Command
+          def self.list
+            " * #{AssLauncher::Enterprise.search_paths.join("\n * ")}"
+          end
+
+          def execute
+            $stdout.puts self.class.list
           end
         end
 
         subcommand 'run', 'run of designer', Run
         subcommand 'createinfobase', 'create file infrmation base', CreateInfobase
         subcommand 'platforms', 'show list of instaled platforms', Platforms
+        subcommand 'search-paths', 'show search paths of 1C:Enterprise'\
+          ' installations', Paths
       end
     end
   end
