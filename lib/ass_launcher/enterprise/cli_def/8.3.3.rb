@@ -18,7 +18,7 @@ module AssLauncher::Enterprise::CliDef
 
   group :debug do
     mode :webclient do
-      string 'TESTCLIENTID',
+      string '/TESTCLIENTID',
         'запуск в качестве объекта автоматизированного тестирования.'\
         ' Если значение идентификатора не указано или запущено несколько'\
         ' клиентов с одним и тем же значением, то выбирается произвольный.'
