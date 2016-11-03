@@ -513,7 +513,7 @@ class CliStringParamTest < Minitest::Test
   def test_to_args
     inst = cls.new('/StringParam','',nil,'',nil,nil)
     assert_equal ['/StringParam', 'string value'], inst.to_args('string value')
-   end
+  end
 
   def test_to_args_not_valid_value
     inst = cls.new('/S',nil,nil,nil,nil,
