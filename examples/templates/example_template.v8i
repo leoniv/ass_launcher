@@ -1,0 +1,9 @@
+﻿[Info base 1]
+Connect=Srvr="example.org:1541";Ref="ib1";
+ClientConnectionSpeed=Normal
+App=Auto
+
+[Info base 2]
+Connect=Srvr="example.org:1541";Ref="ib2";
+ClientConnectionSpeed=Normal
+App=Auto

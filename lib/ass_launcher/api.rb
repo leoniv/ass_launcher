@@ -64,8 +64,8 @@ module AssLauncher
     # @example
     #  include AssLauncher::Api
     #
-    #  v8i = load_v8i('infobase.v8i')
-    #  conn_str = cs(v8i.connect)
+    #  v8i = load_v8i('infobase.v8i')[0]
+    #  conn_str = cs(v8i[:connect])
     #  conn_str.usr = 'admin'
     #  conn_str.pwd = 'password'
     #  designer = thicks.last.command(:designer, conn_str.to_args)
