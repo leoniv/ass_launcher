@@ -216,7 +216,7 @@ module AssLauncher
           # @param binary_matcher [BinaryMatcher, String, nil] for which
           #  parameter defined
           #  - If nil will be build default matcher.
-          #  - If string. String value mast be suitable for Gem::Requirement.
+          #  - If string. String value must be suitable for Gem::Requirement.
           #    In this case, will be build matcher for version defined in
           #    string and suitable bynary type detected on run_modes
           # @param group [Symbol] parameter group
@@ -281,23 +281,23 @@ module AssLauncher
 
           def verify(path)
             case must_be
-            when :exist then mast_exists(path)
-            when :not_exist then mast_not_exists(path)
+            when :exist then must_exists(path)
+            when :not_exist then must_not_exists(path)
             end
           end
           private :verify
 
-          def mast_exists(path)
+          def must_exists(path)
             fail ArgumentError, "Wrong value for #{name}."\
               " Path #{path} not exists" unless path.exist?
           end
-          private :mast_exists
+          private :must_exists
 
-          def mast_not_exists(path)
+          def must_not_exists(path)
             fail ArgumentError, "Wrong value for #{name}."\
               " Path #{path} exists" if path.exist?
           end
-          private :mast_not_exists
+          private :must_not_exists
         end
 
         # In 8.3.8 platform add CLI parameters like as
