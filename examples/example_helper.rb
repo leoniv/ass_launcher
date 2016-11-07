@@ -3,6 +3,9 @@ require "minitest/autorun"
 require 'ass_launcher'
 
 module Examples
-  PV = '8.3.8.1784'
+  PLATFORM_VER = '~> 8.3.8.0'
+  module TEMPLATES
+    CF = File.expand_path('../templates/example_template.cf',__FILE__)
+  end
 end
 
