@@ -38,9 +38,15 @@ module AssLauncher
 
         # Translate any +key+ in to real {#_hash} key
         def trans(key)
-          dict[key.downcase.to_sym]
+          dict[key.downcase.to_sym] || dict_add(key)
         end
         private :trans
+
+        def dict_add(key)
+          dict[key.downcase.to_sym] = key
+          key
+        end
+        private :dict_add
 
         # :nodoc:
         def [](key)
@@ -54,7 +60,7 @@ module AssLauncher
 
         # :nodoc:
         def key?(key)
-          !trans(key).nil?
+          dict.key? key.to_s.downcase.to_sym
         end
 
         # :nodoc:
@@ -76,6 +82,7 @@ module AssLauncher
       def initialize(caption, fields)
         @caption = caption
         @fields = Fields.new(fields)
+        yield self if block_given?
       end
 
       # Return value of field +key+

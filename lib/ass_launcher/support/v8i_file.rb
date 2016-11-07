@@ -44,7 +44,9 @@ module AssLauncher
       # @param filename [String]
       # @param sections (see write)
       def self.save(filename, sections)
-        write File.new(filename, 'w'), sections
+        f = File.new(filename, 'w')
+        write f, sections
+        f.close
       end
 
       private
