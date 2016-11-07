@@ -103,12 +103,12 @@ module Examples
       # But we can use 'command.ran.wait' for run and wait together
       process_holder = command.process_holder.wait
 
-      it 'Verify execution result manual' do
+      it 'Verify execution result manually' do
         process_holder.result.success?.must_equal false
         process_holder.result.assout.must_match /Infobase not found!/i
       end
 
-      it 'Verify execution result automation' do
+      it 'Verify execution result automatically' do
         proc do
           process_holder.result.verify!
         end.must_raise AssLauncher::Support::Shell::RunAssResult::RunAssError
@@ -189,7 +189,7 @@ module Examples
         _L 'en'
       end
 
-      it 'All commands is equal exclude "/OUT" argument value' do
+      it 'All commands are equal exclude "/OUT" argument value' do
         expected_args = ["DESIGNER",
                          "/UC", "uc value",
                          "/S", "example.org/infobase",
