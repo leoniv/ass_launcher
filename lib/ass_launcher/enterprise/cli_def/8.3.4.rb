@@ -1,7 +1,7 @@
 module AssLauncher::Enterprise::CliDef
   group :packge_mode do
     mode :designer do
-      chose '/SetPredefinedDataUpdate,', 'режим обновления предопределенных данных',
+      chose '/SetPredefinedDataUpdate', 'режим обновления предопределенных данных',
             chose_list:\
             chose_list(:"-Auto" => 'фактическое значение вычисляется автоматически',
               :"-UpdateAutomatically" => 'при реструктуризации информационной базы'\

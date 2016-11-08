@@ -58,7 +58,7 @@ module AssLauncher::Enterprise::CliDef
     end
 
     mode :enterprise do
-      url '/Debug', 'запуск 1С:Предприятия в отладочном режиме'
+      flag '/Debug', 'запуск 1С:Предприятия в отладочном режиме'
     end
   end
 
@@ -88,7 +88,7 @@ module AssLauncher::Enterprise::CliDef
         ' Использовать в строке двойные кавычки запрещено работает криво.',
         value_validator: (Proc.new do |value|
           fail ArgumentError,
-            'In /C parameter char `\"` forbidden for use' if /"/ =~ value
+            'In /C parameter double quote char forbidden for use' if /"/ =~ value
         end)
       string '/VL', 'код локализации сеанса'
       flag '/UsePrivilegedMode', 'запуск в режиме привилегированного сеанса'
