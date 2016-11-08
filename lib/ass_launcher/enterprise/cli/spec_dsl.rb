@@ -193,10 +193,11 @@ module AssLauncher
         def url_value_validator(n)
           proc do |value|
             begin
-              Addressable::URI.parse(value)
-            rescue
+              uri = Addressable::URI.parse(value)
+              fail 'Host is nil' if uri.host.nil?
+            rescue Exception => e
               raise ArgumentError,
-                    "Invalid URL for parameter `#{n}': `#{value}'"
+                "Invalid URL for parameter `#{n}': `#{value}' #{e.message}"
             end
             value
           end
