@@ -72,7 +72,8 @@ module AssLauncher::Enterprise::CliDef
 
     mode :enterprise, :designer, :createinfobase do
       path_exist('/Out', 'файл используемый 1С вместо stdout и stderr.'\
-                 ' Выводятся служебные сообщения и сообщения метода Сообщить()')
+                 ' Выводятся служебные сообщения и сообщения метода Сообщить()',
+                thick)
       flag('/DisableStartupMessages', 'подавляет gui сообщения')
     end
 
