@@ -257,6 +257,56 @@ class TestCommand < Minitest::Test
                    inst.send(:_silent_mode)
   end
 
+  def test_capture_assout?
+    inst = cls.new('')
+    assert inst.capture_assout?
+
+    inst = cls.new('',[], capture_assout: false)
+    refute inst.capture_assout?
+  end
+
+  def test_duplicate_param_out?
+    inst = Class.new(cls) do
+      def initialize
+
+      end
+    end.new
+    inst.expects(:args).returns(['/out'])
+    inst.expects(:capture_assout?).returns(true)
+    assert inst.send(:duplicate_param_out?)
+  end
+
+  def test_validate_args
+    inst = Class.new(cls) do
+      def initialize
+
+      end
+    end.new
+    inst.expects(:duplicate_param_out?).returns(false)
+    assert_nil inst.send(:validate_args)
+    inst.expects(:duplicate_param_out?).returns(true)
+    assert_raises ArgumentError do
+      inst.send :validate_args
+    end
+  end
+
+  def args_include_test(greps, expect)
+    args = mock
+    args.expects(:grep).with(:regex).returns(greps)
+    inst = Class.new(cls) do
+      def initialize
+
+      end
+    end.new
+    inst.expects(:args).returns(args)
+    assert_equal expect, inst.send(:args_include?, :regex)
+  end
+
+  def test_args_include?
+    args_include_test([], false)
+    args_include_test([1], true)
+  end
+
   def test_ass_out_file_stringio
     inst = Class.new(cls) do
       def initialize

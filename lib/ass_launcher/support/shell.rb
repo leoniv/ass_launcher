@@ -113,17 +113,42 @@ module AssLauncher
         # @option options [Boolean]:silent_mode run 1C with
         #  /DisableStartupDialogs and /DisableStartupMessages parameters.
         #  Default true
+        # @raise [ArgumentError] when +capture_assout: true+ and +args+
+        #  include +/OUT+ parameter
         def initialize(cmd, args = [], options = {})
           @options = DEFAULT_OPTIONS.merge(options).freeze
           @cmd = cmd
           @args = args
+          validate_args
           @args += _silent_mode
           @ass_out_file = _ass_out_file
         end
 
+        def validate_args
+          fail ArgumentError,
+               'Duplicate of /OUT parameter.'\
+               ' Delete /OUT from args or set option capture_assout: false' if\
+                 duplicate_param_out?
+        end
+        private :validate_args
+
+        def duplicate_param_out?
+          capture_assout? && args_include?(%r{\A\/OUT\z}i)
+        end
+        private :duplicate_param_out?
+
+        def args_include?(regex)
+          args.grep(regex).size > 0
+        end
+        private :args_include?
+
+        def capture_assout?
+          options[:capture_assout]
+        end
+
         # @return [true] if command was already running
         def running?
-          ! process_holder.nil?
+          !process_holder.nil?
         end
 
         # Run command
@@ -151,7 +176,7 @@ module AssLauncher
         private :_out_ass_argument
 
         def _ass_out_file
-          if options[:capture_assout]
+          if capture_assout?
             out_file = AssOutFile.new(options[:assout_encoding])
             _out_ass_argument out_file
           else
