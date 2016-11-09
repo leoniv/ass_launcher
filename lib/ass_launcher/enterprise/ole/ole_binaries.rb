@@ -203,9 +203,16 @@ module AssLauncher
           private :_binary_wrapper
 
           def reg_server
-            run_as_enterprise ['/regserver']
+            run_as_enterprise reg_server_args
           end
           private :reg_server
+
+          def reg_server_args
+            r = ['/regserver']
+            r << '-currentuser' if version >= Gem::Version.new('8.3.9')
+            r
+          end
+          private :reg_server_args
 
           def unreg_server
             run_as_enterprise ['/unregserver']

@@ -178,15 +178,16 @@ class SpecDslTest < Minitest::Test
   end
 
   def test_url_value_validator
+    uri_stub = stub(host: 'host')
     dsl = spec_dsl
-    Addressable::URI.expects(:parse).with(:value)
+    Addressable::URI.expects(:parse).with(:value).returns(uri_stub)
     assert_equal :value, dsl.send(:url_value_validator, 'name').call(:value)
 
     Addressable::URI.expects(:parse).raises(ArgumentError)
     e = assert_raises ArgumentError do
       dsl.send(:url_value_validator, 'name').call(:bad_url)
     end
-    assert_equal 'Invalid URL for parameter `name\': `bad_url\'', e.message
+    assert_match /Invalid URL for parameter `name': `bad_url'/i, e.message
   end
 
   def test_num

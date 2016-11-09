@@ -87,7 +87,6 @@ class AbstractAssOleBinaryTest < Minitest::Test
     assert inst.instaled?
   end
 
-
   def test_registred?
     refute inst_stub.send(:registred?)
   end
@@ -199,9 +198,9 @@ end
 
 module LikeAssOleBinaryTest
   attr_reader :cls
-  def inst_stub
+  def inst_stub(version = '0')
     cls.any_instance.expects(:linux?).returns(false)
-    cls.new('0')
+    cls.new(version)
   end
 
   def test_binary
@@ -317,9 +316,18 @@ class ThickApplicationTest < Minitest::Test
     @run_as_enterprise_args = [:enterprise, :args]
   end
 
-  def test_reg_server
-    inst = inst_stub
+  def test_reg_server_version_less_8_3_9
+    inst = inst_stub('0')
+    inst.expects(:version).returns(Gem::Version.new('8.3.8'))
     inst.expects(:run_as_enterprise).with(['/regserver']).returns(:success)
+    assert_equal :success, inst.send(:reg_server)
+  end
+
+  def test_reg_server_version_from_8_3_9
+    inst = inst_stub('8.3.9')
+    inst.expects(:version).returns(Gem::Version.new('8.3.9'))
+    inst.expects(:run_as_enterprise).with(['/regserver', '-currentuser'])\
+      .returns(:success)
     assert_equal :success, inst.send(:reg_server)
   end
 
