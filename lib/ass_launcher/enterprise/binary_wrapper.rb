@@ -45,8 +45,8 @@ module AssLauncher
         @path = platform.path(binpath).realpath
         fail ArgumentError, "Is not a file `#{binpath}'" unless @path.file?
         fail ArgumentError,
-             "Invalid binary #{@path.basename} for #{self.class}"\
-          unless @path.basename.to_s.upcase == expects_basename.upcase
+             "Invalid binary #{@path.basename} for #{self.class}" unless\
+             @path.basename.to_s.upcase == expects_basename.upcase
       end
 
       # Define version of 1C platform.
@@ -79,8 +79,8 @@ module AssLauncher
       #  - In Linux 1V default install into path:
       #    +/opt/1C/v8.3/i386/1cv8+
       def extract_version(realpath)
-        return AssLauncher::Support::Linux.get_pkg_version(realpath)\
-          if platform.linux?
+        return AssLauncher::Support::Linux.get_pkg_version(realpath) if\
+          platform.linux?
         extracted = realpath.to_s.split('/')[-3]
         extracted =~ /(\d+\.\d+\.?\d*\.?\d*)/i
         extracted = (Regexp.last_match(1).to_s.split('.')\
@@ -148,8 +148,9 @@ module AssLauncher
       private :to_script
 
       def fail_if_wrong_mode(run_mode)
-        fail ArgumentError, "Invalid run_mode `#{run_mode}' for #{self.class}"\
-          unless run_modes.include? run_mode
+        fail ArgumentError,
+          "Invalid run_mode `#{run_mode}' for #{self.class}" unless\
+          run_modes.include? run_mode
         run_mode
       end
       private :fail_if_wrong_mode
@@ -281,8 +282,36 @@ module AssLauncher
           args_ = args.dup
           args_.unshift mode(run_mode)
           args_ += build_args(run_mode, &block) if block_given?
+          verify_createinfobase_param_order! args_ if\
+            run_mode == :createinfobase
           to_command(args_, options)
         end
+
+        # Fucking 1C not check CLI parameter
+        # In create infobase mode create default infobase in user profile
+        # directory if the first parameter is not connection string!!!
+        def verify_createinfobase_param_order!(args)
+          cs = parse_cs args[1]
+          fail ArgumentError, ':createinfobase expects file or server'\
+          " connection string in first argument but given `#{args[1]}'" unless\
+          good_cs?(cs)
+          args
+        end
+        private :verify_createinfobase_param_order!
+
+        def good_cs?(cs)
+          return false unless cs
+          cs.is?(:file) || cs.is?(:server)
+        end
+        private :good_cs?
+
+        def parse_cs(string)
+          AssLauncher::Support::ConnectionString\
+            .new(string.to_s.tr('\'', '"'))
+        rescue AssLauncher::Support::ConnectionString::ParseError
+          nil
+        end
+        private :parse_cs
 
         # Run 1C:Enterprise client as cmd or shell script.
         # @note It waiting for script

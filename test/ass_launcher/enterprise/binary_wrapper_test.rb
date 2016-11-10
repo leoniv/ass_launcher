@@ -264,4 +264,69 @@ class TestThickClient < Minitest::Test
     assert_equal :command, inst.command(nil)
   end
 
+  def test_command_in_createinfobase_mode
+    inst = inst_
+    inst.expects(:mode).with(:createinfobase).returns(:createinfobase)
+    inst.expects(:verify_createinfobase_param_order!).with([:createinfobase, :args])
+    inst.expects(:to_command).returns(:command)
+    assert_equal :command, inst.command(:createinfobase, [:args])
+  end
+
+  def test_command_in_not_createinfobase_mode
+    inst = inst_
+    inst.expects(:mode).with(:non_createinfobase).returns(:non_createinfobase)
+    inst.expects(:verify_createinfobase_param_order!).never
+    inst.expects(:to_command).returns(:command)
+    assert_equal :command, inst.command(:non_createinfobase, [:args])
+  end
+
+  def test_verify_createinfobase_param_order!
+    inst = inst_
+    inst.expects(:parse_cs).with(1).returns(:cs)
+    inst.expects(:good_cs?).with(:cs).returns(true)
+    assert_equal [0, 1], inst.send(:verify_createinfobase_param_order!, [0, 1])
+
+    inst = inst_
+    inst.expects(:parse_cs).with(1).returns(:cs)
+    inst.expects(:good_cs?).with(:cs).returns(false)
+    e = assert_raises ArgumentError do
+      inst.send(:verify_createinfobase_param_order!, [0, 1])
+    end
+    assert_match(/:createinfobase expects file or server/,
+                 e.message)
+  end
+
+  def test_good_cs?
+    refute inst_.send(:good_cs?, nil)
+    srv_cs = mock
+    srv_cs.expects(:is?).with(:file).returns(false)
+    srv_cs.expects(:is?).with(:server).returns(true)
+    assert inst_.send(:good_cs?, srv_cs)
+
+    file_cs = mock
+    file_cs.expects(:is?).with(:file).returns(true)
+    file_cs.expects(:is?).with(:server).never
+    assert inst_.send(:good_cs?, file_cs)
+
+    other_cs = mock
+    other_cs.expects(:is?).with(:file).returns(false)
+    other_cs.expects(:is?).with(:server).returns(false)
+    refute inst_.send(:good_cs?, other_cs)
+  end
+
+  def test_parse_cs
+    inst = inst_
+    cs = inst.send(:parse_cs, 'bad connection_string')
+    assert_nil cs
+
+    cs = inst.send(:parse_cs, "File='path'")
+    assert cs.is? :file
+
+    cs = inst.send(:parse_cs, "File=\"path\"")
+    assert cs.is? :file
+
+    cs = inst.send(:parse_cs, "srvr=\"host\";ref=\"infobase\"")
+    assert cs.is? :server
+  end
+
 end
