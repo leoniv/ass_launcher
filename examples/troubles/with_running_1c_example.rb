@@ -26,6 +26,17 @@ module Examples
         command.run.wait
       end
 
+      it 'Designer show dialg with error message for serevr infobase' do
+        skip unless TROUBLES_EXECUTE_CONTROL::SHOW_STUPID_GUI
+        designer = CLIENTS::THICK.command :designer do
+            _S 'example.org/fake_ib'
+            _L 'en'
+          end
+
+        # It show GUI
+        designer.run.wait
+      end
+
       describe 'Solution. For file infobase only!!!' do
         it 'Arguments builder check existing path for /F parameter' do
           proc {
@@ -179,6 +190,22 @@ module Examples
 
           source_string.must_equal ret_string
         end
+      end
+    end
+
+    describe 'Designer talks "Infobase not found!" but exit with 0 for file infobase' do
+      designer = CLIENTS::THICK.command :designer, ['/F','./fake_ib'] do
+        _L 'en'
+      end
+
+      designer.run.wait
+
+      it 'Exitstatus == 0' do
+        designer.process_holder.result.exitstatus.must_equal 0
+      end
+
+      it 'Error message in out' do
+        designer.process_holder.result.assout.strip.must_equal 'Infobase not found!'
       end
     end
   end
