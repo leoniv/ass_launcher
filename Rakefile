@@ -10,7 +10,15 @@ end
 Rake::TestTask.new(:run_examples) do |t|
   t.libs << 'examples'
   t.libs << 'lib'
-  t.test_files = FileList['examples/**/*_example.rb']
+  examples = FileList['examples/**/*_example.rb']
+  t.test_files = examples - examples.grep(%r{trouble}i)
+end
+
+Rake::TestTask.new(:run_trouble_examples) do |t|
+  t.libs << 'examples'
+  t.libs << 'lib'
+  examples = FileList['examples/**/*_example.rb']
+  t.test_files = examples.grep(%r{trouble}i)
 end
 
 task :default => :test
