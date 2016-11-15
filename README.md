@@ -1,11 +1,18 @@
+
 [![Code Climate](https://codeclimate.com/github/leoniv/ass_launcher/badges/gpa.svg)](https://codeclimate.com/github/leoniv/ass_launcher)
 # AssLauncher
 
-Ruby wrapper for 1C:Enterprise platform. Don't ask why this necessary. Believe this necessary!
+Ruby wrapper for 1C:Enterprise platform.
 
-**Ruby ~> 2.0 require**
+Goal of this to make easily and friendly writing scripts for development
+and support lifecycle of 1C:Enterprise applications
 
-## Installation
+`AssLauncher` is cross platform but **it full tested in `Cygwin` only!**. In  `Windows` and `Linux` it works too.
+
+In `Linux` don't support `OLE` feature. Don't known why I told it ;)
+
+
+## Quick start
 
 Add this line to your application's Gemfile:
 
@@ -21,134 +28,73 @@ Or install it yourself as:
 
     $ gem install ass_launcher
 
-## Usage
-
-For example:
+For example, writing script which dumping 1C:Enterprise application
 
 ```ruby
 require 'ass_launcher'
 
 include AssLauncher::Api
 
-#
-# Get 1C:Enterprise ~> v8.3.7 binary wrapper
-#
+def main(dupm_path)
+  # Get wrapper for the thck client
+  thick_client = thicks('~> 8.3.8.0').last
 
-cl = thicks('~> 8.3.7').last
+  # Fail if 1C:Enterprise installation not found
+  fail '1C:Enterprise not found' if thick_client.nil?
 
-fail '1C:Enterprise ~> v8.3.7 not found' if cl.nil?
+  # Build designer command
+  designer = thick_client.command :designer do
+    _S 'enterprse_server/application_name'
+    dumpIB dupm_path
+  end
 
-#
-# create new infobase
-#
+  # Execute command
+  designer.run.wait
 
-conn_str = cs 'File="./tmp/new.ib"'
-
-process_holder = cl.command(:createinfobase) do
-  connection_string conn_str
-  addInList 'New infobase'
-end.run.wait
-
-raise 'Error while create infobase' unless process_holder.result.success?
-
-#
-# dump infobase
-#
-
-command = cl.command(:designer) do
-  connection_string 'File="./tmp/new.ib"'
-  dumpIB './tmp/new.ib.dt'
+  # Verify result
+  designer.process_holder.result.verify!
 end
 
-ph = command.run.wait
-
-ph.result.verify! # raised error unless executing success
-
-#
-# run designer for development
-#
-
-ph = cl.command(:designer) do
-  connection_string 'File="./tmp/new.ib"'
-end.run
-
-# .... do in designer
-
-ph.wait # wait while designer open
-
-#
-# Check config
-#
-
-result = cl.command(:designer) do
-  connection_string 'File="./tmp/new.ib"'
-  checkConfig do
-    configLogIntegrity
-    incorrectReferences
-    thinClient
-    unreferenceProcedures
-  end
-end.run.wait.result
-result.verify!
-
-#
-# Web client
-#
-
-# Get web client instanse for connect to
-# infobase 'http://host/port/path/infobase'
-wc = web_client('http://host/path/infobase')
-
-loc = wc.location do
-  _N 'user_name'
-  _P 'password'
-  _L 'en'
-end # => URI
-
-# Or do it with uses connect string
-connstr =  cs 'ws="http://host/path/infobase";usr="user";pwd="password"'
-wc = web_client(connstr.uri)
-loc = wc.location do
-  _L 'en'
-end # => URI
-
-# And use given location URI with selenium driver:
-# driver.navigate.to loc.to_s
+main ARGV[0]
 ```
 
-## Releases
+## Usage
 
-### 0.1.1.alpha
-  - ```Cli::ArgumentsBuilder``` not implements
-  - ```Cli::CliSpec``` require extracts in standalone ```gem```
-  - ```WebClients``` not implements
-  - ```API``` not implements
-  - ```Support::``` stable
-  - ```Enterprse``` stable
-  - ```BinaryWrapper``` mostly stable, depends ```Cli::ArgumentsBuilder```
-  - ```Enterprse::Ole``` stable
+### Examples
 
-#### Small exaple:
+For more usage examples see [examples](examples/)
 
-```ruby
-require 'ass_launcher'
-cs = AssLauncher::Support::ConnectionString.new('File="tmp/tmp.i";Usr="root"')
-tc = AssLauncher::Enterprise.thick_clients('~> 8.3').last
-cmd = tc.command :designer, cs.to_args
-cmd.run # Opens 1C Designer
+For beginning look at
+[examples/enterprise_running_example.rb](examples\
+/enterprise_running_example.rb)
 
-com_conn = AssLauncher::Enterprise::Ole::IbConnection.new '~>8.3'
-com_conn.__open__ cs # Open ole connection into infobase
+All [examples](examples/) executable. For run them require
+1C:Enterprise platform version defined in `Examples::MIN_PLATFORM_VERSION`
 
-a = com_conn.newObject 'array'
-a.add 'Hello World'
+Run all examples:
 
-puts com_con.string a.get(0) # => "Hello World"
+    $rake run_examples
 
-com_con.__close__
+Or run specified example:
 
-cmd.process_holder.kill # Not forget to kill 1C Designer process!
-```
+    $rake run_examples TEST=examples/enterprise_running_example.rb
+
+### Troubles
+
+Directory [examples/troubles](examples/troubles) contains examples
+which describe troubles with executing 1C:Enterprise binary.
+
+All [examples/troubles](examples/troubles) are executable too.
+
+Run all troubles:
+
+    $rake run_trouble_examples
+
+**Be careful to run [examples/troubles](examples/troubles)! Learn sources before run it.**
+
+## Help
+
+If you have any questions open issue with `question` lable
 
 ## Development
 
@@ -156,11 +102,24 @@ After checking out the repo, run `bin/setup` to install dependencies. Then, run 
 
 To install this gem onto your local machine, run `bundle exec rake install`. To release a new version, update the version number in `version.rb`, and then run `bundle exec rake release`, which will create a git tag for the version, push git commits and tags, and push the `.gem` file to [rubygems.org](https://rubygems.org).
 
+### Development helper
+
+`AssLauncher` include [bin/dev-helper](bin/dev-helper) utility for contributors.
+
+    $bin/dev-helper --help
+
 ### Testing
 
-    $ export SIMPLECOV=YES && rake test
+#### Run unit tests:
+
+    $export SIMPLECOV=YES && rake test
+
+Unit tests is isolated and doesn't require installation of 1C:Enterprise
+
+#### Run examples:
+
+Examples writed as `Minitest::Spec`. About run examples see above
 
 ## Contributing
 
 Bug reports and pull requests are welcome on GitHub at https://github.com/leoniv/ass_launcher.
-
