@@ -2,9 +2,9 @@ $LOAD_PATH.unshift File.expand_path('../../lib', __FILE__)
 require 'ass_launcher'
 
 module Examples
-  MIN_PLATFORM_VERSION = '8.3.4'
+  MIN_PLATFORM_VERSION = '8.3.8'
 
-  PLATFORM_VER = '~> 8.3.8'
+  PLATFORM_VER = "~> #{MIN_PLATFORM_VERSION}"
   OLE_V8 = '83'
 
   # Examples executing control
@@ -32,6 +32,7 @@ module Examples
     THIN = thins(Examples::PLATFORM_VER).last
     fail "1C:Enterprise thin client  v.#{Examples::PLATFORM_VER} not found" if\
       THIN.nil?
+    WEB = web_client('http://example.org', MIN_PLATFORM_VERSION)
   end
 
   module TEMPLATES

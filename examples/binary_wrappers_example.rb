@@ -126,8 +126,6 @@ module Examples
 
       # Build command for 1C:Enterprise using arguments array.
       command = client.command( ['/F','bad infobase path',
-                                '/CheckModules','',
-                                '-Server','',
                                 '/L', 'en'])
 
 
