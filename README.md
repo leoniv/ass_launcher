@@ -65,8 +65,7 @@ main ARGV[0]
 For more usage examples see [examples](examples/)
 
 For beginning look at
-[examples/enterprise_running_example.rb](examples\
-/enterprise_running_example.rb)
+[examples/enterprise_running_example.rb](examples/enterprise_running_example.rb)
 
 All [examples](examples/) executable. For run them require
 1C:Enterprise platform version defined in `Examples::MIN_PLATFORM_VERSION`

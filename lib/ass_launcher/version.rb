@@ -1,5 +1,5 @@
 module AssLauncher
-  VERSION = "0.2.0.alpha"
+  VERSION = "0.2.0"
   module KNOWN_ENTERPRISE_VERSIONS
     require 'ass_launcher/enterprise/cli_defs_loader'
     extend AssLauncher::Enterprise::CliDefsLoader
