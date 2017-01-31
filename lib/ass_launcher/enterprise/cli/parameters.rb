@@ -308,6 +308,10 @@ module AssLauncher
             [key('').to_s, rdp_(p1).to_s, rdp_(p2).to_s]
           end
 
+          def arguments_count
+            2
+          end
+
           def rdp_(p)
             platform.path(p).realdirpath
           end

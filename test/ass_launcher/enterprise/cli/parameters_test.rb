@@ -463,6 +463,11 @@ class CliPathTwiceParameterTest < Minitest::Test
                   platform.path(__FILE__).realdirpath.to_s],
       inst.to_args('.', __FILE__)
   end
+
+  def test_arguments_count
+    inst = cls.new('/PathTwiceParameter',nil,nil,nil,nil,nil)
+    assert_equal 2, inst.arguments_count
+  end
 end
 
 class CliStringParamTest < Minitest::Test
