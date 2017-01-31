@@ -227,12 +227,26 @@ class COMConnectorTest < Minitest::Test
 
   include LikeAssOleBinaryTest
 
+  def inst_stub(version = '0')
+    cls.any_instance.expects(:linux?).returns(false)
+    cls.any_instance.expects(:x32_arch?).returns(true)
+    cls.new(version)
+  end
+
   def setup
     @binary = 'comcntr.dll'
     @v8x = '69'
     @prog_id = 'v69.COMConnector'
     @cls = AssLauncher::Enterprise::Ole::OleBinaries::COMConnector
     @binary_wrapper = :thick_clients
+  end
+
+  def test_initialize_fail
+    cls.any_instance.expects(:x32_arch?).returns(false)
+    e = assert_raises RuntimeError do
+      cls.new('> 0')
+    end
+    assert_match %r{v8x\.COMConnector unavailable}, e.message
   end
 
   def reg_unreg_server_inst(mode, key)
@@ -242,7 +256,6 @@ class COMConnectorTest < Minitest::Test
       .returns(:success)
     inst
   end
-
 
   def test_reg_server_sucsess
     inst = reg_unreg_server_inst 'register', 'i'
@@ -285,6 +298,42 @@ class COMConnectorTest < Minitest::Test
 
   def test_clsids
     assert_instance_of Hash, inst_stub.send(:clsids)
+  end
+
+  def test_const_x32_archs
+    assert_equal ['i386-mingw32', 'i386-cygwin'], @cls::X32_ARCHS
+  end
+
+  def inst_fake
+    Class.new(cls) do
+      def initialize
+
+      end
+    end.new
+  end
+
+  def test_arch
+    inst = inst_fake
+    refute inst.arch.to_s.empty?
+    assert_equal RbConfig::CONFIG['arch'], inst.arch
+  end
+
+  def test_x32_arch_true_if_cygwin
+    inst = inst_fake
+    inst.expects(:arch).returns('i386-cygwin')
+    assert inst.x32_arch?
+  end
+
+  def test_x32_arch_true_if_mingw
+    inst = inst_fake
+    inst.expects(:arch).returns('i386-mingw32')
+    assert inst.x32_arch?
+  end
+
+  def test_x32_arch_false
+    inst = inst_fake
+    inst.expects(:arch).returns('x86_64-cygwin')
+    refute inst.x32_arch?
   end
 end
 

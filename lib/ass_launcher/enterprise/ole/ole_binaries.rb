@@ -11,13 +11,15 @@ module AssLauncher
         # @abstract
         class AbstractAssOleBinary
           include AssLauncher::Support::Platforms
+
           # @return [Gem::Version::Requirement]
           attr_reader :requirement
+
           # @param requirement [Gem::Version::Requirement] version of 1C Ole
           #  server
           def initialize(requirement)
-            fail NotImplementedError, 'WIN32OLE undefined for this machine'\
-              if linux?
+            fail NotImplementedError, 'WIN32OLE undefined for this machine' if\
+              linux?
             @requirement = Gem::Version::Requirement.new(requirement)
           end
 
@@ -74,8 +76,8 @@ module AssLauncher
           # Register Ole server
           def reg
             return true if registred?
-            fail "Platform version `#{requirement}' not instaled."\
-              unless instaled?
+            fail "Platform version `#{requirement}' not instaled." unless\
+              instaled?
             reg_server
           end
 
@@ -87,8 +89,8 @@ module AssLauncher
           # Unregister Ole server
           def unreg
             return true unless registred?
-            fail "Platform version `#{requirement}' not instaled."\
-              unless instaled?
+            fail "Platform version `#{requirement}' not instaled." unless\
+              instaled?
             unreg_server
           end
 
@@ -130,6 +132,24 @@ module AssLauncher
         class COMConnector < AbstractAssOleBinary
           require 'English'
           BINARY = 'comcntr.dll'
+          # Ruby for x32 architectures
+          X32_ARCHS = ['i386-mingw32', 'i386-cygwin']
+
+          # (see AbstractAssOleBinary#initialize)
+          def initialize(requirement)
+            super requirement
+            fail "v8x.COMConnector unavailable for #{arch} Ruby" unless\
+              x32_arch?
+          end
+
+          def arch
+            RbConfig::CONFIG['arch']
+          end
+
+          def x32_arch?
+            X32_ARCHS.include? arch
+          end
+
           def binary
             BINARY
           end
@@ -177,8 +197,8 @@ module AssLauncher
           private :childe_status
 
           def fail_reg_unreg_server(message, status)
-            fail "Failure #{message} `#{path.win_string}' #{status}"\
-              unless status.success?
+            fail "Failure #{message} `#{path.win_string}' #{status}" unless\
+              status.success?
             status
           end
           private :fail_reg_unreg_server
