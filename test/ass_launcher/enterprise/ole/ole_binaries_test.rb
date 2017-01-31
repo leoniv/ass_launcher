@@ -218,8 +218,8 @@ module LikeAssOleBinaryTest
     inst.expects(:requirement).returns(:requirement)
     AssLauncher::Enterprise.expects(@binary_wrapper)
       .with(:requirement.to_s)
-      .returns([1,2,:binary_wrapper])
-    assert_equal :binary_wrapper, inst.send(:_binary_wrapper)
+      .returns([1,3,2])
+    assert_equal 3, inst.send(:_binary_wrapper)
   end
 end
 

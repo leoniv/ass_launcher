@@ -149,7 +149,7 @@ module AssLauncher
           private :clsids
 
           def _binary_wrapper
-            Enterprise.thick_clients(requirement.to_s).last
+            Enterprise.thick_clients(requirement.to_s).sort.last
           end
           private :_binary_wrapper
 
@@ -198,7 +198,7 @@ module AssLauncher
           private :prog_id
 
           def _binary_wrapper
-            Enterprise.thick_clients(requirement.to_s).last
+            Enterprise.thick_clients(requirement.to_s).sort.last
           end
           private :_binary_wrapper
 
@@ -240,7 +240,7 @@ module AssLauncher
           private :prog_id
 
           def _binary_wrapper
-            Enterprise.thin_clients(requirement.to_s).last
+            Enterprise.thin_clients(requirement.to_s).sort.last
           end
           private :_binary_wrapper
 
