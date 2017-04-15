@@ -201,7 +201,8 @@ class AssOutFileTest < Minitest::Test
   end
 
   def test_read_good
-    mock_file = StringIO.new
+    mock_file = mock
+    mock_file.responds_like(Tempfile.new('mock'))
     mock_file.expects(:open)
     mock_file.expects(:read).returns('string')
     mock_file.expects(:close).twice

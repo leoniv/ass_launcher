@@ -301,8 +301,9 @@ module AssLauncher
         private :yes_or_not
 
         def valid_value(v, av)
-          fail ArgumentError, "Bad value #{v}. Accepted values are `#{av}'"\
-            unless av.map(&:downcase).include?(v.to_s.downcase)
+          fail ArgumentError,
+            "Bad value #{v}. Accepted values are `#{av}'" unless\
+            av.map(&:downcase).include?(v.to_s.downcase)
           v
         end
         private :valid_value
@@ -353,6 +354,7 @@ module AssLauncher
         # - File="path" not work but work running as script
         # - File='path' work correct
         def createinfobase_args
+          return ["File='#{path.win_string}'"] if path.relative?
           ["File='#{path.realdirpath.win_string}'"]
         end
 

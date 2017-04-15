@@ -378,9 +378,23 @@ class TestConnectionStringFile < Minitest::Test
       end
     end.new
     path = mock
+    path.expects(:relative?).returns(false)
     path.expects(:realdirpath).returns(path)
     path.expects(:win_string).returns(:win_string)
-    mock.expects(:path).returns(path)
+    mock.expects(:path).returns(path).twice
+    assert_equal ["File='#{:win_string}'"], mock.createinfobase_args
+  end
+
+  def test_createinfobase_args_if_path_rlative
+    mock = Class.new(cls) do
+      def initialize
+      end
+    end.new
+    path = mock
+    path.expects(:relative?).returns(true)
+    path.expects(:realdirpath).never
+    path.expects(:win_string).returns(:win_string)
+    mock.expects(:path).returns(path).twice
     assert_equal ["File='#{:win_string}'"], mock.createinfobase_args
   end
 
