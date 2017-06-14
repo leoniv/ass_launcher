@@ -39,10 +39,13 @@ module DevHelper
     require_relative './dev_helper/designer'
 
     class Main < Clamp::Command
+      include AssLauncher::Enterprise::CliDefsLoader
 
-      subcommand 'show-version', 'show ass_launcher version' do
+      subcommand 'show-version', 'show ass_launcher and known 1C:Enterprise versions' do
         def execute
-          $stdout.puts AssLauncher::VERSION
+          $stdout.puts "AssLauncher::VERSION: #{AssLauncher::VERSION}"
+          $stdout.puts "Known 1C:Enterprise CLI definitions:"
+          $stdout.puts " - #{defs_versions.map(&:to_s).join("\n - ")}"
         end
       end
       subcommand 'cli-def-report',
