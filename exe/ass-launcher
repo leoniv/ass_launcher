@@ -1,0 +1,6 @@
+#!/usr/bin/env ruby
+
+require 'ass_launcher'
+require 'ass_launcher/cmd'
+
+AssLauncher::Cmd::Main.run
