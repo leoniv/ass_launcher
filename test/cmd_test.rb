@@ -37,16 +37,16 @@ module AssLauncher::Cmd
         version: [%w[--version -v], 'VERSION', %r{specify.+Enterprise version}],
         verbose: [%w[--verbose], :flag, %r{verbose}],
         query: [%w[--query -q], 'REGEX', %r{regular.+filter}],
-#        infoabse: [%w[--infoabse, -i], 'IBPATH', %r{specify.+infoabse path}, {required: true}],
+#        infobase: [%w[--infobase, -i], 'IBPATH', %r{specify.+infobase path}, {required: true}],
         user: [%w[--user -u], 'NAME', %r{infobase user name}],
-        password: [%w[--password -p ], 'PASSWORD', %r{infoabse user password}],
-        uc: [%w[--uc], 'LOCK_CODE', %r{infoabse lock code}],
-        dry_run: [%w[--dry-run -n], :flag, %r{puts cmd string on stdout}],
-        raw: [%w[--raw], "\"/Param VAL, -SubParam VAL\"", %r{raw paramteres string}],
-        pattern: [%w[--pattern -p], 'PATH', %r{\.cf, \.dt files or xml-dump directory}],
-        dbms: [%w[--dbms], "DB_SERVER_TYPE", %r{db server type}, {required: true}],
-        dbsrv: [%w[--dbsrv], "user:pass@dbsrv", %r{db server}, {required: true}],
-        esrv: [%w[--esrv], "user:pass@esrv", %r{enterprise server}, {required: true}]
+        password: [%w[--password -p], 'PASSWORD', %r{infobase user password}],
+        uc: [%w[--uc], 'LOCK_CODE', %r{infobase lock code}],
+        dry_run: [%w[--dry-run], :flag, %r{puts cmd string}],
+        raw: [%w[--raw], "\"/Param VAL, -SubParam VAL\"", %r{parameters in raw\(native\) format}],
+        pattern: [%w[--pattern -P], 'PATH', %r{\.cf, \.dt files or xml-dump directory}],
+        dbms: [%w[--dbms], "DB_TYPE", %r{db type}, {default: 'File'}],
+        dbsrv: [%w[--dbsrv], "user:pass@dbsrv", %r{db server}],
+        esrv: [%w[--esrv], "user:pass@esrv", %r{enterprise server}]
       }
 
       OPTIONS_MATRIX = {
@@ -55,7 +55,7 @@ module AssLauncher::Cmd
         Thick: %i{},
         Thin: %i{},
         Web: %i{},
-        MakeIb: %i{pattern dbms dbsrv esrv},
+        MakeIb: %i{pattern dbms dbsrv esrv dry_run},
         Cli: %i{version verbose query},
         Versions: %i{search_path},
         Uri: %i{user password uc raw},
@@ -100,10 +100,6 @@ module AssLauncher::Cmd
         it "has option #{spec[0][0]}" do
           opt = desc.find_option spec[0][0]
           opt.wont_be_nil
-          opt.switches.must_equal spec[0]
-          opt.type.must_equal spec[1]
-          opt.description.must_match spec[2]
-          opt.required?.must_eqal (spec[3] || {})[:required]
         end
       end
 
@@ -149,41 +145,218 @@ module AssLauncher::Cmd
           end
         end
       end
+    end
 
-#      def_subcommands_test(MAIN_SUBCOMMANDS)
-#
-#      def_subcommand_test 'show-version'
-#
-#
-#      MAIN_DECLARED_SUBCOMMANDS.each do |cmd|
-#
-#        def_subcommand_test(cmd)
-#
-#        describe "SubCommands::#{cmd}" do
-#          define_method :desc do
-#            eval "AssLauncher::Cmd::Main::SubCommands::#{cmd}"
-#          end
-#
-#          %i{Cli Versions Run Uri}.each do |sub_cmd|
-#
-#            if cmd == :MakeIb
-#              next
-#            end
-#
-#            if sub_cmd == :Cli || sub_cmd == :Versions
-#              def_subcommand_test sub_cmd
-#            end
-#
-#            if sub_cmd == :Run &&  cmd != :Web
-#              def_subcommand_test sub_cmd
-#            end
-#
-#            if sub_cmd == :Uri && cmd == :Web
-#              def_subcommand_test sub_cmd
-#            end
-#          end
-#        end
-#      end
+    describe AssLauncher::Cmd::Abstract::Option do
+      def self.camelize(s)
+        s.to_s.split('_').collect(&:capitalize).join
+      end
+
+      def camelize(s)
+        self.class.camelize s
+      end
+
+      def cmd_class(option)
+        Class.new(Clamp::Command) do
+          include option
+
+          def execute
+            # NOP
+          end
+        end
+      end
+
+      module OptionSpecs
+        module SearchPath
+          extend Minitest::Spec::DSL
+          it 'FIXME' do
+            inst = cmd_class(desc).new('')
+            raise 'FIXME'
+          end
+        end
+        module Version
+          extend Minitest::Spec::DSL
+          it 'FIXME' do
+            inst = cmd_class(desc).new('')
+            raise 'FIXME'
+          end
+        end
+        module Verbose
+          extend Minitest::Spec::DSL
+          it 'FIXME' do
+            inst = cmd_class(desc).new('')
+            raise 'FIXME'
+          end
+        end
+        module Query
+          extend Minitest::Spec::DSL
+          it 'FIXME' do
+            inst = cmd_class(desc).new('')
+            raise 'FIXME'
+          end
+        end
+        module Dbms
+          extend Minitest::Spec::DSL
+          it 'FIXME' do
+            inst = cmd_class(desc).new('')
+            raise 'FIXME'
+          end
+        end
+        module Dbsrv
+          extend Minitest::Spec::DSL
+          it '#run' do
+            inst = cmd_class(desc).new('')
+            inst.run ['--dbsrv', 'user:pass@host:2020']
+            inst.dbsrv_user.must_equal 'user'
+            inst.dbsrv_pass.must_equal 'pass'
+            inst.dbsrv_host.must_equal 'host:2020'
+            inst.dbsrv.must_equal 'user:pass@host:2020'
+          end
+
+          it '#parse_dbsrv user@host:port' do
+            inst = cmd_class(desc).new('')
+            inst.parse_dbsrv 'user@host:port'
+            inst.dbsrv_user.must_equal 'user'
+            inst.dbsrv_pass.must_be_nil
+            inst.dbsrv_host.must_equal 'host:port'
+          end
+
+          it '#parse_dbsrv host:port' do
+            inst = cmd_class(desc).new('')
+            inst.parse_dbsrv 'host:port'
+            inst.dbsrv_user.must_be_nil
+            inst.dbsrv_pass.must_be_nil
+            inst.dbsrv_host.must_equal 'host:port'
+          end
+        end
+        module Esrv
+          extend Minitest::Spec::DSL
+          it '#run' do
+            inst = cmd_class(desc).new('')
+            inst.run ['--esrv', 'user:pass@host:2020']
+            inst.esrv_user.must_equal 'user'
+            inst.esrv_pass.must_equal 'pass'
+            inst.esrv_host.must_equal 'host:2020'
+            inst.esrv.must_equal 'user:pass@host:2020'
+          end
+
+          it '#parse_esrv user@host:port' do
+            inst = cmd_class(desc).new('')
+            inst.parse_esrv 'user@host:port'
+            inst.esrv_user.must_equal 'user'
+            inst.esrv_pass.must_be_nil
+            inst.esrv_host.must_equal 'host:port'
+          end
+
+          it '#parse_esrv host:port' do
+            inst = cmd_class(desc).new('')
+            inst.parse_esrv 'host:port'
+            inst.esrv_user.must_be_nil
+            inst.esrv_pass.must_be_nil
+            inst.esrv_host.must_equal 'host:port'
+          end
+        end
+        module User
+          extend Minitest::Spec::DSL
+          it '#run' do
+            inst = cmd_class(desc).new('')
+            inst.run ['--user', 'user']
+            inst.user.must_equal 'user'
+          end
+        end
+        module Password
+          extend Minitest::Spec::DSL
+          it '#run' do
+            inst = cmd_class(desc).new('')
+            inst.run ['--password', 'password']
+            inst.password.must_equal 'password'
+          end
+        end
+        module Pattern
+          extend Minitest::Spec::DSL
+          it '#run fail' do
+            inst = cmd_class(desc).new('')
+            e = proc {
+              inst.run ['--pattern', '/notexists']
+            }.must_raise Clamp::UsageError
+            e.message.must_match %r{: /notexists}
+          end
+
+          it '#run with directory' do
+            inst = cmd_class(desc).new('')
+            inst.run ['--pattern', '.']
+            inst.pattern.must_equal '.'
+            inst.xml_dump?.must_equal true
+          end
+
+          it '#run with file' do
+            inst = cmd_class(desc).new('')
+            inst.run ['--pattern', __FILE__]
+            inst.pattern.must_equal __FILE__
+            inst.xml_dump?.must_equal false
+          end
+        end
+        module Uc
+          extend Minitest::Spec::DSL
+          it '#run' do
+            inst = cmd_class(desc).new('')
+            inst.run ['--uc', 'uc val']
+            inst.uc.must_equal 'uc val'
+          end
+        end
+        module DryRun
+          extend Minitest::Spec::DSL
+          it '#run with --dry-run' do
+            inst = cmd_class(desc).new('')
+            inst.run ['--dry-run']
+            inst.dry_run?.must_equal true
+          end
+
+          it '#run default' do
+            inst = cmd_class(desc).new('')
+            inst.run []
+            inst.dry_run?.must_be_nil
+          end
+        end
+        module Raw
+          extend Minitest::Spec::DSL
+          it "#parse_raw" do
+            inst = cmd_class(desc).new('')
+            inst.parse_raw('/Param VALUE1\, VALUE2 VALUE3, -SubParam VALUE, /Param2')
+              .must_equal  ['/Param', 'VALUE1, VALUE2 VALUE3', '-SubParam', "VALUE", '/Param2']
+          end
+
+          it '#run' do
+            inst = cmd_class(desc).new('')
+            inst.run ['--raw', '/Param VALUE']
+            inst.raw.must_equal ['/Param', 'VALUE']
+          end
+        end
+      end
+
+      OPTIONS.each do |name, spec|
+        describe "#{camelize(name)}" do
+
+          def desc
+            AssLauncher::Cmd::Abstract::Option.const_get self.class.desc.to_sym
+          end
+
+          it "spec for #{spec[0][0]}" do
+            desc.wont_be_nil
+            desc.class.must_equal Module
+
+            opt = cmd_class(desc).find_option spec[0][0]
+            opt.wont_be_nil
+            opt.switches.must_equal spec[0]
+            opt.type.must_equal spec[1]
+            opt.description.must_match spec[2]
+            opt.required?.to_s.must_equal (spec[3] || {})[:required].to_s
+            opt.default_value.to_s.must_equal (spec[3] || {})[:default].to_s
+          end
+
+          include OptionSpecs.const_get desc.to_sym
+        end
+      end
     end
   end
 end

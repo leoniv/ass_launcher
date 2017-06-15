@@ -5,6 +5,25 @@ module AssLauncher
   #   $ass-launcher --help
   #
   module Cmd
+    module Support
+      module SrvStrParser
+        def parse_srv_str(s)
+          split = s.split('@')
+          fail ArgumentError if split.size > 2
+
+          host = split.pop
+          return [host, nil, nil] if split.size == 0
+
+          split = split[0].split(':')
+          fail ArgumentError if split.size > 2
+
+          user = split.shift
+          pass = split.shift
+
+          [host, user, pass]
+        end
+      end
+    end
     module Abstract
       class SubCommand < Clamp::Command
         module Declaration
@@ -57,14 +76,14 @@ module AssLauncher
       module Option
         module SearchPath
           def self.included(base)
-            base.option '--search-path', 'PATH',
+            base.option %w{--search-path -I}, 'PATH',
             'specify 1C:Enterprise installation path'
           end
         end
 
-        module AssVersion
+        module Version
           def self.included(base)
-            base.option '--version', 'VERSION',
+            base.option %w{--version -v}, 'VERSION',
               'specify 1C:Enterprise version' do |s|
               version = Gem::Version.new(s)
             end
@@ -90,30 +109,105 @@ module AssLauncher
         end
 
         module Dbms
-          def valid_dmbs
-            AssLauncher::Support::ConnectionString::DBMS_VALUES
-          end
-
           def self.included(base)
-            dbms = AssLauncher::Support::ConnectionString::DBMS_VALUES.join(', ')
-            base.option '--dbms', 'DB_SERVER_TYPE', "db server type: #{dbms}", required: true do |s|
+            dbtypes = AssLauncher::Support::ConnectionString::DBMS_VALUES + ['File']
+
+            define_method :valid_db_types do
+              dbtypes
+            end
+
+            base.option '--dbms', 'DB_TYPE', "db type: #{dbtypes}.\nValue \"File\" for make file infobase", default: 'File' do |s|
               raise 'FIXME'
             end
           end
         end
 
         module Dbsrv
+          attr_reader :dbsrv_user, :dbsrv_pass, :dbsrv_host
+          include Support::SrvStrParser
+          def parse_dbsrv(s)
+            @dbsrv_host, @dbsrv_user, @dbsrv_pass = parse_srv_str(s)
+          end
+
           def self.included(base)
-            base.option '--dbsrv', 'user:pass@dbsrv', 'db server address', required: true do |s|
-              raise 'FIXME'
+            base.option '--dbsrv', 'user:pass@dbsrv', 'db server address' do |s|
+              parse_dbsrv s
+              s
             end
           end
         end
 
         module Esrv
+          attr_reader :esrv_user, :esrv_pass, :esrv_host
+          include Support::SrvStrParser
+          def parse_esrv(s)
+            @esrv_host, @esrv_user, @esrv_pass = parse_srv_str(s)
+          end
+
           def self.included(base)
-            base.option '--esrv', 'user:pass@esrv', 'enterprise server address', required: true do |s|
-              raise 'FIXME'
+            base.option '--esrv', 'user:pass@esrv', 'enterprise server address' do |s|
+              parse_esrv(s)
+              s
+            end
+          end
+        end
+
+        module User
+          def self.included(base)
+            base.option %w{--user -u}, 'NAME', 'infobase user name'
+          end
+        end
+
+        module Password
+          def self.included(base)
+            base.option %w{--password -p}, 'PASSWORD', 'infobase user password'
+          end
+        end
+
+        module Pattern
+          def xml_dump?
+            File.directory? pattern
+          end
+
+          def self.included(base)
+            base.option %w{--pattern -P}, 'PATH', "pattern for make infobase\nPath to .cf, .dt files or xml-dump directory" do |s|
+              fail ArgumentError, "Path not exist: #{s}" unless File.exist?(s)
+              s
+            end
+          end
+        end
+
+        module Uc
+          def self.included(base)
+            base.option '--uc', 'LOCK_CODE', 'infobase lock code'
+          end
+        end
+
+        module DryRun
+          def self.included(base)
+            base.option %w{--dry-run}, :flag, 'will not realy run 1C:Enterprise only puts cmd string'
+          end
+        end
+
+        module Raw
+          def parse_raw(s)
+            split = s.split(%r{(?<!\\),\s}).map(&:strip)
+
+            split.map do |pv|
+              fail ArgumentError, "Parse error in: #{pv}" unless pv =~ %r{^(/|-)}
+              pv =~ %r{^(\/|-)(\w+)+(.*)?}
+              ["#{$1}#{$2}", $3.strip].select {|i| !i.empty?}
+            end.flatten.map {|i| i.gsub('\\,', ',')}
+          end
+
+          def self.included(base)
+            description =  "other 1C CLI parameters in raw(native) format.\n"\
+              "Parameters and their arguments must be delimited comma-space sequence: `, '\n"\
+              "If values includes comma comma must be slashed `\,'\n"\
+              "WARNING: correctness of parsing will not guaranteed!"
+
+            base.option '--raw', '"/Param VAL, -SubParam VAL"', description do |s|
+              raw = parse_raw s
             end
           end
         end
@@ -122,7 +216,7 @@ module AssLauncher
       module Parameter
         module IB_NAME
           def self.included(base)
-            base.parameter 'IB_PATH', "path to infoabse like a strings 'tcp://srv/ref' or 'http[s]://host/path' or 'path/to/ib'" do |s|
+            base.parameter 'IB_PATH', "path to infobase like a strings 'tcp://srv/ref' or 'http[s]://host/path' or 'path/to/ib'" do |s|
                raise 'FIXME'
             end
           end
@@ -138,7 +232,7 @@ module AssLauncher
       end
 
       class Cli < SubCommand
-        include Option::AssVersion
+        include Option::Version
         include Option::Verbose
         include Option::Query
         include ClientMode
