@@ -1,9 +1,11 @@
 #
 module AssLauncher
   module Cmd
-    module SubCommands
+    module Main::SubCommands
       class Thick < Abstract::SubCommand
-        class Cli < Abstract::Cli; end
+        module SubCommands
+          class Cli < Abstract::Cli; end
+        end
 
         def self.command_name
           'thick'
@@ -13,7 +15,7 @@ module AssLauncher
           '1C:Enterprise Thick client in ENTERPRISE mode'
         end
 
-        subcommand_ Cli
+        declare_subcommands
       end
     end
   end

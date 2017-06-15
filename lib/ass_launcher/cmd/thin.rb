@@ -1,8 +1,12 @@
 #
 module AssLauncher
   module Cmd
-    module SubCommands
+    module Main::SubCommands
       class Thin < Abstract::SubCommand
+        module SubCommands
+          class Cli < Abstract::Cli; end
+        end
+
         def self.command_name
           'thin'
         end
@@ -10,6 +14,8 @@ module AssLauncher
         def self._banner
           '1C:Enterprise Thin client'
         end
+
+        declare_subcommands
       end
     end
   end

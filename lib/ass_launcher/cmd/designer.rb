@@ -1,8 +1,11 @@
 #
 module AssLauncher
   module Cmd
-    module SubCommands
+    module Main::SubCommands
       class Designer < Abstract::SubCommand
+        module SubCommands
+          class Cli < Abstract::Cli; end
+        end
         def self.command_name
           'designer'
         end
@@ -10,6 +13,8 @@ module AssLauncher
         def self._banner
           '1C:Enterprise Thick client in DESIGNER mode'
         end
+
+        declare_subcommands
       end
     end
   end
