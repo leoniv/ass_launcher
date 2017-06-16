@@ -3,83 +3,84 @@ require 'ass_launcher/cmd'
 
 module AssLauncher::Cmd
   module Test
+
+    MAIN_SUBCOMMANDS = {
+      ShowVersion: ['show-version', %r{Show ass_launcher and known 1C:Enterprise versions}],
+      Designer: ['designer', %r{1C:Enterprise Thick client in DESIGNER mode}i],
+      Thick: ['thick', %r{1C:Enterprise Thick client in ENTERPRISE mode}i],
+      Thin: ['thin', %r{1C:Enterprise Thin client}i],
+      Web: ['web', %r{1C:Enterprise Web client}i],
+      MakeIb: ['makeib', %r{Make new information base}i]}
+
+    NESTED_SUBCOMMANDS = {
+      Cli: ['cli', %r{show help for 1C:Enterprise CLI parameters}i],
+      Versions: ['versions', %r{FIXME}],
+      Uri: ['uri', %r{FIXME}],
+      Run: ['run', %r{FIXME}]}
+
+    MAIN_NESTED_MATRIX = {
+      ShowVersion: %i{},
+      Designer: %i{Cli Versions Run},
+      Thick: %i{Cli Versions Run},
+      Thin: %i{Cli Versions Run},
+      Web: %i{Cli Uri},
+      MakeIb: %i{}
+    }
+
+    OPTIONS = {
+      search_path: [%w[--search-path -I], 'PATH', %r{specify.+installation path}],
+      version: [%w[--version -v], 'VERSION', %r{specify.+Enterprise version}],
+      verbose: [%w[--verbose], :flag, %r{verbose}],
+      query: [%w[--query -q], 'REGEX', %r{regular.+filter}],
+#        infobase: [%w[--infobase, -i], 'IBPATH', %r{specify.+infobase path}, {required: true}],
+      user: [%w[--user -u], 'NAME', %r{infobase user name}],
+      password: [%w[--password -p], 'PASSWORD', %r{infobase user password}],
+      uc: [%w[--uc], 'LOCK_CODE', %r{infobase lock code}],
+      dry_run: [%w[--dry-run], :flag, %r{puts cmd string}],
+      raw: [%w[--raw], "\"/Param VAL, -SubParam VAL\"", %r{parameters in raw\(native\) format}],
+      pattern: [%w[--pattern -P], 'PATH', %r{\.cf, \.dt files or xml-dump directory}],
+      dbms: [%w[--dbms], "DB_TYPE", %r{db type}, {default: 'File'}],
+      dbsrv: [%w[--dbsrv], "user:pass@dbsrv", %r{db server}],
+      esrv: [%w[--esrv], "user:pass@esrv", %r{enterprise server}]
+    }
+
+    OPTIONS_MATRIX = {
+      ShowVersion: %i{},
+      Designer: %i{},
+      Thick: %i{},
+      Thin: %i{},
+      Web: %i{},
+      MakeIb: %i{pattern dbms dbsrv esrv dry_run},
+      Cli: %i{version verbose query},
+      Versions: %i{search_path},
+      Uri: %i{user password uc raw},
+      Run: %i{search_path version user password uc dry_run raw}
+    }
+
+    PARAMTERS = {
+      IB_PATH: ['IB_PATH', %r{path to information base}],
+      IB_PATH_NAME: ['IB_PATH | IB_NAME',
+                     %{PATH for file or NAME for server infobase}, :attribute_name => 'ib_path']
+    }
+
+    PARAMTERS_MATRIX = {
+      ShowVersion: %i{},
+      Designer: %i{},
+      Thick: %i{},
+      Thin: %i{},
+      Web: %i{},
+      MakeIb: %i{IB_PATH_NAME},
+      Cli: %i{},
+      Versions: %i{},
+      Uri: %i{IB_PATH},
+      Run: %i{IB_PATH}
+    }
+
     describe AssLauncher::Cmd::Main do
       def desc
         return self.class.desc unless self.class.desc.is_a? String
         eval(self.class.desc)
       end
-
-      MAIN_SUBCOMMANDS = {
-        ShowVersion: ['show-version', %r{Show ass_launcher and known 1C:Enterprise versions}],
-        Designer: ['designer', %r{1C:Enterprise Thick client in DESIGNER mode}i],
-        Thick: ['thick', %r{1C:Enterprise Thick client in ENTERPRISE mode}i],
-        Thin: ['thin', %r{1C:Enterprise Thin client}i],
-        Web: ['web', %r{1C:Enterprise Web client}i],
-        MakeIb: ['makeib', %r{Make new information base}i]}
-
-      NESTED_SUBCOMMANDS = {
-        Cli: ['cli', %r{show help for 1C:Enterprise CLI parameters}i],
-        Versions: ['versions', %r{FIXME}],
-        Uri: ['uri', %r{FIXME}],
-        Run: ['run', %r{FIXME}]}
-
-      MAIN_NESTED_MATRIX = {
-        ShowVersion: %i{},
-        Designer: %i{Cli Versions Run},
-        Thick: %i{Cli Versions Run},
-        Thin: %i{Cli Versions Run},
-        Web: %i{Cli Uri},
-        MakeIb: %i{}
-      }
-
-      OPTIONS = {
-        search_path: [%w[--search-path -I], 'PATH', %r{specify.+installation path}],
-        version: [%w[--version -v], 'VERSION', %r{specify.+Enterprise version}],
-        verbose: [%w[--verbose], :flag, %r{verbose}],
-        query: [%w[--query -q], 'REGEX', %r{regular.+filter}],
-#        infobase: [%w[--infobase, -i], 'IBPATH', %r{specify.+infobase path}, {required: true}],
-        user: [%w[--user -u], 'NAME', %r{infobase user name}],
-        password: [%w[--password -p], 'PASSWORD', %r{infobase user password}],
-        uc: [%w[--uc], 'LOCK_CODE', %r{infobase lock code}],
-        dry_run: [%w[--dry-run], :flag, %r{puts cmd string}],
-        raw: [%w[--raw], "\"/Param VAL, -SubParam VAL\"", %r{parameters in raw\(native\) format}],
-        pattern: [%w[--pattern -P], 'PATH', %r{\.cf, \.dt files or xml-dump directory}],
-        dbms: [%w[--dbms], "DB_TYPE", %r{db type}, {default: 'File'}],
-        dbsrv: [%w[--dbsrv], "user:pass@dbsrv", %r{db server}],
-        esrv: [%w[--esrv], "user:pass@esrv", %r{enterprise server}]
-      }
-
-      OPTIONS_MATRIX = {
-        ShowVersion: %i{},
-        Designer: %i{},
-        Thick: %i{},
-        Thin: %i{},
-        Web: %i{},
-        MakeIb: %i{pattern dbms dbsrv esrv dry_run},
-        Cli: %i{version verbose query},
-        Versions: %i{search_path},
-        Uri: %i{user password uc raw},
-        Run: %i{search_path version user password uc dry_run raw}
-      }
-
-      PARAMTERS = {
-        IB_PATH: ['IB_PATH', %r{path to information base}],
-        IB_PATH_NAME: ['IB_PATH | IB_NAME',
-                       %{PATH for file or NAME for server infobase}, :attribute_name => 'ib_path']
-      }
-
-      PARAMTERS_MATRIX = {
-        ShowVersion: %i{},
-        Designer: %i{},
-        Thick: %i{},
-        Thin: %i{},
-        Web: %i{},
-        MakeIb: %i{IB_PATH_NAME},
-        Cli: %i{},
-        Versions: %i{},
-        Uri: %i{IB_PATH},
-        Run: %i{IB_PATH}
-      }
 
       def self.it_has_subcommand(klass, spec)
         it "has subcommand #{spec[0]}" do
