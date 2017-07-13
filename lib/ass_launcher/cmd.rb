@@ -279,7 +279,8 @@ module AssLauncher
           end
 
           def self._banner
-            'Show ass_launcher and known 1C:Enterprise versions'
+            "Show version of ass_launcher gem and\n"\
+              'list of known 1C:Enterprise versions'
           end
 
           def execute

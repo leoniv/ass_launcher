@@ -5,7 +5,7 @@ module AssLauncher::Cmd
   module Test
 
     MAIN_SUBCOMMANDS = {
-      ShowVersion: ['show-version', %r{Show ass_launcher and known 1C:Enterprise versions}],
+      ShowVersion: ['show-version', %r{Show version of ass_launcher gem and list of known\s+1C:Enterprise versions}],
       Designer: ['designer', %r{1C:Enterprise Thick client in DESIGNER mode}i],
       Thick: ['thick', %r{1C:Enterprise Thick client in ENTERPRISE mode}i],
       Thin: ['thin', %r{1C:Enterprise Thin client}i],
