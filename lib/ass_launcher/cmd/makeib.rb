@@ -21,8 +21,6 @@ module AssLauncher
         end
 
         def execute
-          require 'pry'
-          binding.pry
           raise 'FIXME'
         end
       end

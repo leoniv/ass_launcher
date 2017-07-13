@@ -23,7 +23,20 @@ module AssLauncher
           [host, user, pass]
         end
       end
+
+      module OutputFormmater
+        require 'colorized_string'
+
+        def self.red(mes)
+          puts colorize(mes, :red)
+        end
+
+        def self.colorize(mes, color)
+          ColorizedString[mes].colorize(color)
+        end
+      end
     end
+
     module Abstract
       class SubCommand < Clamp::Command
         module Declaration
@@ -92,6 +105,14 @@ module AssLauncher
           end
         end
         private :binary_get
+
+        def run_enterise(cmd)
+          if respond_to?(:dry_run?) && dry_run?
+            Support::OutputFormmater.red "#{cmd}"
+          else
+            cmd.run.wait.result.verify!
+          end
+        end
       end
 
       module Option

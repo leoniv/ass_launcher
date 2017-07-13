@@ -413,6 +413,14 @@ module AssLauncher::Cmd
         cmd.expects(:web_client).with(:infobase, :version).returns(:wrapper)
         cmd.send(:binary_get).must_equal :wrapper
       end
+
+      it '#run_enterise dry_run' do
+        cmd.expects(:dry_run?).returns(true)
+        command = stub to_s: 'command dryrun'
+        AssLauncher::Cmd:: Support:: OutputFormmater.expects(:red)
+          .with('command dryrun')
+        cmd.run_enterise(command)
+      end
     end
 
     module IncludeBinaryWrapper
