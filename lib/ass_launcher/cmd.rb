@@ -51,7 +51,7 @@ module AssLauncher
 
       module ClientMode
         def parrent_command
-          invocation_path.split[-2]
+          invocation_path.to_s.split[1]
         end
 
         def client
@@ -59,7 +59,8 @@ module AssLauncher
           when 'designer' then :thick
           when 'thick' then :thick
           when 'thin' then :thin
-          when 'web'  then :web
+          when 'web' then :web
+          when 'makeib' then :thick
           end
         end
 
@@ -69,8 +70,28 @@ module AssLauncher
           when 'thick' then :enterprise
           when 'thin' then :enterprise
           when 'web'  then :webclient
+          when 'makeib' then :createinfobase
           end
         end
+      end
+
+      module BinaryWrapper
+        include AssLauncher::Api
+        include ClientMode
+
+        def binary_wrapper
+          binary_get ||\
+            (fail "1C:Enterprise #{client} v#{version} not installed")
+        end
+
+        def binary_get
+          case client
+          when :thick then thicks("= #{version}").last
+          when :thin then thins("= #{version}").last
+          when :web then web_client(infobase, version)
+          end
+        end
+        private :binary_get
       end
 
       module Option
@@ -214,10 +235,11 @@ module AssLauncher
       end
 
       module Parameter
-        module IB_NAME
+        module IB_PATH
           def self.included(base)
-            base.parameter 'IB_PATH', "path to infobase like a strings 'tcp://srv/ref' or 'http[s]://host/path' or 'path/to/ib'" do |s|
-               raise 'FIXME'
+            base.parameter 'IB_PATH',
+              "path to infobase like a strings 'tcp://srv/ref' or 'http[s]://host/path' or 'path/to/ib'" do |s|
+               s
             end
           end
         end
@@ -225,7 +247,7 @@ module AssLauncher
         module IB_PATH_NAME
           def self.included(base)
             base.parameter 'IB_PATH | IB_NAME', 'PATH for file or NAME for server infobase', attribute_name: :ib_path do |s|
-              raise 'FIXME'
+              s
             end
           end
         end

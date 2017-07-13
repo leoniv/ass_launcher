@@ -50,7 +50,7 @@ module AssLauncher::Cmd
       Thick: %i{},
       Thin: %i{},
       Web: %i{},
-      MakeIb: %i{pattern dbms dbsrv esrv dry_run},
+      MakeIb: %i{pattern dbms dbsrv esrv dry_run version},
       Cli: %i{version verbose query},
       Versions: %i{search_path},
       Uri: %i{user password uc raw},
@@ -357,6 +357,96 @@ module AssLauncher::Cmd
 
           include OptionSpecs.const_get desc.to_sym
         end
+      end
+    end
+
+    describe AssLauncher::Cmd::Abstract::BinaryWrapper do
+      def cmd
+        @cmd ||= Class.new(Clamp::Command) do
+          def initialize; end
+          include AssLauncher::Cmd::Abstract::BinaryWrapper
+        end.new
+      end
+
+      it 'include? ClientMode' do
+        cmd.class.include?(AssLauncher::Cmd::Abstract::ClientMode)
+          .must_equal true
+      end
+
+      it 'include? AssLauncher::Api' do
+        cmd.class.include?(AssLauncher::Api)
+          .must_equal true
+      end
+
+      it '#binary_wrapper fail' do
+        cmd.expects(:binary_get).returns(nil)
+        cmd.expects(:version).returns(:version)
+        e = proc {
+          cmd.binary_wrapper
+        }.must_raise RuntimeError
+        e.message.must_match %r{1C:Enterprise.+not installed}
+      end
+
+      it '#binary_wrapper' do
+        cmd.expects(:binary_get).returns(:binary_wrapper)
+        cmd.binary_wrapper.must_equal :binary_wrapper
+      end
+
+      it '#binary_get :thick' do
+        cmd.expects(:client).returns(:thick)
+        cmd.expects(:version).returns(:version)
+        cmd.expects(:thicks).with("= version").returns([:wrapper])
+        cmd.send(:binary_get).must_equal :wrapper
+      end
+
+      it '#binary_get :thin' do
+        cmd.expects(:client).returns(:thin)
+        cmd.expects(:version).returns(:version)
+        cmd.expects(:thins).with("= version").returns([:wrapper])
+        cmd.send(:binary_get).must_equal :wrapper
+      end
+
+      it '#binary_get :web' do
+        cmd.expects(:client).returns(:web)
+        cmd.expects(:version).returns(:version)
+        cmd.expects(:infobase).returns(:infobase)
+        cmd.expects(:web_client).with(:infobase, :version).returns(:wrapper)
+        cmd.send(:binary_get).must_equal :wrapper
+      end
+    end
+
+    module IncludeBinaryWrapper
+      extend Minitest::Spec::DSL
+
+      def desc
+        self.class.desc
+      end
+
+      it 'includes BinaryWrapper' do
+        desc.include?(AssLauncher::Cmd::Abstract::BinaryWrapper)
+          .must_equal true
+      end
+    end
+
+    describe AssLauncher::Cmd::Main::SubCommands::MakeIb do
+      include IncludeBinaryWrapper
+
+      def desc
+        self.class.desc
+      end
+
+      def cmd
+        @cmd ||= Class.new(desc) do
+          def initialize; end
+        end.new
+      end
+
+      it '#client' do
+        cmd.client.must_equal :thick
+      end
+
+      it '#mode' do
+        cmd.mode.must_equal :createinfobase
       end
     end
   end

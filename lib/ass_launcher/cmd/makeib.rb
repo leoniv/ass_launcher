@@ -7,6 +7,10 @@ module AssLauncher
         include Abstract::Option::Dbms
         include Abstract::Option::Dbsrv
         include Abstract::Option::Esrv
+        include Abstract::Option::Pattern
+        include Abstract::Option::Version
+        include Abstract::Option::DryRun
+        include Abstract::BinaryWrapper
 
         def self.command_name
           'makeib'
@@ -17,6 +21,8 @@ module AssLauncher
         end
 
         def execute
+          require 'pry'
+          binding.pry
           raise 'FIXME'
         end
       end
