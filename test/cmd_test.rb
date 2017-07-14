@@ -15,8 +15,8 @@ module AssLauncher::Cmd
 
     NESTED_SUBCOMMANDS = {
       Cli: ['cli', %r{show help for 1C:Enterprise CLI parameters}i],
-      Uri: ['uri', %r{FIXME}],
-      Run: ['run', %r{FIXME}]}
+      Uri: ['uri', %r{Uri constructor for webclient}],
+      Run: ['run', %r{run 1C:Enterprise}]}
 
     MAIN_NESTED_MATRIX = {
       ShowVersion: %i{},
@@ -38,7 +38,7 @@ module AssLauncher::Cmd
       password: [%w[--password -p], 'PASSWORD', %r{infobase user password}],
       uc: [%w[--uc], 'LOCK_CODE', %r{infobase lock code}],
       dry_run: [%w[--dry-run], :flag, %r{puts cmd string}],
-      raw: [%w[--raw], "\"/Param VAL, -SubParam VAL\"", %r{parameters in raw\(native\) format}],
+      raw: [%w[--raw], "\"/Par VAL, -SubPar VAL\"", %r{parameters in raw\(native\) format}],
       pattern: [%w[--pattern -P], 'PATH', %r{\.cf, \.dt files}],
       dbms: [%w[--dbms], "DB_TYPE", %r{db type}, {default: 'File'}],
       dbsrv: [%w[--dbsrv], "user:pass@dbsrv", %r{db server}],
@@ -59,7 +59,8 @@ module AssLauncher::Cmd
     }
 
     PARAMTERS = {
-      IB_PATH: ['IB_PATH', %r{path to information base}],
+      IB_PATH: ['IB_PATH', %r{path to infobase},
+                 :attribute_name => 'ib_path'],
       IB_PATH_NAME: ['IB_PATH | IB_NAME',
                      %{PATH for file or NAME for server infobase}, :attribute_name => 'ib_path']
     }

@@ -5,6 +5,10 @@ module AssLauncher
       class Thick < Abstract::SubCommand
         module SubCommands
           class Cli < Abstract::Cli; end
+          class Run < Abstract::Run
+            include Abstract::Parameter::IB_PATH
+
+          end
         end
 
         def self.command_name

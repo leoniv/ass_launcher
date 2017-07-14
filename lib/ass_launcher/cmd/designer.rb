@@ -5,8 +5,13 @@ module AssLauncher
       class Designer < Abstract::SubCommand
         module SubCommands
           class Cli < Abstract::Cli; end
+          class Run < Abstract::Run
+            include Abstract::Parameter::IB_PATH
+
+          end
         end
-        def self.command_name
+
+        def  self.command_name
           'designer'
         end
 

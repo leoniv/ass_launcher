@@ -272,10 +272,10 @@ module AssLauncher
           def self.included(base)
             description =  "other 1C CLI parameters in raw(native) format.\n"\
               "Parameters and their arguments must be delimited comma-space sequence: `, '\n"\
-              "If values includes comma comma must be slashed `\,'\n"\
+              "If values includes comma comma must be slashed `\\\\,'\n"\
               "WARNING: correctness of parsing will not guaranteed!"
 
-            base.option '--raw', '"/Param VAL, -SubParam VAL"', description do |s|
+            base.option '--raw', '"/Par VAL, -SubPar VAL"', description do |s|
               raw = parse_raw s
             end
           end
@@ -286,7 +286,9 @@ module AssLauncher
         module IB_PATH
           def self.included(base)
             base.parameter 'IB_PATH',
-              "path to infobase like a strings 'tcp://srv/ref' or 'http[s]://host/path' or 'path/to/ib'" do |s|
+              "path to infobase like a strings"\
+              " 'tcp://srv/ref' or 'http[s]://host/path' or 'path/to/ib'",
+              attribute_name: :ib_path do |s|
                s
             end
           end
@@ -337,6 +339,29 @@ module AssLauncher
 
         def execute
           Report.new(client, mode, version).execute($stdout, verbose?)
+        end
+      end
+
+      class Run < SubCommand
+        include Option::Version
+        include Option::DryRun
+        include Option::SearchPath
+        include Option::User
+        include Option::Password
+        include Option::Uc
+        include Option::Raw
+        include BinaryWrapper
+
+        def self.command_name
+          'run'
+        end
+
+        def self._banner
+          "run 1C:Enterprise"
+        end
+
+        def execute
+          fail 'Abstract'
         end
       end
     end
