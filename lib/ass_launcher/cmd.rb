@@ -343,6 +343,7 @@ module AssLauncher
       end
 
       class Run < SubCommand
+        require 'uri'
         include Option::Version
         include Option::DryRun
         include Option::SearchPath
@@ -360,8 +361,44 @@ module AssLauncher
           "run 1C:Enterprise"
         end
 
+        def parse_tcp_path
+          u = URI(ib_path)
+          cs_srv(srvr: "#{u.host}:#{u.port}", ref: u.path.gsub(%r{^/}, ''))
+        end
+
+        def connection_string
+          case ib_path
+          when %r{https?://}i then return cs_http(ws: ib_path)
+          when %r{tcp://}i then return parse_tcp_path
+          else return cs_file(file: ib_path)
+          end
+        end
+
+        def command_(&block)
+          if client == :thin
+            binary_wrapper.command((raw || []), &block)
+          else
+            binary_wrapper.command(mode,(raw || []) ,&block)
+          end
+        end
+
+        def make_command
+          usr = user
+          pass = password
+          uc_ = uc
+          cs = connection_string
+          cmd = command_ do
+            connection_string cs
+            _N usr if usr
+            _P pass if pass
+            _UC uc_ if uc_
+          end
+          cmd
+        end
+
         def execute
-          fail 'Abstract'
+          cmd = run_enterise(make_command)
+          puts Colorize.green(cmd.process_holder.result.assout) unless dry_run?
         end
       end
     end

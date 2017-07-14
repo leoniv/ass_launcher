@@ -496,6 +496,41 @@ module AssLauncher::Cmd
       end
     end
 
+    describe AssLauncher::Cmd::Abstract::Run do
+      def cmd
+        @cmd ||= Class.new(self.class.desc) do
+          def initialize
+
+          end
+        end.new
+      end
+
+      it 'file ib_path' do
+        cmd.expects(:ib_path).twice.returns('path/to/ibase')
+        cs = cmd.connection_string
+        cs.file.must_equal 'path/to/ibase'
+      end
+
+      it 'tcp ib_path' do
+        cmd.expects(:ib_path).twice.returns('tcp://host.name:43/ibase')
+        cs = cmd.connection_string
+        cs.srvr.must_equal 'host.name:43'
+        cs.ref.must_equal 'ibase'
+      end
+
+      it 'https ib_path' do
+        cmd.expects(:ib_path).twice.returns('https://host/ibase')
+        cs = cmd.connection_string
+        cs.ws.must_equal 'https://host/ibase'
+      end
+
+      it 'http ib_path' do
+        cmd.expects(:ib_path).twice.returns('http://host/ibase')
+        cs = cmd.connection_string
+        cs.ws.must_equal 'http://host/ibase'
+      end
+    end
+
     describe 'Examples' do
 
       module IncludeBinaryWrapper
