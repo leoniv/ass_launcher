@@ -605,6 +605,7 @@ module AssLauncher::Cmd
 
       describe AssLauncher::Cmd::Main::SubCommands::MakeIb do
         include IncludeBinaryWrapper
+        include AssLauncher::Api
 
         def cmd
           @cmd ||= self.class.desc.new('ass-launcher makeib')
@@ -612,12 +613,6 @@ module AssLauncher::Cmd
 
         def desc
           self.class.desc
-        end
-
-        def cmd
-          @cmd ||= Class.new(desc) do
-            def initialize; end
-          end.new
         end
 
         it '#client' do
@@ -628,8 +623,31 @@ module AssLauncher::Cmd
           cmd.mode.must_equal :createinfobase
         end
 
-        it '#run' do
-          raise 'FIXME'
+        it '#run for srv infobase' do
+          skip '1C not found' if thicks.size == 0
+          out = capture_stdout do
+            cmd.run ['--dbms', 'MSSQLServer',
+                     '--dbsrv', 'sa:sapass@DBHOST\SQLEXPRESS2005',
+                     '--esrv', 'euser:epass@ehosr',
+                     '--pattern', __FILE__,
+                     '--dry-run', 'tmp_ib']
+          end
+          out.must_match %r{1cv8(\.exe)? CREATEINFOBASE Srvr='ehosr';Ref='tmp_ib';}
+          out.must_match %r{DBMS='MSSQLServer';DBSrvr='DBHOST\\SQLEXPRESS2005';}
+          out.must_match %r{DB='tmp_ib';DBUID='sa';DBPwd='sapass';CrSQLDB='Y';}
+          out.must_match %r{SUsr='euser';SPwd='epass'; /UseTemplate .*/cmd_test\.rb}
+          out.must_match %r{/DisableStartupDialogs  /DisableStartupMessages  /OUT \S+}
+        end
+
+        it '#run for file infobase' do
+          skip '1C not found' if thicks.size == 0
+          out = capture_stdout do
+            cmd.run [ '--pattern', __FILE__,
+                      '--dry-run', 'tmp/fake.ib']
+          end
+          out.must_match %r{1cv8(\.exe)? CREATEINFOBASE File='tmp\\fake.ib'}
+          out.must_match %r{/UseTemplate .*/cmd_test\.rb}
+          out.must_match %r{/DisableStartupDialogs  /DisableStartupMessages  /OUT \S+}
         end
       end
     end
