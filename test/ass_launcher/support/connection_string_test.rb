@@ -305,8 +305,9 @@ class TestConnectionStringServer < Minitest::Test
 
       end
     end.new
-    mock.expects(:createinfobase_cmd).returns(:to_s)
-    assert_equal [:to_s], mock.createinfobase_args
+    mock.expects(:createinfobase_cmd)
+      .returns("Srvr=\"seg_2012_001\";Ref=\"tmp_ib\";DBMS=\"MSSQLServer\";DBSrvr=\"dbsrv:port\";DB=\"tmp_ib\";DBUID=\"user\";DBPwd=\"pass\";CrSQLDB=\"Y\";")
+    assert_equal ["Srvr='seg_2012_001';Ref='tmp_ib';DBMS='MSSQLServer';DBSrvr='dbsrv:port';DB='tmp_ib';DBUID='user';DBPwd='pass';CrSQLDB='Y';"], mock.createinfobase_args
   end
 
   def test_to_ole_string

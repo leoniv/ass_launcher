@@ -279,7 +279,7 @@ module AssLauncher
         # Build args array suitable for
         # :createinfibase runmode
         def createinfobase_args
-          [createinfobase_cmd]
+          [createinfobase_cmd.gsub(%r{=\s*"},"='").gsub(%r{"\s*;},"';")]
         end
 
         # (see DBMS_VALUES)
