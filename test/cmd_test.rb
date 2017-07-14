@@ -5,7 +5,8 @@ module AssLauncher::Cmd
   module Test
 
     MAIN_SUBCOMMANDS = {
-      ShowVersion: ['show-version', %r{Show version of ass_launcher gem and list of known\s+1C:Enterprise versions}],
+      ShowVersion: ['show-version', %r{Show version of ass_launcher gem and list of known\s+1C:Enterprise}],
+      Env: ['env', %r{Show 1C:Enterprise installations}],
       Designer: ['designer', %r{1C:Enterprise Thick client in DESIGNER mode}i],
       Thick: ['thick', %r{1C:Enterprise Thick client in ENTERPRISE mode}i],
       Thin: ['thin', %r{1C:Enterprise Thin client}i],
@@ -14,15 +15,15 @@ module AssLauncher::Cmd
 
     NESTED_SUBCOMMANDS = {
       Cli: ['cli', %r{show help for 1C:Enterprise CLI parameters}i],
-      Versions: ['versions', %r{FIXME}],
       Uri: ['uri', %r{FIXME}],
       Run: ['run', %r{FIXME}]}
 
     MAIN_NESTED_MATRIX = {
       ShowVersion: %i{},
-      Designer: %i{Cli Versions Run},
-      Thick: %i{Cli Versions Run},
-      Thin: %i{Cli Versions Run},
+      Env: %i{},
+      Designer: %i{Cli Run},
+      Thick: %i{Cli Run},
+      Thin: %i{Cli Run},
       Web: %i{Cli Uri},
       MakeIb: %i{}
     }
@@ -46,13 +47,13 @@ module AssLauncher::Cmd
 
     OPTIONS_MATRIX = {
       ShowVersion: %i{},
+      Env: %i{search_path},
       Designer: %i{},
       Thick: %i{},
       Thin: %i{},
       Web: %i{},
-      MakeIb: %i{pattern dbms dbsrv esrv dry_run version},
+      MakeIb: %i{pattern dbms dbsrv esrv dry_run version search_path},
       Cli: %i{version verbose query},
-      Versions: %i{search_path},
       Uri: %i{user password uc raw},
       Run: %i{search_path version user password uc dry_run raw}
     }
@@ -65,13 +66,13 @@ module AssLauncher::Cmd
 
     PARAMTERS_MATRIX = {
       ShowVersion: %i{},
+      Env: %i{},
       Designer: %i{},
       Thick: %i{},
       Thin: %i{},
       Web: %i{},
       MakeIb: %i{IB_PATH_NAME},
       Cli: %i{},
-      Versions: %i{},
       Uri: %i{IB_PATH},
       Run: %i{IB_PATH}
     }
@@ -170,9 +171,15 @@ module AssLauncher::Cmd
       module OptionSpecs
         module SearchPath
           extend Minitest::Spec::DSL
-          it 'FIXME' do
+          it '#run' do
             inst = cmd_class(desc).new('')
-            raise 'FIXME'
+            inst.run ['--search-path', 'custom/path']
+            begin
+              AssLauncher.config.search_path.must_equal 'custom/path'
+              inst.search_path.must_equal 'custom/path'
+            ensure
+              AssLauncher.config.search_path = nil
+            end
           end
         end
         module Version

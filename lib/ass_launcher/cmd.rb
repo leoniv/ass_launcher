@@ -128,11 +128,16 @@ module AssLauncher
         end
       end
 
+      # @api private
+      # All +Clamp::Command+ option mixins
       module Option
         module SearchPath
           def self.included(base)
             base.option %w{--search-path -I}, 'PATH',
-            'specify 1C:Enterprise installation path'
+            'specify 1C:Enterprise installation path' do |s|
+              AssLauncher.config.search_path = s
+              s
+            end
           end
         end
 
@@ -153,7 +158,8 @@ module AssLauncher
 
         module Query
           def self.included(base)
-            base.option %w{--query -q}, 'REGEX', 'regular expression based filter' do |s|
+            base.option %w{--query -q}, 'REGEX',
+              'regular expression based filter' do |s|
               begin
                 query = Regexp.new(s)
               rescue RegexpError => e
@@ -165,7 +171,8 @@ module AssLauncher
 
         module Dbms
           def self.included(base)
-            dbtypes = AssLauncher::Support::ConnectionString::DBMS_VALUES + ['File']
+            dbtypes = AssLauncher::Support::ConnectionString::DBMS_VALUES\
+              + ['File']
 
             define_method :valid_db_types do
               dbtypes
@@ -335,15 +342,47 @@ module AssLauncher
           end
 
           def self._banner
-            "Show version of ass_launcher gem and\n"\
-              'list of known 1C:Enterprise versions'
+            'Show version of ass_launcher gem and'\
+              ' list of known 1C:Enterprise'
           end
 
           def execute
-            puts Colorize.red "ass_launcher v#{AssLauncher::VERSION}"
-            puts Colorize.green "Known 1C:Enterprise:"
+            puts Colorize.yellow("ass_launcher:")\
+              + Colorize.green(" v#{AssLauncher::VERSION}")
+            puts Colorize.yellow("Known 1C:Enterprise:")
             puts Colorize
-              .green " - v#{defs_versions.reverse.map(&:to_s).join("\n - v")}"
+              .green(" - v#{defs_versions.reverse.map(&:to_s).join("\n - v")}")
+          end
+        end
+
+        class Env < Abstract::SubCommand
+          include Abstract::Option::SearchPath
+          include AssLauncher::Api
+
+          def self.command_name
+            'env'
+          end
+
+          def self._banner
+            'Show 1C:Enterprise installations'
+          end
+
+          def thins_list
+            "#{list(thins)}"
+          end
+
+          def list(clients)
+            " - v#{clients.map {|c| c.version}.sort.reverse.join("\n - v")}"
+          end
+
+          def execute
+            puts Colorize.yellow "1C:Enterprise installations was searching in:"
+            puts Colorize
+              .green " - #{AssLauncher::Enterprise.search_paths.join("\n - ")}"
+            puts Colorize.yellow "Thick client installations:"
+            puts Colorize.green list(thicks)
+            puts Colorize.yellow "Thin client installations:"
+            puts Colorize.green list(thicks)
           end
         end
       end
