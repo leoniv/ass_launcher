@@ -182,8 +182,13 @@ module AssLauncher
               dbtypes
             end
 
-            base.option '--dbms', 'DB_TYPE', "db type: #{dbtypes}.\nValue \"File\" for make file infobase", default: 'File' do |s|
-              raise 'FIXME'
+            base.option '--dbms', 'DB_TYPE',
+              "db type: #{dbtypes}.\nValue \"File\" for make file infobase",
+              default: 'File' do |s|
+              raise ArgumentError,
+                "valid values: [#{valid_db_types.join(' ')}]" unless\
+                valid_db_types.include? s
+              s
             end
           end
         end

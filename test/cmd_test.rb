@@ -184,30 +184,57 @@ module AssLauncher::Cmd
         end
         module Version
           extend Minitest::Spec::DSL
-          it 'FIXME' do
+          it '#run' do
             inst = cmd_class(desc).new('')
-            raise 'FIXME'
+            inst.run ['--version', '8.3.2.1']
+            inst.version.must_equal Gem::Version.new('8.3.2.1')
           end
         end
         module Verbose
           extend Minitest::Spec::DSL
-          it 'FIXME' do
+          it '#run' do
             inst = cmd_class(desc).new('')
-            raise 'FIXME'
+            inst.run ['--verbose']
+            inst.verbose?.must_equal true
           end
         end
         module Query
           extend Minitest::Spec::DSL
-          it 'FIXME' do
+          it '#run' do
             inst = cmd_class(desc).new('')
-            raise 'FIXME'
+            inst.run ['--query', '\s+']
+            inst.query.must_equal %r{\s+}
+          end
+
+          it '#run fail' do
+            inst = cmd_class(desc).new('')
+            e = proc {
+              inst.run ['--query', '[']
+            }.must_raise Clamp::UsageError
           end
         end
         module Dbms
           extend Minitest::Spec::DSL
-          it 'FIXME' do
+          it '#run default' do
             inst = cmd_class(desc).new('')
-            raise 'FIXME'
+            inst.run []
+            inst.dbms.must_equal 'File'
+          end
+
+          it '#run fail' do
+            inst = cmd_class(desc).new('')
+
+            e = proc {
+              inst.run ['--dbms', 'invalid']
+            }.must_raise Clamp::UsageError
+            e.message
+              .must_match %r{\[MSSQLServer PostgreSQL IBMDB2 OracleDatabase File\]}i
+          end
+
+          it '#run' do
+            inst = cmd_class(desc).new('')
+            inst.run ['--dbms', 'PostgreSQL']
+            inst.dbms.must_equal 'PostgreSQL'
           end
         end
         module Dbsrv
