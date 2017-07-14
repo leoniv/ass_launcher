@@ -3,10 +3,32 @@ module AssLauncher
   # AssLauncher command-line untils
   # @example
   #   $ass-launcher --help
+  # @api private
   #
   module Cmd
+    # Colorize string for console output
+    # It's stupid wrapper for ColorizedString
+    # @api private
+    module Colorize
+      require 'colorized_string'
+
+      def self.method_missing(m, s)
+        colorized(s).send(m)
+      end
+
+      def self.colorized(mes)
+        ColorizedString[mes]
+      end
+    end
+
+    # @api private
     module Support
+      # Mixin
+      # @api private
       module SrvStrParser
+        # Parse string like +user:password@host:port+
+        # @param s [String]
+        # @return [Array] ['host:port', 'user', 'password']
         def parse_srv_str(s)
           split = s.split('@')
           fail ArgumentError if split.size > 2
@@ -23,20 +45,10 @@ module AssLauncher
           [host, user, pass]
         end
       end
-
-      module OutputFormmater
-        require 'colorized_string'
-
-        def self.red(mes)
-          puts colorize(mes, :red)
-        end
-
-        def self.colorize(mes, color)
-          ColorizedString[mes].colorize(color)
-        end
-      end
     end
 
+    # @api private
+    # Abstract things
     module Abstract
       class SubCommand < Clamp::Command
         module Declaration
@@ -63,7 +75,7 @@ module AssLauncher
       end
 
       module ClientMode
-        def parrent_command
+        def pareent_command
           invocation_path.to_s.split[1]
         end
 
@@ -88,6 +100,7 @@ module AssLauncher
         end
       end
 
+      # @api private
       module BinaryWrapper
         include AssLauncher::Api
         include ClientMode
@@ -108,7 +121,7 @@ module AssLauncher
 
         def run_enterise(cmd)
           if respond_to?(:dry_run?) && dry_run?
-            Support::OutputFormmater.red "#{cmd}"
+            puts Colorize.green(cmd.to_s)
           else
             cmd.run.wait.result.verify!
           end
@@ -327,9 +340,10 @@ module AssLauncher
           end
 
           def execute
-            $stdout.puts "AssLauncher::VERSION: #{AssLauncher::VERSION}"
-            $stdout.puts "Known 1C:Enterprise versions:"
-            $stdout.puts " - #{defs_versions.map(&:to_s).join("\n - ")}"
+            puts Colorize.red "ass_launcher v#{AssLauncher::VERSION}"
+            puts Colorize.green "Known 1C:Enterprise:"
+            puts Colorize
+              .green " - v#{defs_versions.reverse.map(&:to_s).join("\n - v")}"
           end
         end
       end

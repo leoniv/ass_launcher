@@ -381,6 +381,7 @@ module AssLauncher::Cmd
       it '#binary_wrapper fail' do
         cmd.expects(:binary_get).returns(nil)
         cmd.expects(:version).returns(:version)
+        cmd.expects(:client).returns(:client)
         e = proc {
           cmd.binary_wrapper
         }.must_raise RuntimeError
@@ -417,8 +418,9 @@ module AssLauncher::Cmd
       it '#run_enterise dry_run' do
         cmd.expects(:dry_run?).returns(true)
         command = stub to_s: 'command dryrun'
-        AssLauncher::Cmd:: Support:: OutputFormmater.expects(:red)
-          .with('command dryrun')
+        AssLauncher::Cmd::Colorize.expects(:green)
+          .with('command dryrun').returns('command dryrun')
+        cmd.expects(:puts).with('command dryrun')
         cmd.run_enterise(command)
       end
     end
