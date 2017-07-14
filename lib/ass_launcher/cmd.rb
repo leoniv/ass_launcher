@@ -75,7 +75,7 @@ module AssLauncher
       end
 
       module ClientMode
-        def pareent_command
+        def parrent_command
           invocation_path.to_s.split[1]
         end
 
@@ -125,10 +125,11 @@ module AssLauncher
 
         def run_enterise(cmd)
           if respond_to?(:dry_run?) && dry_run?
-            puts Colorize.green(cmd.to_s)
+            puts Colorize.yellow(cmd.to_s)
           else
             cmd.run.wait.result.verify!
           end
+          cmd
         end
       end
 
@@ -236,12 +237,9 @@ module AssLauncher
         end
 
         module Pattern
-          def xml_dump?
-            File.directory? pattern
-          end
-
           def self.included(base)
-            base.option %w{--pattern -P}, 'PATH', "pattern for make infobase\nPath to .cf, .dt files or xml-dump directory" do |s|
+            base.option %w{--pattern -P}, 'PATH',
+              "Template for make infobase. Path to .cf, .dt files" do |s|
               fail ArgumentError, "Path not exist: #{s}" unless File.exist?(s)
               s
             end
@@ -296,7 +294,9 @@ module AssLauncher
 
         module IB_PATH_NAME
           def self.included(base)
-            base.parameter 'IB_PATH | IB_NAME', 'PATH for file or NAME for server infobase', attribute_name: :ib_path do |s|
+            base.parameter 'IB_PATH | IB_NAME',
+              'PATH for file or NAME for server infobase',
+              attribute_name: :ib_path do |s|
               s
             end
           end

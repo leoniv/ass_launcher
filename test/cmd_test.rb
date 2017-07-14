@@ -39,7 +39,7 @@ module AssLauncher::Cmd
       uc: [%w[--uc], 'LOCK_CODE', %r{infobase lock code}],
       dry_run: [%w[--dry-run], :flag, %r{puts cmd string}],
       raw: [%w[--raw], "\"/Param VAL, -SubParam VAL\"", %r{parameters in raw\(native\) format}],
-      pattern: [%w[--pattern -P], 'PATH', %r{\.cf, \.dt files or xml-dump directory}],
+      pattern: [%w[--pattern -P], 'PATH', %r{\.cf, \.dt files}],
       dbms: [%w[--dbms], "DB_TYPE", %r{db type}, {default: 'File'}],
       dbsrv: [%w[--dbsrv], "user:pass@dbsrv", %r{db server}],
       esrv: [%w[--esrv], "user:pass@esrv", %r{enterprise server}]
@@ -317,13 +317,6 @@ module AssLauncher::Cmd
             e.message.must_match %r{: /notexists}
           end
 
-          it '#run with directory' do
-            inst = cmd_class(desc).new('')
-            inst.run ['--pattern', '.']
-            inst.pattern.must_equal '.'
-            inst.xml_dump?.must_equal true
-          end
-
           it '#run with file' do
             inst = cmd_class(desc).new('')
             inst.run ['--pattern', __FILE__]
@@ -454,7 +447,7 @@ module AssLauncher::Cmd
       it '#run_enterise dry_run' do
         cmd.expects(:dry_run?).returns(true)
         command = stub to_s: 'command dryrun'
-        AssLauncher::Cmd::Colorize.expects(:green)
+        AssLauncher::Cmd::Colorize.expects(:yellow)
           .with('command dryrun').returns('command dryrun')
         cmd.expects(:puts).with('command dryrun')
         cmd.run_enterise(command)
