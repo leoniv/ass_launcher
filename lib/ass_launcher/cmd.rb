@@ -110,11 +110,15 @@ module AssLauncher
             (fail "1C:Enterprise #{client} v#{version} not installed")
         end
 
+        def vrequrement
+          return "= #{version}" if version
+          ''
+        end
+
         def binary_get
           case client
-          when :thick then thicks("= #{version}").last
-          when :thin then thins("= #{version}").last
-          when :web then web_client(infobase, version)
+          when :thick then thicks(vrequrement).last
+          when :thin then thins(vrequrement).last
           end
         end
         private :binary_get

@@ -402,24 +402,26 @@ module AssLauncher::Cmd
 
       it '#binary_get :thick' do
         cmd.expects(:client).returns(:thick)
-        cmd.expects(:version).returns(:version)
-        cmd.expects(:thicks).with("= version").returns([:wrapper])
+        cmd.expects(:vrequrement).returns(:vrequrement)
+        cmd.expects(:thicks).with(:vrequrement).returns([:wrapper])
         cmd.send(:binary_get).must_equal :wrapper
       end
 
       it '#binary_get :thin' do
         cmd.expects(:client).returns(:thin)
-        cmd.expects(:version).returns(:version)
-        cmd.expects(:thins).with("= version").returns([:wrapper])
+        cmd.expects(:vrequrement).returns(:vrequrement)
+        cmd.expects(:thins).with(:vrequrement).returns([:wrapper])
         cmd.send(:binary_get).must_equal :wrapper
       end
 
-      it '#binary_get :web' do
-        cmd.expects(:client).returns(:web)
-        cmd.expects(:version).returns(:version)
-        cmd.expects(:infobase).returns(:infobase)
-        cmd.expects(:web_client).with(:infobase, :version).returns(:wrapper)
-        cmd.send(:binary_get).must_equal :wrapper
+      it '#vrequrement default' do
+        cmd.expects(:version).returns(nil)
+        cmd.vrequrement.must_equal ''
+      end
+
+      it '#vrequrement' do
+        cmd.expects(:version).returns(:version).twice
+        cmd.vrequrement.must_equal '= version'
       end
 
       it '#run_enterise dry_run' do
@@ -430,44 +432,63 @@ module AssLauncher::Cmd
         cmd.expects(:puts).with('command dryrun')
         cmd.run_enterise(command)
       end
-    end
 
-    module IncludeBinaryWrapper
-      extend Minitest::Spec::DSL
+      describe 'Test with real 1C' do
+        include AssLauncher::Api
+        before do
+          skip '1C not found' if thicks.size == 0
+        end
 
-      def desc
-        self.class.desc
-      end
+        it '#binary_wrapper :thick default version' do
+          cmd.expects(:client).returns(:thick)
+          cmd.expects(:version).returns(nil)
+          wrapper = cmd.binary_wrapper
+          wrapper.must_be_instance_of AssLauncher::Enterprise::BinaryWrapper::ThickClient
+          wrapper.version.must_equal thicks.last.version
+        end
 
-      it 'includes BinaryWrapper' do
-        desc.include?(AssLauncher::Cmd::Abstract::BinaryWrapper)
-          .must_equal true
-      end
-    end
+        it '#binary_wrapper :thick specified version' do
+          v = thicks.first.version
+          cmd.expects(:client).returns(:thick)
+          cmd.expects(:version).twice.returns(v.to_s)
+          wrapper = cmd.binary_wrapper
+          wrapper.must_be_instance_of AssLauncher::Enterprise::BinaryWrapper::ThickClient
+          wrapper.version.must_equal thicks.first.version
+        end
 
-    describe AssLauncher::Cmd::Main::SubCommands::MakeIb do
-      include IncludeBinaryWrapper
+        it '#binary_wrapper :thin default version' do
+          cmd.expects(:client).returns(:thin)
+          cmd.expects(:version).returns(nil)
+          wrapper = cmd.binary_wrapper
+          wrapper.must_be_instance_of AssLauncher::Enterprise::BinaryWrapper::ThinClient
+          wrapper.version.must_equal thins.last.version
+        end
 
-      def desc
-        self.class.desc
-      end
-
-      def cmd
-        @cmd ||= Class.new(desc) do
-          def initialize; end
-        end.new
-      end
-
-      it '#client' do
-        cmd.client.must_equal :thick
-      end
-
-      it '#mode' do
-        cmd.mode.must_equal :createinfobase
+        it '#binary_wrapper :thin specified version' do
+          v = thins.first.version
+          cmd.expects(:client).returns(:thin)
+          cmd.expects(:version).twice.returns(v.to_s)
+          wrapper = cmd.binary_wrapper
+          wrapper.must_be_instance_of AssLauncher::Enterprise::BinaryWrapper::ThinClient
+          wrapper.version.must_equal thins.first.version
+        end
       end
     end
 
     describe 'Examples' do
+
+      module IncludeBinaryWrapper
+        extend Minitest::Spec::DSL
+
+        def desc
+          self.class.desc
+        end
+
+        it 'includes BinaryWrapper' do
+          desc.include?(AssLauncher::Cmd::Abstract::BinaryWrapper)
+            .must_equal true
+        end
+      end
 
       def colorize(str)
         ColorizedString[str]
@@ -559,6 +580,36 @@ module AssLauncher::Cmd
           expected << "\n"
 
           out.must_equal expected
+        end
+      end
+
+      describe AssLauncher::Cmd::Main::SubCommands::MakeIb do
+        include IncludeBinaryWrapper
+
+        def cmd
+          @cmd ||= self.class.desc.new('ass-launcher makeib')
+        end
+
+        def desc
+          self.class.desc
+        end
+
+        def cmd
+          @cmd ||= Class.new(desc) do
+            def initialize; end
+          end.new
+        end
+
+        it '#client' do
+          cmd.client.must_equal :thick
+        end
+
+        it '#mode' do
+          cmd.mode.must_equal :createinfobase
+        end
+
+        it '#run' do
+          raise 'FIXME'
         end
       end
     end
