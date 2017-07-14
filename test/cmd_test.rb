@@ -466,5 +466,101 @@ module AssLauncher::Cmd
         cmd.mode.must_equal :createinfobase
       end
     end
+
+    describe 'Examples' do
+
+      def colorize(str)
+        ColorizedString[str]
+      end
+
+      def capture_stdout(&block)
+        original_stdout = $stdout
+        $stdout = fake = StringIO.new
+        begin
+          yield
+        ensure
+          $stdout = original_stdout
+        end
+        fake.string
+      end
+
+      describe AssLauncher::Cmd::Main::SubCommands::ShowVersion do
+        include AssLauncher::Enterprise::CliDefsLoader
+
+        def cmd
+          @cmd ||= self.class.desc.new('ass-launcher show-version')
+        end
+
+        it '#known_versions_list' do
+          cmd.known_versions_list
+            .must_equal " - v#{defs_versions.reverse.map(&:to_s).join("\n - v")}"
+        end
+
+        it '#run' do
+          cmd.expects(:known_versions_list).returns(" - version list")
+          out = capture_stdout do
+            cmd.run []
+          end
+
+          expected = ''
+          expected << colorize('ass_launcher:').yellow
+          expected << colorize(" v#{AssLauncher::VERSION}").green
+          expected << "\n"
+          expected << colorize('Known 1C:Enterprise:').yellow
+          expected << "\n"
+          expected << colorize(' - version list').green
+          expected << "\n"
+
+          out.must_equal expected
+        end
+      end
+
+      describe AssLauncher::Cmd::Main::SubCommands::Env do
+
+        def cmd
+          @cmd ||= self.class.desc.new('ass-launcher env')
+        end
+
+        it 'include? AssLauncher::Api' do
+          cmd.class.include?(AssLauncher::Api).must_equal true
+        end
+
+        it '#list' do
+          clients = 3.times.map do |i|
+            stub(version: i)
+          end
+
+          cmd.list(clients).must_equal " - v#{[2,1,0].join("\n - v")}"
+        end
+
+        it '#run' do
+          cmd.expects(:thicks).returns(:thicks)
+          cmd.expects(:thins).returns(:thins)
+          cmd.expects(:list).with(:thicks).returns('thicks')
+          cmd.expects(:list).with(:thins).returns('thins')
+
+          out = capture_stdout do
+            cmd.run ['--search-path', './tmp']
+          end
+
+          expected = ''
+          expected << colorize('1C:Enterprise installations was searching in:').yellow
+          expected << "\n"
+          expected << colorize(" - #{AssLauncher::Enterprise.search_paths
+            .join("\n - ")}").green
+          expected << "\n"
+          expected << colorize('Thick client installations:').yellow
+          expected << "\n"
+          expected << colorize('thicks').green
+          expected << "\n"
+          expected << colorize('Thin client installations:').yellow
+          expected << "\n"
+          expected << colorize('thins').green
+          expected << "\n"
+
+          out.must_equal expected
+        end
+      end
+    end
   end
 end

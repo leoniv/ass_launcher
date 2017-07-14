@@ -346,12 +346,15 @@ module AssLauncher
               ' list of known 1C:Enterprise'
           end
 
+          def known_versions_list
+            " - v#{defs_versions.reverse.map(&:to_s).join("\n - v")}"
+          end
+
           def execute
             puts Colorize.yellow("ass_launcher:")\
               + Colorize.green(" v#{AssLauncher::VERSION}")
             puts Colorize.yellow("Known 1C:Enterprise:")
-            puts Colorize
-              .green(" - v#{defs_versions.reverse.map(&:to_s).join("\n - v")}")
+            puts Colorize.green(known_versions_list)
           end
         end
 
@@ -367,10 +370,6 @@ module AssLauncher
             'Show 1C:Enterprise installations'
           end
 
-          def thins_list
-            "#{list(thins)}"
-          end
-
           def list(clients)
             " - v#{clients.map {|c| c.version}.sort.reverse.join("\n - v")}"
           end
@@ -382,7 +381,7 @@ module AssLauncher
             puts Colorize.yellow "Thick client installations:"
             puts Colorize.green list(thicks)
             puts Colorize.yellow "Thin client installations:"
-            puts Colorize.green list(thicks)
+            puts Colorize.green list(thins)
           end
         end
       end
