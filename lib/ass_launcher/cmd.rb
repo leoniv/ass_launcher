@@ -269,13 +269,18 @@ module AssLauncher
             end.flatten.map {|i| i.gsub('\\,', ',')}
           end
 
+          def raw_param
+            raw_list.flatten
+          end
+
           def self.included(base)
             description =  "other 1C CLI parameters in raw(native) format.\n"\
               "Parameters and their arguments must be delimited comma-space sequence: `, '\n"\
               "If values includes comma comma must be slashed `\\\\,'\n"\
               "WARNING: correctness of parsing will not guaranteed!"
 
-            base.option '--raw', '"/Par VAL, -SubPar VAL"', description do |s|
+            base.option '--raw', '"/Par VAL, -SubPar VAL"', description,
+              multivalued: true do |s|
               raw = parse_raw s
             end
           end
@@ -376,9 +381,9 @@ module AssLauncher
 
         def command_(&block)
           if client == :thin
-            binary_wrapper.command((raw || []), &block)
+            binary_wrapper.command((raw_param || []), &block)
           else
-            binary_wrapper.command(mode,(raw || []) ,&block)
+            binary_wrapper.command(mode,(raw_param || []) ,&block)
           end
         end
 

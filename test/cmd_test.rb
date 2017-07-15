@@ -38,7 +38,7 @@ module AssLauncher::Cmd
       password: [%w[--password -p], 'PASSWORD', %r{infobase user password}],
       uc: [%w[--uc], 'LOCK_CODE', %r{infobase lock code}],
       dry_run: [%w[--dry-run], :flag, %r{puts cmd string}],
-      raw: [%w[--raw], "\"/Par VAL, -SubPar VAL\"", %r{parameters in raw\(native\) format}],
+      raw: [%w[--raw], "\"/Par VAL, -SubPar VAL\"", %r{parameters in raw\(native\) format}, {multivalued: true}],
       pattern: [%w[--pattern -P], 'PATH', %r{\.cf, \.dt files}],
       dbms: [%w[--dbms], "DB_TYPE", %r{db type}, {default: 'File'}],
       dbsrv: [%w[--dbsrv], "user:pass@dbsrv", %r{db server}],
@@ -356,8 +356,9 @@ module AssLauncher::Cmd
 
           it '#run' do
             inst = cmd_class(desc).new('')
-            inst.run ['--raw', '/Param VALUE']
-            inst.raw.must_equal ['/Param', 'VALUE']
+            inst.run ['--raw', '/P1 VALUE1', '--raw', '/P2 VALUE2']
+            inst.raw_list.must_equal [['/P1', 'VALUE1'], ['/P2', 'VALUE2']]
+            inst.raw_param.must_equal ['/P1', 'VALUE1', '/P2', 'VALUE2']
           end
         end
       end
@@ -379,7 +380,11 @@ module AssLauncher::Cmd
             opt.type.must_equal spec[1]
             opt.description.must_match spec[2]
             opt.required?.to_s.must_equal (spec[3] || {})[:required].to_s
-            opt.default_value.to_s.must_equal (spec[3] || {})[:default].to_s
+            if (spec[3] || {})[:multivalued]
+              opt.default_value.must_equal []
+            else
+              opt.default_value.to_s.must_equal (spec[3] || {})[:default].to_s
+            end
           end
 
           include OptionSpecs.const_get desc.to_sym
