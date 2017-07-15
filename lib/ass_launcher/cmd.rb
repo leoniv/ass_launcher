@@ -107,7 +107,9 @@ module AssLauncher
 
         def binary_wrapper
           binary_get ||\
-            (fail "1C:Enterprise #{client} v#{version} not installed")
+            (fail Clamp::ExecutionError
+               .new("1C:Enterprise #{client} v#{version} not installed",
+                     invocation_path, 1))
         end
 
         def vrequrement
@@ -127,7 +129,12 @@ module AssLauncher
           if respond_to?(:dry_run?) && dry_run?
             puts Colorize.yellow(cmd.to_s)
           else
-            cmd.run.wait.result.verify!
+            begin
+              cmd.run.wait.result.verify!
+            rescue AssLauncher::Support::Shell::RunAssResult::RunAssError => e
+              raise Clamp::ExecutionError.new(e.message, invocation_path,
+                cmd.process_holder.result.exitstatus)
+            end
           end
           cmd
         end

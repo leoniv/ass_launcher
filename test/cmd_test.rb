@@ -416,7 +416,7 @@ module AssLauncher::Cmd
         cmd.expects(:client).returns(:client)
         e = proc {
           cmd.binary_wrapper
-        }.must_raise RuntimeError
+        }.must_raise Clamp::ExecutionError
         e.message.must_match %r{1C:Enterprise.+not installed}
       end
 
