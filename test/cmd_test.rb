@@ -322,7 +322,6 @@ module AssLauncher::Cmd
             inst = cmd_class(desc).new('')
             inst.run ['--pattern', __FILE__]
             inst.pattern.must_equal __FILE__
-            inst.xml_dump?.must_equal false
           end
         end
         module Uc

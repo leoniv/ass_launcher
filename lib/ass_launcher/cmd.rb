@@ -264,7 +264,7 @@ module AssLauncher
 
             split.map do |pv|
               fail ArgumentError, "Parse error in: #{pv}" unless pv =~ %r{^(/|-)}
-              pv =~ %r{^(\/|-)(\w+)+(.*)?}
+              pv =~ %r{^(\/|-)([^\s]+)+(.*)?}
               ["#{$1}#{$2}", $3.strip].select {|i| !i.empty?}
             end.flatten.map {|i| i.gsub('\\,', ',')}
           end
@@ -330,7 +330,7 @@ module AssLauncher
         end
 
         def self.command_name
-          'cli'
+          'cli-help'
         end
 
         def self._banner
@@ -392,6 +392,7 @@ module AssLauncher
             _N usr if usr
             _P pass if pass
             _UC uc_ if uc_
+            _AppAutoCheckVersion :-
           end
           cmd
         end
