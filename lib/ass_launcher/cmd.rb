@@ -427,7 +427,8 @@ module AssLauncher
             _N usr if usr
             _P pass if pass
             _UC uc_ if uc_
-            _AppAutoCheckVersion :-
+            _AppAutoCheckVersion :- if\
+                Gem::Requirement.new('>= 8.3.8').satisfied_by? binary_wrapper.version
           end
           cmd
         end
