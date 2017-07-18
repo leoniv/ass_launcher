@@ -125,9 +125,24 @@ module AssLauncher
         end
         private :binary_get
 
+        def dry_run(cmd)
+          r = "#{cmd.cmd.gsub(' ', '\\ ')} "
+          if mode == :createinfobase
+            r << cmd.args.join(' ')
+          else
+            r << cmd.args.map do |a|
+              unless a =~ %r{^(/|-|'|"|DESIGNER|ENTERPRISE)}
+                "\'#{a}\'" unless a.to_s.empty?
+              else
+                a
+              end
+            end.join(' ')
+          end
+        end
+
         def run_enterprise(cmd)
           if respond_to?(:dry_run?) && dry_run?
-            puts Colorize.yellow(cmd.to_s)
+            puts Colorize.yellow(dry_run(cmd))
           else
             begin
               cmd.run.wait.result.verify!
@@ -277,7 +292,11 @@ module AssLauncher
           end
 
           def raw_param
-            raw_list
+            r = []
+            raw_list.each do |params|
+              r += params
+            end
+            r
           end
 
           def self.included(base)

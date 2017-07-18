@@ -23,7 +23,9 @@ module AssLauncher
             end
 
             def webclient
-              web_client(ib_path)
+              cl = web_client(ib_path)
+              cl.send(:add_to_query, cl.uri, cl.send(:args_to_query, raw_param.flatten))
+              cl
             end
 
             def location
@@ -34,12 +36,11 @@ module AssLauncher
               webclient.location do
                 _N user_ if user_
                 _P pass_ if pass_
-                raise 'FIXME'
               end
             end
 
             def execute
-              raise 'FIXME'
+              Colorize.yellow location
             end
           end
         end

@@ -365,18 +365,18 @@ module AssLauncher::Cmd
           extend Minitest::Spec::DSL
           it "#parse_raw" do
             inst = cmd_class(desc).new('')
-            inst.parse_raw('/Param VALUE1\, VALUE2 VALUE3, -FlagParam, -SubParam /PATH1/PATH /PATH2/PATH, /FlagParam')
+            inst.parse_raw('/Param VALUE1\, VALUE2 VALUE3, -FlagParam, -SubParam \'/PATH1/PATH\' \'/PATH2/PATH\', /FlagParam')
               .must_equal  [['/Param', 'VALUE1, VALUE2 VALUE3'],
                             ['-FlagParam', ''],
-                            ['-SubParam', '/PATH1/PATH /PATH2/PATH'],
+                            ['-SubParam', '\'/PATH1/PATH\' \'/PATH2/PATH\''],
                             ['/FlagParam', '']]
           end
 
           it '#run' do
             inst = cmd_class(desc).new('')
             inst.run ['--raw', '/P1 VALUE1', '--raw', '/P2 VALUE2']
-            inst.raw_list.must_equal [['/P1', 'VALUE1'], ['/P2', 'VALUE2']]
-            inst.raw_param.must_equal ['/P1', 'VALUE1', '/P2', 'VALUE2']
+            inst.raw_list.must_equal [[['/P1', 'VALUE1']], [['/P2', 'VALUE2']]]
+            inst.raw_param.must_equal [['/P1', 'VALUE1'], ['/P2', 'VALUE2']]
           end
         end
       end
@@ -469,11 +469,11 @@ module AssLauncher::Cmd
 
       it '#run_enterprise dry_run' do
         cmd.expects(:dry_run?).returns(true)
-        command = stub to_s: 'command dryrun'
+        cmd.expects(:dry_run).with(:command).returns('command dryrun')
         AssLauncher::Cmd::Colorize.expects(:yellow)
           .with('command dryrun').returns('command dryrun')
         cmd.expects(:puts).with('command dryrun')
-        cmd.run_enterprise(command)
+        cmd.run_enterprise(:command)
       end
 
       describe 'Test with real 1C' do
@@ -815,7 +815,7 @@ module AssLauncher::Cmd
               'tcp://host/ib']
           end
 
-          out.must_match %r{1cv8(\.exe)? DESIGNER /P1 V1 /P2 V2 /S host/ib /N user /P secret /UC uc-code /AppAutoCheckVersion-  /DisableStartupDialogs  /DisableStartupMessages}
+          out.must_match %r{1cv8(\.exe)? DESIGNER /P1 'V1' /P2 'V2' /S 'host/ib' /N 'user' /P 'secret' /UC 'uc-code' /AppAutoCheckVersion-  /DisableStartupDialogs  /DisableStartupMessages}
         end
       end
 
@@ -845,7 +845,7 @@ module AssLauncher::Cmd
               'tcp://host/ib']
           end
 
-          out.must_match %r{1cv8(\.exe)? ENTERPRISE /P1 V1 /P2 V2 /S host/ib /N user /P secret /UC uc-code /AppAutoCheckVersion-  /DisableStartupDialogs  /DisableStartupMessages}
+          out.must_match %r{1cv8(\.exe)? ENTERPRISE /P1 'V1' /P2 'V2' /S 'host/ib' /N 'user' /P 'secret' /UC 'uc-code' /AppAutoCheckVersion-  /DisableStartupDialogs  /DisableStartupMessages}
         end
       end
 
@@ -876,7 +876,7 @@ module AssLauncher::Cmd
               'tcp://host/ib']
           end
 
-          out.must_match %r{1cv8c(\.exe)? ENTERPRISE /P1 V1 /P2 V2 /S host/ib /N user /P secret /UC uc-code /AppAutoCheckVersion-  /DisableStartupDialogs  /DisableStartupMessages}
+          out.must_match %r{1cv8c(\.exe)? ENTERPRISE /P1 'V1' /P2 'V2' /S 'host/ib' /N 'user' /P 'secret' /UC 'uc-code' /AppAutoCheckVersion-  /DisableStartupDialogs  /DisableStartupMessages}
         end
       end
 
