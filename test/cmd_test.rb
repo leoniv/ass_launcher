@@ -904,10 +904,10 @@ module AssLauncher::Cmd
           out = capture_stdout do
             cmd.run ['--user', 'user',
                      '--password', 'pass',
-                     '--raw', '/P1 V1, /P2 V2',
+                     '--raw', '/P1 V1, /P2 V2, /Flag',
                      'http://host/ib']
           end
-          out.must_match %r{FIXME}
+          ColorizedString[out].uncolorize.must_equal "http://host/ib?P1=V1&P2=V2&Flag&DisableStartupMessages&N=user&P=pass\n"
         end
       end
     end

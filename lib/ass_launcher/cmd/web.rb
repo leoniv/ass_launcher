@@ -31,16 +31,14 @@ module AssLauncher
             def location
               user_ = user
               pass_ = password
-              uc_   = uc
-              raw_ = raw
               webclient.location do
                 _N user_ if user_
                 _P pass_ if pass_
-              end
+              end.to_s
             end
 
             def execute
-              Colorize.yellow location
+              puts Colorize.yellow location.to_s
             end
           end
         end
