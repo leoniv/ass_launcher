@@ -54,7 +54,7 @@ module AssLauncher::Cmd
       Web: %i{},
       MakeIb: %i{pattern dbms dbsrv esrv dry_run version search_path},
       Cli: %i{version verbose query},
-      Uri: %i{user password uc raw},
+      Uri: %i{user password raw},
       Run: %i{search_path version user password uc dry_run raw}
     }
 
@@ -365,8 +365,11 @@ module AssLauncher::Cmd
           extend Minitest::Spec::DSL
           it "#parse_raw" do
             inst = cmd_class(desc).new('')
-            inst.parse_raw('/Param VALUE1\, VALUE2 VALUE3, -SubParam VALUE, /Param2')
-              .must_equal  ['/Param', 'VALUE1, VALUE2 VALUE3', '-SubParam', "VALUE", '/Param2']
+            inst.parse_raw('/Param VALUE1\, VALUE2 VALUE3, -FlagParam, -SubParam /PATH1/PATH /PATH2/PATH, /FlagParam')
+              .must_equal  [['/Param', 'VALUE1, VALUE2 VALUE3'],
+                            ['-FlagParam', ''],
+                            ['-SubParam', '/PATH1/PATH /PATH2/PATH'],
+                            ['/FlagParam', '']]
           end
 
           it '#run' do
@@ -898,7 +901,13 @@ module AssLauncher::Cmd
         end
 
         it '#execute' do
-          raise 'FIXME'
+          out = capture_stdout do
+            cmd.run ['--user', 'user',
+                     '--password', 'pass',
+                     '--raw', '/P1 V1, /P2 V2',
+                     'http://host/ib']
+          end
+          out.must_match %r{FIXME}
         end
       end
     end

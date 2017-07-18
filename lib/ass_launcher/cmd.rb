@@ -272,12 +272,12 @@ module AssLauncher
             split.map do |pv|
               fail ArgumentError, "Parse error in: #{pv}" unless pv =~ %r{^(/|-)}
               pv =~ %r{^(\/|-)([^\s]+)+(.*)?}
-              ["#{$1}#{$2}", $3.strip].select {|i| !i.empty?}
-            end.flatten.map {|i| i.gsub('\\,', ',')}
+              ["#{$1}#{$2}", $3.strip].map {|i| i.gsub('\\,', ',')} #.select {|i| !i.empty?}
+            end
           end
 
           def raw_param
-            raw_list.flatten
+            raw_list
           end
 
           def self.included(base)
@@ -392,9 +392,9 @@ module AssLauncher
 
         def command_(&block)
           if client == :thin
-            binary_wrapper.command((raw_param || []), &block)
+            binary_wrapper.command((raw_param.flatten || []), &block)
           else
-            binary_wrapper.command(mode,(raw_param || []) ,&block)
+            binary_wrapper.command(mode,(raw_param.flatten || []) ,&block)
           end
         end
 

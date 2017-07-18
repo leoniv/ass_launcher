@@ -9,10 +9,10 @@ module AssLauncher
             include Abstract::Option::User
             include Abstract::Option::Password
             include Abstract::Option::Raw
-            include Abstract::Option::Uc
             include Abstract::Parameter::IB_PATH
             include Abstract::ParseIbPath
             include Abstract::ClientMode
+            include AssLauncher::Api
 
             def self.command_name
               'uri'
@@ -20,6 +20,26 @@ module AssLauncher
 
             def self._banner
               'Uri constructor for webclient'
+            end
+
+            def webclient
+              web_client(ib_path)
+            end
+
+            def location
+              user_ = user
+              pass_ = password
+              uc_   = uc
+              raw_ = raw
+              webclient.location do
+                _N user_ if user_
+                _P pass_ if pass_
+                raise 'FIXME'
+              end
+            end
+
+            def execute
+              raise 'FIXME'
             end
           end
         end
