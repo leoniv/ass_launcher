@@ -49,9 +49,7 @@ class TestEnetrpriseCliSpec < Minitest::Test
   end
 
   def test_class_cli_def
-    cls.expects(:load_cli_def).returns(:cli_def)
-    assert_equal :cli_def, cls.cli_def
-    assert_equal :cli_def, cls.cli_def
+    assert_equal 'AssLauncher::Enterprise::CliDef', cls.cli_def.name
   end
 
   def all_parameters_stub
