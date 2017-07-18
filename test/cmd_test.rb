@@ -78,6 +78,21 @@ module AssLauncher::Cmd
       Run: %i{IB_PATH}
     }
 
+    module Support
+      module CaptureStdout
+        def capture_stdout(&block)
+          original_stdout = $stdout
+          $stdout = fake = StringIO.new
+          begin
+            yield
+          ensure
+            $stdout = original_stdout
+          end
+          fake.string
+        end
+      end
+    end
+
     describe AssLauncher::Cmd::Main do
       def desc
         return self.class.desc unless self.class.desc.is_a? String
@@ -501,6 +516,8 @@ module AssLauncher::Cmd
     end
 
     describe AssLauncher::Cmd::Abstract::Run do
+      include Support::CaptureStdout
+
       [AssLauncher::Cmd::Main::SubCommands::Designer::SubCommands::Run,
        AssLauncher::Cmd::Main::SubCommands::Thick::SubCommands::Run,
        AssLauncher::Cmd::Main::SubCommands::Thin::SubCommands::Run,
@@ -525,23 +542,57 @@ module AssLauncher::Cmd
       end
 
       it '#execute' do
-        raise 'FIXME'
-      end
+        command = mock
+        command.expects(:process_holder).returns(command)
+        command.expects(:result).returns(command)
+        command.expects(:assout).returns(:assout)
 
-      it '#make_command' do
-        raise 'FIXME'
+        cmd.expects(:make_command).returns(cmd)
+        cmd.expects(:run_enterpse).with(command).returns(command)
+        AssLauncher::Cmd::Colorize.expects(:green).with(:assout).returns('assout')
+
+        out = capture_stdout do
+          cmd.execute
+        end
+
+        out.must_equal 'assout'
       end
 
       describe 'Test with real 1C' do
         include AssLauncher::Api
+
+        def cmd
+          @cmd ||= Class.new(AssLauncher::Cmd::Abstract::Run) do
+            def initialize
+
+            end
+          end.new
+        end
+
         before do
           skip '1C not found' if thicks.size == 0
         end
 
-        it '#command_' do
-          raise 'FIXME'
+        def make_command_test(client, mode)
+          actual = cmd.make_command
+
+          actual.args.must_equal []
         end
 
+        %w{thick-designer thick-enterprise thin}.each do |client|
+          it "#make_command for #{client}" do
+            client, mode = *client.split('-')
+            cmd.expects(:client).twice.returns(client.to_sym)
+            cmd.expects(:mode).returns(mode.to_sym) if client == 'thick'
+            cmd.expects(:user).returns('user')
+            cmd.expects(:password).returns('password')
+            cmd.expects(:uc).returns('uc')
+            cmd.expects(:raw_param).returns(['/P1', 'V1', '/P2', 'V2'])
+            cmd.expects(:ib_path).twice.returns('tcp://host/ib')
+
+            make_command_test(client, mode)
+          end
+        end
       end
     end
 
@@ -579,6 +630,7 @@ module AssLauncher::Cmd
     end
 
     describe 'Examples' do
+      include Support::CaptureStdout
 
       module IncludeBinaryWrapper
         extend Minitest::Spec::DSL
@@ -595,17 +647,6 @@ module AssLauncher::Cmd
 
       def colorize(str)
         ColorizedString[str]
-      end
-
-      def capture_stdout(&block)
-        original_stdout = $stdout
-        $stdout = fake = StringIO.new
-        begin
-          yield
-        ensure
-          $stdout = original_stdout
-        end
-        fake.string
       end
 
       describe AssLauncher::Cmd::Main::SubCommands::ShowVersion do
