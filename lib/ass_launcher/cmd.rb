@@ -343,15 +343,21 @@ module AssLauncher
         include ClientMode
 
         class Report
-          attr_reader :client, :mode, :version
-          def initialize(client, mode, version)
+          include AssLauncher::Enterprise::CliDefsLoader
+          attr_reader :client, :mode, :version, :query
+          def initialize(client, mode, version, query)
             @client = client
             @mode = mode
             @version = version
+            @query = query
           end
 
           def header
-            "1C:Enterprise-#{version} CLI parameters for #{client}-#{mode}:"
+            "1C:Enterprise CLI parameters for #{client}-#{mode} v#{for_version}:"
+          end
+
+          def for_version
+            version || defs_versions.sort.last
           end
 
           def execute(io, verbose = false)
