@@ -354,8 +354,24 @@ module AssLauncher
         end
       end
 
-      class Run < SubCommand
+      module ParseIbPath
+        include AssLauncher::Api
         require 'uri'
+        def connection_string
+          case ib_path
+          when %r{https?://}i then return cs_http(ws: ib_path)
+          when %r{tcp://}i then return parse_tcp_path
+          else return cs_file(file: ib_path)
+          end
+        end
+
+        def parse_tcp_path
+          u = URI(ib_path)
+          cs_srv(srvr: "#{u.host}:#{u.port}", ref: u.path.gsub(%r{^/}, ''))
+        end
+      end
+
+      class Run < SubCommand
         include Option::Version
         include Option::DryRun
         include Option::SearchPath
@@ -364,6 +380,7 @@ module AssLauncher
         include Option::Uc
         include Option::Raw
         include BinaryWrapper
+        include ParseIbPath
 
         def self.command_name
           'run'
@@ -371,19 +388,6 @@ module AssLauncher
 
         def self._banner
           "run 1C:Enterprise"
-        end
-
-        def parse_tcp_path
-          u = URI(ib_path)
-          cs_srv(srvr: "#{u.host}:#{u.port}", ref: u.path.gsub(%r{^/}, ''))
-        end
-
-        def connection_string
-          case ib_path
-          when %r{https?://}i then return cs_http(ws: ib_path)
-          when %r{tcp://}i then return parse_tcp_path
-          else return cs_file(file: ib_path)
-          end
         end
 
         def command_(&block)

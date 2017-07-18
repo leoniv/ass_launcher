@@ -14,7 +14,7 @@ module AssLauncher::Cmd
       MakeIb: ['makeib', %r{Make new information base}i]}
 
     NESTED_SUBCOMMANDS = {
-      Cli: ['cli', %r{show help for 1C:Enterprise CLI parameters}i],
+      Cli: ['cli-help', %r{show help for 1C:Enterprise CLI parameters}i],
       Uri: ['uri', %r{Uri constructor for webclient}],
       Run: ['run', %r{run 1C:Enterprise}]}
 
@@ -87,7 +87,7 @@ module AssLauncher::Cmd
       def self.it_has_subcommand(klass, spec)
         it "has subcommand #{spec[0]}" do
           cmd = desc.find_subcommand(spec[0])
-          cmd.wont_be_nil
+          cmd.wont_be_nil "#{klass} #{spec[0]}"
           cmd.subcommand_class.must_equal eval("#{desc}::SubCommands::#{klass}")
           cmd.description.must_match spec[1]
         end
@@ -501,11 +501,54 @@ module AssLauncher::Cmd
     end
 
     describe AssLauncher::Cmd::Abstract::Run do
+      [AssLauncher::Cmd::Main::SubCommands::Designer::SubCommands::Run,
+       AssLauncher::Cmd::Main::SubCommands::Thick::SubCommands::Run,
+       AssLauncher::Cmd::Main::SubCommands::Thin::SubCommands::Run,
+      ].each do |klass|
+        it "#{klass}.superclass == AssLauncher::Cmd::Abstract::Run" do
+          klass.superclass
+            .must_equal  AssLauncher::Cmd::Abstract::Run, klass.name
+        end
+      end
+
       def cmd
         @cmd ||= Class.new(self.class.desc) do
           def initialize
 
           end
+        end.new
+      end
+
+      it 'include? ParseIbPath' do
+        self.class.desc.include?(AssLauncher::Cmd::Abstract::ParseIbPath)
+          .must_equal true
+      end
+
+      it '#execute' do
+        raise 'FIXME'
+      end
+
+      it '#make_command' do
+        raise 'FIXME'
+      end
+
+      describe 'Test with real 1C' do
+        include AssLauncher::Api
+        before do
+          skip '1C not found' if thicks.size == 0
+        end
+
+        it '#command_' do
+          raise 'FIXME'
+        end
+
+      end
+    end
+
+    describe AssLauncher::Cmd::Abstract::ParseIbPath do
+      def cmd
+        @cmd ||= Class.new() do
+          include AssLauncher::Cmd::Abstract::ParseIbPath
         end.new
       end
 
@@ -688,6 +731,21 @@ module AssLauncher::Cmd
           out.must_match %r{1cv8(\.exe)? CREATEINFOBASE File='tmp\\fake.ib'}
           out.must_match %r{/UseTemplate .*/cmd_test\.rb}
           out.must_match %r{/DisableStartupDialogs  /DisableStartupMessages  /OUT \S+}
+        end
+      end
+
+      describe AssLauncher::Cmd::Main::SubCommands::Web::SubCommands::Uri do
+        def cmd
+          @cmd ||= self.class.desc.new('ass-launcher web uri')
+        end
+
+        it 'include? ParseIbPath' do
+          self.class.desc.include?(AssLauncher::Cmd::Abstract::ParseIbPath)
+            .must_equal true
+        end
+
+        it '#execute' do
+          raise 'FIXME'
         end
       end
     end

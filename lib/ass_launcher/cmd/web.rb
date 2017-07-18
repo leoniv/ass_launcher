@@ -11,6 +11,7 @@ module AssLauncher
             include Abstract::Option::Raw
             include Abstract::Option::Uc
             include Abstract::Parameter::IB_PATH
+            include Abstract::ParseIbPath
 
             def self.command_name
               'uri'
