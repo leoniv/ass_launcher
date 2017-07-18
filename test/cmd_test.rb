@@ -643,6 +643,26 @@ module AssLauncher::Cmd
       end
     end
 
+    describe AssLauncher::Cmd::Abstract::Cli do
+      def cmd
+        @cmd ||= self.class.desc.new('ass-launcher designer cli-help')
+      end
+
+      it '#run' do
+        report = mock
+        report.expects(:execute).with($stdout, true).returns(:report)
+        AssLauncher::Cmd::Abstract::Cli::Report.expects(:new)
+          .with(:thick, :designer, Gem::Version.new('1.2.3'), %r{.+})
+          .returns(report)
+        cmd.run(['--version', '1.2.3', '--verbose', '--query', '.+'])
+          .must_equal :report
+      end
+    end
+
+    describe AssLauncher::Cmd::Abstract::Cli::Report do
+
+    end
+
     describe 'Examples' do
       include Support::CaptureStdout
 

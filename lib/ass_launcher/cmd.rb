@@ -355,7 +355,7 @@ module AssLauncher
           end
 
           def execute(io, verbose = false)
-            io.puts header
+            io.puts Colorize.bold header
             raise 'FIXME'
           end
         end
@@ -369,7 +369,7 @@ module AssLauncher
         end
 
         def execute
-          Report.new(client, mode, version).execute($stdout, verbose?)
+          Report.new(client, mode, version, query).execute($stdout, verbose?)
         end
       end
 
