@@ -464,13 +464,13 @@ module AssLauncher::Cmd
         cmd.vrequrement.must_equal '= version'
       end
 
-      it '#run_enterise dry_run' do
+      it '#run_enterprise dry_run' do
         cmd.expects(:dry_run?).returns(true)
         command = stub to_s: 'command dryrun'
         AssLauncher::Cmd::Colorize.expects(:yellow)
           .with('command dryrun').returns('command dryrun')
         cmd.expects(:puts).with('command dryrun')
-        cmd.run_enterise(command)
+        cmd.run_enterprise(command)
       end
 
       describe 'Test with real 1C' do
@@ -547,15 +547,15 @@ module AssLauncher::Cmd
         command.expects(:result).returns(command)
         command.expects(:assout).returns(:assout)
 
-        cmd.expects(:make_command).returns(cmd)
-        cmd.expects(:run_enterpse).with(command).returns(command)
+        cmd.expects(:make_command).returns(command)
+        cmd.expects(:run_enterprise).with(command).returns(command)
         AssLauncher::Cmd::Colorize.expects(:green).with(:assout).returns('assout')
 
         out = capture_stdout do
           cmd.execute
         end
 
-        out.must_equal 'assout'
+        out.must_equal "assout\n"
       end
 
       describe 'Test with real 1C' do
@@ -576,7 +576,18 @@ module AssLauncher::Cmd
         def make_command_test(client, mode)
           actual = cmd.make_command
 
-          actual.args.must_equal []
+          actual.args.pop # pop temp /UOT file name like a "H:/tmp/ass_out..."
+          actual.args.must_equal [ (mode == 'designer' ? 'DESIGNER' : 'ENTERPRISE'),
+            "/P1", "V1",
+            "/P2", "V2",
+            "/S", "host/ib",
+            "/N", "user",
+            "/P", "password",
+            "/UC", "uc",
+            "/AppAutoCheckVersion-", "",
+            "/DisableStartupDialogs", "",
+            "/DisableStartupMessages", "",
+            "/OUT"]
         end
 
         %w{thick-designer thick-enterprise thin}.each do |client|
@@ -775,7 +786,100 @@ module AssLauncher::Cmd
         end
       end
 
+      describe AssLauncher::Cmd::Main::SubCommands::Designer::SubCommands::Run do
+        include Support::CaptureStdout
+        include AssLauncher::Api
+        def cmd
+          @cmd = self.class.desc.new('ass-launcher designer run')
+        end
+
+        it '#client' do
+          cmd.client.must_equal :thick
+        end
+
+        it '#mode' do
+          cmd.mode.must_equal :designer
+        end
+
+        it '#run' do
+          skip '1C not found' if thicks.size == 0
+          out = capture_stdout do
+            cmd.run [ '--dry-run',
+              '--user', 'user',
+              '--password', 'secret',
+              '--uc', 'uc-code',
+              '--raw', '/P1 V1, /P2 V2',
+              'tcp://host/ib']
+          end
+
+          out.must_match %r{1cv8(\.exe)? DESIGNER /P1 V1 /P2 V2 /S host/ib /N user /P secret /UC uc-code /AppAutoCheckVersion-  /DisableStartupDialogs  /DisableStartupMessages}
+        end
+      end
+
+      describe AssLauncher::Cmd::Main::SubCommands::Thick::SubCommands::Run do
+        include Support::CaptureStdout
+        include AssLauncher::Api
+        def cmd
+          @cmd = self.class.desc.new('ass-launcher thick run')
+        end
+
+        it '#client' do
+          cmd.client.must_equal :thick
+        end
+
+        it '#mode' do
+          cmd.mode.must_equal :enterprise
+        end
+
+        it '#run' do
+          skip '1C not found' if thicks.size == 0
+          out = capture_stdout do
+            cmd.run [ '--dry-run',
+              '--user', 'user',
+              '--password', 'secret',
+              '--uc', 'uc-code',
+              '--raw', '/P1 V1, /P2 V2',
+              'tcp://host/ib']
+          end
+
+          out.must_match %r{1cv8(\.exe)? ENTERPRISE /P1 V1 /P2 V2 /S host/ib /N user /P secret /UC uc-code /AppAutoCheckVersion-  /DisableStartupDialogs  /DisableStartupMessages}
+        end
+      end
+
+      describe AssLauncher::Cmd::Main::SubCommands::Thin::SubCommands::Run do
+        include Support::CaptureStdout
+        include AssLauncher::Api
+        def cmd
+          @cmd = self.class.desc.new('ass-launcher thin run')
+        end
+
+        it '#client' do
+          cmd.client.must_equal :thin
+        end
+
+        it '#mode' do
+          cmd.mode.must_equal :enterprise
+        end
+
+        it '#run' do
+          skip '1C not found' if thicks.size == 0
+
+          out = capture_stdout do
+            cmd.run [ '--dry-run',
+              '--user', 'user',
+              '--password', 'secret',
+              '--uc', 'uc-code',
+              '--raw', '/P1 V1, /P2 V2',
+              'tcp://host/ib']
+          end
+
+          out.must_match %r{1cv8c(\.exe)? ENTERPRISE /P1 V1 /P2 V2 /S host/ib /N user /P secret /UC uc-code /AppAutoCheckVersion-  /DisableStartupDialogs  /DisableStartupMessages}
+        end
+      end
+
       describe AssLauncher::Cmd::Main::SubCommands::Web::SubCommands::Uri do
+        include Support::CaptureStdout
+
         def cmd
           @cmd ||= self.class.desc.new('ass-launcher web uri')
         end
@@ -783,6 +887,14 @@ module AssLauncher::Cmd
         it 'include? ParseIbPath' do
           self.class.desc.include?(AssLauncher::Cmd::Abstract::ParseIbPath)
             .must_equal true
+        end
+
+        it '#client' do
+          cmd.client.must_equal :web
+        end
+
+        it '#mode' do
+          cmd.mode.must_equal :webclient
         end
 
         it '#execute' do

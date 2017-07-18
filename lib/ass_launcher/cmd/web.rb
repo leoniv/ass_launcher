@@ -12,6 +12,7 @@ module AssLauncher
             include Abstract::Option::Uc
             include Abstract::Parameter::IB_PATH
             include Abstract::ParseIbPath
+            include Abstract::ClientMode
 
             def self.command_name
               'uri'

@@ -125,7 +125,7 @@ module AssLauncher
         end
         private :binary_get
 
-        def run_enterise(cmd)
+        def run_enterprise(cmd)
           if respond_to?(:dry_run?) && dry_run?
             puts Colorize.yellow(cmd.to_s)
           else
@@ -414,7 +414,7 @@ module AssLauncher
         end
 
         def execute
-          cmd = run_enterise(make_command)
+          cmd = run_enterprise(make_command)
           puts Colorize.green(cmd.process_holder.result.assout) unless dry_run?
         end
       end

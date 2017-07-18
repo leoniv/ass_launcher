@@ -45,7 +45,7 @@ module AssLauncher
         end
 
         def execute
-          cmd = run_enterise(make_command)
+          cmd = run_enterprise(make_command)
           puts Colorize.green(cmd.process_holder.result.assout) unless dry_run?
         end
       end
