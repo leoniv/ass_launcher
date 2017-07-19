@@ -45,6 +45,26 @@ module AssLauncher
           [host, user, pass]
         end
       end
+
+      module VersionValidator
+        include AssLauncher::Enterprise::CliDefsLoader
+
+        def version
+          @version || known_version.last
+        end
+
+        def validate_version
+          unless known_version.include? version
+            signal_usage_error "Unknown 1C:Enterprise v#{version}\n"\
+              "Execute `ass-launcher show-version' command"
+          end
+          version
+        end
+
+        def known_version
+          @known_version ||= defs_versions.sort
+        end
+      end
     end
 
     # @api private
@@ -334,16 +354,26 @@ module AssLauncher
             end
           end
         end
+
+        module PARAM_NAME
+          def self.included(base)
+            base.parameter 'PARAM_NAME',
+              '1C:Enterprise parameter name',
+              attribute_name: :ib_path do |s|
+              s
+            end
+          end
+        end
       end
 
       class Cli < SubCommand
+        include Support::VersionValidator
         include Option::Version
         include Option::Verbose
         include Option::Query
         include ClientMode
 
         class Report
-          include AssLauncher::Enterprise::CliDefsLoader
           attr_reader :client, :mode, :version, :query
           def initialize(client, mode, version, query)
             @client = client
@@ -353,11 +383,7 @@ module AssLauncher
           end
 
           def header
-            "1C:Enterprise CLI parameters for #{client}-#{mode} v#{for_version}:"
-          end
-
-          def for_version
-            version || defs_versions.sort.last
+            "1C:Enterprise CLI parameters for #{client}-#{mode} v#{version}:"
           end
 
           def execute(io, verbose = false)
@@ -367,15 +393,15 @@ module AssLauncher
         end
 
         def self.command_name
-          'cli-help'
+          'cli-report'
         end
 
         def self._banner
-          'show help for 1C:Enterprise CLI parameters'
+          '1C:Enterprise CLI parameters report in CSV format'
         end
 
         def execute
-          Report.new(client, mode, version, query).execute($stdout, verbose?)
+          Report.new(client, mode, validate_version, query).execute($stdout, verbose?)
         end
       end
 
@@ -497,6 +523,21 @@ module AssLauncher
             puts Colorize.yellow "Thin client installations:"
             puts Colorize.green list(thins)
           end
+        end
+
+        class ParamHelp < Abstract::SubCommand
+          include Support::VersionValidator
+          include Abstract::Parameter::PARAM_NAME
+          include Abstract::Option::Version
+
+          def self.command_name
+            'cli-help'
+          end
+
+          def self._banner
+            'Help for 1C:Enterprise CLI parameter'
+          end
+
         end
       end
 
