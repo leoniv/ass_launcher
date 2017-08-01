@@ -54,6 +54,7 @@ module AssLauncher
         end
 
         def validate_version
+          return known_version.sort.last if version.to_s.empty?
           unless known_version.include? version
             signal_usage_error "Unknown 1C:Enterprise v#{version}\n"\
               "Execute `ass-launcher show-version' command"
@@ -63,6 +64,18 @@ module AssLauncher
 
         def known_version
           @known_version ||= defs_versions.sort
+        end
+      end
+
+      module AcceptedValuesGet
+        def accepted_values_get
+          xxx_list_keys(:switch ,param) + xxx_list_keys(:chose, param)
+        end
+
+        def xxx_list_keys(list, p)
+          list = p.send("#{list}_list".to_sym)
+          return list.keys if list
+          []
         end
       end
     end
@@ -337,6 +350,31 @@ module AssLauncher
             end
           end
         end
+
+        module ShowAppiaredOnly
+          def self.included(base)
+            base.option ['-a', '--show-appiared-only'], :flag,
+              'show parameters which appiared in --version only'
+          end
+        end
+
+        module DevMode
+          def self.included(base)
+            base.option ['-d', '--dev-mode'], :flag,
+              "for developers mode. Includes paremeters\n"\
+              " specifications for builds commands in ruby scripts\n"
+          end
+        end
+
+        module Format
+          def self.included(base)
+            base.option ['-f', '--format'], 'ascii|csv', 'output format',
+              default: :ascii do |s|
+                fail ArgumentError, "Inavlid format `#{s}'" unless %w{csv ascii}.include? s
+                s.to_sym
+            end
+          end
+        end
       end
 
       module Parameter
@@ -375,26 +413,156 @@ module AssLauncher
       class Cli < SubCommand
         include Support::VersionValidator
         include Option::Version
-        include Option::Verbose
+        include Option::ShowAppiaredOnly
+        include Option::DevMode
         include Option::Query
+        include Option::Format
         include ClientMode
 
         class Report
-          attr_reader :client, :mode, :version, :query
-          def initialize(client, mode, version, query)
+
+          USAGE_COLUMNS = [:usage,
+                           :parent,
+                           :argument,
+                           :desc]
+
+          DEVEL_COLUMNS = [:parameter,
+                           :parent,
+                           :klass,
+                           :accepted_values,
+                           :requiremet,
+                           :desc]
+
+          class Row
+            include Support::AcceptedValuesGet
+
+            (USAGE_COLUMNS + DEVEL_COLUMNS).uniq.each do |col|
+              attr_accessor col
+            end
+
+            attr_reader :param
+            def initialize(param)
+              @param = param
+              fill
+            end
+
+            def fill
+              self.parameter = basic_usage
+              self.parent = param.parent
+              self.requiremet = param.binary_matcher.requirement
+              self.accepted_values = accepted_values_get.to_s.gsub(/(^\[|\]$)/, '')
+              self.usage, self.argument = usage_full
+              self.desc = param.desc
+              self.klass = param.class
+            end
+            private :fill
+
+            def usage_full
+              case param.class.name.split('::').last
+              when 'Switch' then ["#{basic_usage}(#{accepted_values_get.join('|')})"]
+              when 'Chose' then ["#{basic_usage}", "#{accepted_values_get.join(', ')}"]
+              when 'StringParam' then ["#{basic_usage}", "VALUE"]
+              when 'Path' then ["#{basic_usage}", "PATH"]
+              when 'Flag' then [basic_usage]
+              when 'PathTwice' then ["#{basic_usage}", "PATH PATH"]
+              else basic_usage
+              end
+            end
+
+            def basic_usage
+              return "  #{param.name}" if param.parent
+              param.name
+            end
+
+            def to_csv(columns)
+              r = ''
+              columns.each do |col|
+                r << "\"#{self.send(col).to_s.gsub('"','\'')}\";"
+              end
+              r.gsub(/;$/,'')
+            end
+          end
+
+          attr_reader :client, :mode, :version, :query, :appiared_only
+          def initialize(client, mode, version, appiared_only, query)
             @client = client
             @mode = mode
             @version = version
+            @appiared_only = appiared_only
             @query = query
           end
 
-          def header
-            "1C:Enterprise CLI parameters for #{client}-#{mode} v#{version}:"
+          def clients?(p)
+            p.binary_matcher.clients.include? client
           end
 
-          def execute(io, verbose = false)
-            io.puts Colorize.bold header
-            raise 'FIXME'
+          def modes?(p)
+            p.modes.include? mode
+          end
+
+          def version?(p)
+            return true if version.nil?
+            if appiared_only
+              p.binary_matcher.requirement.to_s =~ /^>=\s*#{version}/
+            else
+              p.match_version?(version) unless appiared_only
+            end
+          end
+
+          def match?(p)
+            clients?(p) && modes?(p) && version?(p)
+          end
+
+          def not_filtred?(p)
+            return true unless query
+            coll_match?(:desc, p) || coll_match?(:parent, p) || coll_match?(:name, p)
+          end
+
+          def coll_match?(prop, p)
+            !(p.send(prop).to_s =~ query).nil?
+          end
+
+          def rows
+            @rows ||= execute
+          end
+
+          def execute
+            r = []
+            AssLauncher::Enterprise::Cli::CliSpec
+              .cli_def.parameters.parameters.each do |p|
+              r << Row.new(p) if match?(p) && not_filtred?(p)
+            end
+            r
+          end
+
+          def max_col_width(col)
+            [rows.map do |r|
+              r.send(col).to_s.length
+            end.max, col.to_s.length].max
+          end
+
+          def tp_options(columns)
+            r = []
+            columns.each do |col|
+              co = {}
+              co[col] = {width: [180/columns.size, max_col_width(col)].min}
+              r << co
+            end
+            r
+          end
+
+          def to_table(columns)
+            require 'table_print'
+            TablePrint::Printer.new(rows, tp_options(columns)).table_print
+          end
+
+          def to_csv(columns)
+            r = "#{columns.join(';')}\n"
+            rows.each do |row|
+              r << row.to_csv(columns)
+              r << "\n"
+            end
+            r
           end
         end
 
@@ -403,11 +571,23 @@ module AssLauncher
         end
 
         def self._banner
-          '1C:Enterprise CLI parameters report in CSV format'
+          '1C:Enterprise CLI parameters report'
+        end
+
+        def columns
+          cols = dev_mode? ? Report::DEVEL_COLUMNS : Report::USAGE_COLUMNS
+          cols -= [:parent, :requiremet, :klass] if format == :ascii
+          cols
+        end
+
+        def formating(report)
+          return report.to_table(columns) if format == :ascii
+          report.to_csv(columns)
         end
 
         def execute
-          Report.new(client, mode, validate_version, query).execute($stdout, verbose?)
+          $stdout.puts formating Report
+                    .new(client, mode, validate_version, show_appiared_only?, query)
         end
       end
 
