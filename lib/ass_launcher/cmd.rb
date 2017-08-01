@@ -128,13 +128,17 @@ module AssLauncher
         def binary_wrapper
           binary_get ||\
             (fail Clamp::ExecutionError
-               .new("1C:Enterprise #{client} v#{version} not installed",
+               .new("1C:Enterprise #{client} v #{vrequrement} not installed",
                      invocation_path, 1))
         end
 
         def vrequrement
-          return "= #{version}" if version
-          ''
+          return '' unless version
+          case version.segments.size
+          when 3 then "~> #{version}.0"
+          when 2 then "~> #{version}.0"
+          else "= #{version}"
+          end
         end
 
         def binary_get
@@ -191,7 +195,9 @@ module AssLauncher
         module Version
           def self.included(base)
             base.option %w{--version -v}, 'VERSION',
-              'specify 1C:Enterprise version' do |s|
+              "specify 1C:Enterprise version requiremet.\n"\
+              " Expected full version number or only major\n"\
+              ' part of version number' do |s|
               version = Gem::Version.new(s)
             end
           end

@@ -430,7 +430,7 @@ module AssLauncher::Cmd
 
       it '#binary_wrapper fail' do
         cmd.expects(:binary_get).returns(nil)
-        cmd.expects(:version).returns(:version)
+        cmd.expects(:vrequrement).returns(:vrequrement)
         cmd.expects(:client).returns(:client)
         e = proc {
           cmd.binary_wrapper
@@ -457,14 +457,31 @@ module AssLauncher::Cmd
         cmd.send(:binary_get).must_equal :wrapper
       end
 
-      it '#vrequrement default' do
-        cmd.expects(:version).returns(nil)
-        cmd.vrequrement.must_equal ''
-      end
+      describe '#vrequrement' do
+        it 'default' do
+          cmd.expects(:version).returns(nil)
+          cmd.vrequrement.must_equal ''
+        end
 
-      it '#vrequrement' do
-        cmd.expects(:version).returns(:version).twice
-        cmd.vrequrement.must_equal '= version'
+        it 'version.sections equal 3 digits' do
+          cmd.expects(:version).returns(Gem::Version.new('8.3.2')).at_least 1
+          Gem::Requirement.new(cmd.vrequrement).to_s.must_equal '~> 8.3.2.0'
+        end
+
+        it 'version.sections equal 2 digits' do
+          cmd.expects(:version).returns(Gem::Version.new('8.3')).at_least 1
+          Gem::Requirement.new(cmd.vrequrement).to_s.must_equal '~> 8.3.0'
+        end
+
+        it 'version.sections more 3' do
+          cmd.expects(:version).returns(Gem::Version.new('8.3.2.1')).at_least 1
+          Gem::Requirement.new(cmd.vrequrement).to_s.must_equal '= 8.3.2.1'
+        end
+
+        it 'version.sections less 2' do
+          cmd.expects(:version).returns(Gem::Version.new('8')).at_least 1
+          Gem::Requirement.new(cmd.vrequrement).to_s.must_equal '= 8'
+        end
       end
 
       it '#run_enterprise dry_run' do
@@ -493,7 +510,7 @@ module AssLauncher::Cmd
         it '#binary_wrapper :thick specified version' do
           v = thicks.first.version
           cmd.expects(:client).returns(:thick)
-          cmd.expects(:version).twice.returns(v.to_s)
+          cmd.expects(:version).at_least(1).returns(v)
           wrapper = cmd.binary_wrapper
           wrapper.must_be_instance_of AssLauncher::Enterprise::BinaryWrapper::ThickClient
           wrapper.version.must_equal thicks.first.version
@@ -510,7 +527,7 @@ module AssLauncher::Cmd
         it '#binary_wrapper :thin specified version' do
           v = thins.first.version
           cmd.expects(:client).returns(:thin)
-          cmd.expects(:version).twice.returns(v.to_s)
+          cmd.expects(:version).at_least(1).returns(v)
           wrapper = cmd.binary_wrapper
           wrapper.must_be_instance_of AssLauncher::Enterprise::BinaryWrapper::ThinClient
           wrapper.version.must_equal thins.first.version
