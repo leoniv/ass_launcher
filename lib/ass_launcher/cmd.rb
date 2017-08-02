@@ -215,7 +215,7 @@ module AssLauncher
 
         module Verbose
           def self.included(base)
-            base.option '--verbose', :flag, 'bee verbose'
+            base.option '--verbose', :flag, 'show more information'
           end
         end
 
@@ -358,7 +358,7 @@ module AssLauncher
         module DevMode
           def self.included(base)
             base.option ['-d', '--dev-mode'], :flag,
-              "for developers mode. Includes paremeters\n"\
+              "for developers mode. Show DSL methods\n"\
               " specifications for builds commands in ruby scripts\n"
           end
         end
@@ -414,6 +414,7 @@ module AssLauncher
         include Option::DevMode
         include Option::Query
         include Option::Format
+        include Option::Verbose
         include ClientMode
 
         class Report
@@ -566,7 +567,7 @@ module AssLauncher
             end.sort_by {|row| row.param.full_name}
           end
 
-          def max_col_width(col)
+          def max_col_width(col, rows)
             [rows.map do |r|
               r.send(col).to_s.length
             end.max, col.to_s.length].max
@@ -577,19 +578,19 @@ module AssLauncher
             IO.console.winsize[1] - trim
           end
 
-          def eval_width(col, total, r, trim)
+          def eval_width(col, total, r, trim, rows)
             [(term_width(trim) - r.values.inject(0) {|i,o| o += i})/total,
-             max_col_width(col)].min
+             max_col_width(col, rows)].min
           end
 
-          def columns_width(columns)
+          def columns_width(columns, rows)
             total = columns.size + 1
             columns.each_with_object(Hash.new) do |col, r|
               total -= 1
               if [:usage, :parameter, :dsl_method].include? col
-                r[col] = max_col_width(col)
+                r[col] = max_col_width(col, rows)
               else
-                r[col] = eval_width(col, total, r, 4 + (columns.size - 1) * 3)
+                r[col] = eval_width(col, total, r, 4 + (columns.size - 1) * 3, rows)
               end
             end
           end
@@ -621,12 +622,12 @@ module AssLauncher
 
             grouped_rows.each do |gname, rows|
               next if rows.size == 0
-              header title: "PARAMTERS GROUP: \"#{groups[gname][:desc]}\"",
-                bold: true
-
               table(border: true, encoding: :ascii) do
+                header title: "PARAMTERS GROUP: \"#{groups[gname][:desc]}\"",
+                  bold: true
+
                 row header: true do
-                  columns_width(columns).each do |col, width|
+                  columns_width(columns, rows).each do |col, width|
                     column(col.upcase, width:  width)
                   end
                 end
@@ -662,7 +663,7 @@ module AssLauncher
 
         def columns
           cols = dev_mode? ? Report::DEVEL_COLUMNS : Report::USAGE_COLUMNS
-          cols -= [:parent, :parameter, :group, :require] if format == :ascii
+          cols -= [:parent, :parameter, :group, :require] if !verbose?
           cols
         end
 
