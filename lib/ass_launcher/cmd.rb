@@ -653,6 +653,7 @@ module AssLauncher
              max_col_width(col, rows)].min
           end
 
+          # rubocop:disable Style/ConditionalAssignment
           def columns_width(columns, rows)
             total = columns.size + 1
             columns.each_with_object({}) do |col, r|
@@ -668,28 +669,32 @@ module AssLauncher
 
           def main_header
             if dev_mode
-              r = "DSL METHODS"
+              r = 'DSL METHODS'
             else
-              r = "CLI PARAMETERS"
+              r = 'CLI PARAMETERS'
             end
             r << " AVAILABLE FOR: \"#{client}\" CLIENT V#{version}"
             r << " IN \"#{mode}\" RUNING MODE" if client == :thick
             r.upcase
           end
+          # rubocop:enable Style/ConditionalAssignment
 
           def filter_header
             "FILTERED BY: #{query}" if query
           end
 
+          # rubocop:disable all
+          # @doto: refactoring and tests require
           def to_table(columns)
             require 'command_line_reporter'
             extend CommandLineReporter
 
             header title: main_header, width: main_header.length, rule: true,
-              align: 'center', bold: true, spacing: 0
+                   align: 'center', bold: true, spacing: 0
 
             header title: filter_header, width: filter_header.length, rule: true,
-              align: 'center', bold: false, color: 'yellow', spacing: 0 if filter_header
+                   align: 'center', bold: false, color: 'yellow', spacing: 0 if\
+                   filter_header
 
             grouped_rows.each do |gname, rows|
               next if rows.size.zero?
@@ -713,6 +718,7 @@ module AssLauncher
             end
             nil
           end
+          # rubocop:enable all
 
           def to_csv(columns)
             r = "#{columns.join(';')}\n"
@@ -735,7 +741,7 @@ module AssLauncher
 
         def columns
           cols = dev_mode? ? Report::DEVEL_COLUMNS : Report::USAGE_COLUMNS
-          cols -= [:parent, :parameter, :group, :require] if !verbose?
+          cols -= [:parent, :parameter, :group, :require] unless verbose?
           cols
         end
 
@@ -746,7 +752,8 @@ module AssLauncher
 
         def execute
           $stdout.puts formating Report.new(client, mode, validate_version,
-             show_appiared_only?, query, dev_mode?)
+                                            show_appiared_only?, query,
+                                            dev_mode?)
         end
       end
 
@@ -757,9 +764,9 @@ module AssLauncher
         require 'uri'
         def connection_string
           case ib_path
-          when %r{https?://}i then return cs_http(ws: ib_path)
-          when %r{tcp://}i then return parse_tcp_path
-          else return cs_file(file: ib_path)
+          when %r{https?://}i then cs_http(ws: ib_path)
+          when %r{tcp://}i then parse_tcp_path
+          else cs_file(file: ib_path)
           end
         end
 
@@ -787,17 +794,18 @@ module AssLauncher
         end
 
         def self._banner
-          "run 1C:Enterprise"
+          'run 1C:Enterprise'
         end
 
         def command_(&block)
           if client == :thin
             binary_wrapper.command((raw_param.flatten || []), &block)
           else
-            binary_wrapper.command(mode,(raw_param.flatten || []) ,&block)
+            binary_wrapper.command(mode, (raw_param.flatten || []), &block)
           end
         end
 
+        # rubocop:disable Metrics/MethodLength
         def make_command
           usr = user
           pass = password
@@ -813,6 +821,7 @@ module AssLauncher
           end
           cmd
         end
+        # rubocop:enable Metrics/MethodLength
 
         def execute
           cmd = run_enterprise(make_command)
@@ -825,6 +834,7 @@ module AssLauncher
     # Root of all subcommands
     class Main < Clamp::Command
       module SubCommands
+        # show-version subcommand
         class ShowVersion < Abstract::SubCommand
           include AssLauncher::Enterprise::CliDefsLoader
 
@@ -842,13 +852,14 @@ module AssLauncher
           end
 
           def execute
-            puts Colorize.yellow("ass_launcher:")\
+            puts Colorize.yellow('ass_launcher:')\
               + Colorize.green(" v#{AssLauncher::VERSION}")
-            puts Colorize.yellow("Known 1C:Enterprise:")
+            puts Colorize.yellow('Known 1C:Enterprise:')
             puts Colorize.green(known_versions_list)
           end
         end
 
+        # env subcommand
         class Env < Abstract::SubCommand
           include Abstract::Option::SearchPath
           include AssLauncher::Api
@@ -862,23 +873,25 @@ module AssLauncher
           end
 
           def list(clients)
-            " - v#{clients.map {|c| c.version}.sort.reverse.join("\n - v")}"
+            " - v#{clients.map(&:version).sort.reverse.join("\n - v")}"
           end
 
+          # rubocop:disable Metrics/AbcSize
           def execute
-            puts Colorize.yellow "1C:Enterprise installations was searching in:"
+            puts Colorize.yellow '1C:Enterprise installations was searching in:'
             puts Colorize
               .green " - #{AssLauncher::Enterprise.search_paths.join("\n - ")}"
-            puts Colorize.yellow "Thick client installations:"
+            puts Colorize.yellow 'Thick client installations:'
             puts Colorize.green list(thicks)
-            puts Colorize.yellow "Thin client installations:"
+            puts Colorize.yellow 'Thin client installations:'
             puts Colorize.green list(thins)
           end
+          # rubocop:enable Metrics/AbcSize
         end
       end
 
       # Main cmd invoker
-      Dir.glob File.join(File.expand_path('../cmd',__FILE__),'*.rb') do |lib|
+      Dir.glob File.join(File.expand_path('../cmd', __FILE__), '*.rb') do |lib|
         require lib if File.basename(lib) != 'abstract.rb'
       end
 
