@@ -797,21 +797,6 @@ module AssLauncher
             puts Colorize.green list(thins)
           end
         end
-
-        class ParamHelp < Abstract::SubCommand
-          include Support::VersionValidator
-          include Abstract::Parameter::PARAM_NAME
-          include Abstract::Option::Version
-
-          def self.command_name
-            'cli-help'
-          end
-
-          def self._banner
-            'Help for 1C:Enterprise CLI parameter'
-          end
-
-        end
       end
 
       # Main cmd invoker
