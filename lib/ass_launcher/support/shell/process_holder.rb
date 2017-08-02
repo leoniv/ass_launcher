@@ -112,7 +112,7 @@ module AssLauncher
         # @raise [RunProcessError] if command is cmd.exe with /K key see
         #  {cmd_exe_with_k?}
         # @api public
-        # @raise (see initialize)
+        # @raise [ArgumentError] if command was already running
         def self.run(command, options = {})
           fail RunProcessError, 'Forbidden run cmd.exe with /K key'\
             if cmd_exe_with_k? command
@@ -122,7 +122,7 @@ module AssLauncher
         end
 
         # @param (see run)
-        # @raise [ArgumentError] if command was already running
+        # @raise (see run)
         def initialize(command, options = {})
           fail ArgumentError, 'Command was already running' if command.running?
           @command = command
