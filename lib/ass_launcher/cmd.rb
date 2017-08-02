@@ -12,9 +12,11 @@ module AssLauncher
     module Colorize
       require 'colorized_string'
 
+      # rubocop:disable Style/MethodMissing
       def self.method_missing(m, s)
         colorized(s).send(m)
       end
+      # rubocop:enable Style/MethodMissing
 
       def self.colorized(mes)
         ColorizedString[mes]
@@ -34,7 +36,7 @@ module AssLauncher
           fail ArgumentError if split.size > 2
 
           host = split.pop
-          return [host, nil, nil] if split.size == 0
+          return [host, nil, nil] if split.size.zero?
 
           split = split[0].split(':')
           fail ArgumentError if split.size > 2
@@ -46,6 +48,8 @@ module AssLauncher
         end
       end
 
+      # Mixin for validate version
+      # @api private
       module VersionValidator
         include AssLauncher::Enterprise::CliDefsLoader
 
@@ -63,9 +67,11 @@ module AssLauncher
         end
       end
 
+      # Mixin for cli reporters
+      # @api private
       module AcceptedValuesGet
         def accepted_values_get
-          xxx_list_keys(:switch ,param) + xxx_list_keys(:chose, param)
+          xxx_list_keys(:switch, param) + xxx_list_keys(:chose, param)
         end
 
         def xxx_list_keys(list, p)
@@ -79,7 +85,10 @@ module AssLauncher
     # @api private
     # Abstract things
     module Abstract
+      # Abstarct subcommand
+      # @api private
       class SubCommand < Clamp::Command
+        # :nodoc:
         module Declaration
           def subcommand_(klass)
             subcommand(klass.command_name, klass._banner, klass)
@@ -105,6 +114,8 @@ module AssLauncher
         # :nocov:
       end
 
+      # Mixin
+      # @api private
       module ClientMode
         def parrent_command
           invocation_path.to_s.split[1]
@@ -131,16 +142,21 @@ module AssLauncher
         end
       end
 
+      # Mixin
+      # @api private
       module BinaryWrapper
         include AssLauncher::Api
         include ClientMode
 
         def binary_wrapper
-          binary_get ||\
-            (fail Clamp::ExecutionError
-               .new("1C:Enterprise #{client} v #{vrequrement} not installed",
-                     invocation_path, 1))
+          binary_get || (fail Clamp::ExecutionError
+            .new(not_inst_message, invocation_path, 1))
         end
+
+        def not_inst_message
+          "1C:Enterprise #{client} v #{vrequrement} not installed"
+        end
+        private :not_inst_message
 
         def vrequrement
           return '' unless version
@@ -159,6 +175,7 @@ module AssLauncher
         end
         private :binary_get
 
+        # rubocop:disable all
         def dry_run(cmd)
           r = "#{cmd.cmd.gsub(' ', '\\ ')} "
           if mode == :createinfobase
@@ -187,42 +204,52 @@ module AssLauncher
           end
           cmd
         end
+        # rubocop:enable all
       end
 
+      # @api private
       module Option
+        # Mixin
+        # Command option
         module SearchPath
           def self.included(base)
-            base.option %w{--search-path -I}, 'PATH',
-            'specify 1C:Enterprise installation path' do |s|
+            base.option %w[--search-path -I], 'PATH',
+                        'specify 1C:Enterprise installation path' do |s|
               AssLauncher.config.search_path = s
               s
             end
           end
         end
 
+        # Mixin
+        # Command option
         module Version
           def self.included(base)
-            base.option %w{--version -v}, 'VERSION',
-              "specify 1C:Enterprise version requiremet.\n"\
-              " Expected full version number or only major\n"\
-              ' part of version number' do |s|
-              version = Gem::Version.new(s)
+            base.option %w[--version -v], 'VERSION',
+                        "specify 1C:Enterprise version requiremet.\n"\
+                        " Expected full version number or only major\n"\
+                        ' part of version number' do |s|
+              Gem::Version.new(s)
             end
           end
         end
 
+        # Mixin
+        # Command option
         module Verbose
           def self.included(base)
             base.option '--verbose', :flag, 'show more information'
           end
         end
 
+        # Mixin
+        # Command option
         module Query
           def self.included(base)
-            base.option %w{--query -q}, 'REGEX',
-              'regular expression based filter' do |s|
+            base.option %w[--query -q], 'REGEX',
+                        'regular expression based filter' do |s|
               begin
-                query = Regexp.new(s, Regexp::IGNORECASE)
+                Regexp.new(s, Regexp::IGNORECASE)
               rescue RegexpError => e
                 fail ArgumentError, e.message
               end
@@ -230,7 +257,10 @@ module AssLauncher
           end
         end
 
+        # Mixin
+        # Command option
         module Dbms
+          # rubocop:disable all
           def self.included(base)
             dbtypes = AssLauncher::Support::ConnectionString::DBMS_VALUES\
               + ['File']
@@ -240,16 +270,19 @@ module AssLauncher
             end
 
             base.option '--dbms', 'DB_TYPE',
-              "db type: #{dbtypes}.\nValue \"File\" for make file infobase",
-              default: 'File' do |s|
+                        "db type: #{dbtypes}.\nValue \"File\""\
+                        ' for make file infobase', default: 'File' do |s|
               raise ArgumentError,
                 "valid values: [#{valid_db_types.join(' ')}]" unless\
                 valid_db_types.include? s
               s
             end
           end
+          # rubocop:enable all
         end
 
+        # Mixin
+        # Command option
         module Dbsrv
           attr_reader :dbsrv_user, :dbsrv_pass, :dbsrv_host
           include Support::SrvStrParser
@@ -265,6 +298,8 @@ module AssLauncher
           end
         end
 
+        # Mixin
+        # Command option
         module Esrv
           attr_reader :esrv_user, :esrv_pass, :esrv_host
           include Support::SrvStrParser
@@ -273,55 +308,71 @@ module AssLauncher
           end
 
           def self.included(base)
-            base.option '--esrv', 'user:pass@esrv', 'enterprise server address' do |s|
+            base.option '--esrv', 'user:pass@esrv',
+                        'enterprise server address' do |s|
               parse_esrv(s)
               s
             end
           end
         end
 
+        # Mixin
+        # Command option
         module User
           def self.included(base)
-            base.option %w{--user -u}, 'NAME', 'infobase user name'
+            base.option %w[--user -u], 'NAME', 'infobase user name'
           end
         end
 
+        # Mixin
+        # Command option
         module Password
           def self.included(base)
-            base.option %w{--password -p}, 'PASSWORD', 'infobase user password'
+            base.option %w[--password -p], 'PASSWORD', 'infobase user password'
           end
         end
 
+        # Mixin
+        # Command option
         module Pattern
           def self.included(base)
-            base.option %w{--pattern -P}, 'PATH',
-              "Template for make infobase. Path to .cf, .dt files" do |s|
+            base.option %w[--pattern -P], 'PATH',
+                        'Template for make infobase.'\
+                        ' Path to .cf, .dt files' do |s|
               fail ArgumentError, "Path not exist: #{s}" unless File.exist?(s)
               s
             end
           end
         end
 
+        # Mixin
+        # Command option
         module Uc
           def self.included(base)
             base.option '--uc', 'LOCK_CODE', 'infobase lock code'
           end
         end
 
+        # Mixin
+        # Command option
         module DryRun
           def self.included(base)
-            base.option %w{--dry-run}, :flag, 'will not realy run 1C:Enterprise only puts cmd string'
+            base.option %w[--dry-run], :flag,
+                        'will not realy run 1C:Enterprise only puts cmd string'
           end
         end
 
+        # Mixin
+        # Command option
         module Raw
           def parse_raw(s)
             split = s.split(%r{(?<!\\),\s}).map(&:strip)
 
             split.map do |pv|
-              fail ArgumentError, "Parse error in: #{pv}" unless pv =~ %r{^(/|-)}
+              fail ArgumentError, "Parse error in: #{pv}" unless\
+                pv =~ %r{^(/|-)}
               pv =~ %r{^(\/|-)([^\s]+)+(.*)?}
-              ["#{$1}#{$2}", $3.strip].map {|i| i.gsub('\\,', ',')} #.select {|i| !i.empty?}
+              ["#{$1}#{$2}", $3.strip].map { |i| i.gsub('\\,', ',') }
             end
           end
 
@@ -334,67 +385,83 @@ module AssLauncher
           end
 
           def self.included(base)
-            description =  "other 1C CLI parameters in raw(native) format.\n"\
-              "Parameters and their arguments must be delimited comma-space sequence: `, '\n"\
+            description = "other 1C CLI parameters in raw(native) format.\n"\
+              'Parameters and their arguments must be delimited'\
+              " comma-space sequence: `, '\n"\
               "If values includes comma comma must be slashed `\\\\,'\n"\
-              "WARNING: correctness of parsing will not guaranteed!"
+              'WARNING: correctness of parsing will not guaranteed!'
 
             base.option '--raw', '"/Par VAL, -SubPar VAL"', description,
-              multivalued: true do |s|
-              raw = parse_raw s
+                        multivalued: true do |s|
+              parse_raw s
             end
           end
         end
 
+        # Mixin
+        # Command option
         module ShowAppiaredOnly
           def self.included(base)
             base.option ['--show-appiared-only', '-a'], :flag,
-              'show parameters which appiared in --version only'
+                        'show parameters which appiared in --version only'
           end
         end
 
+        # Mixin
+        # Command option
         module DevMode
           def self.included(base)
             base.option ['--dev-mode', '-d'], :flag,
-              "for developers mode. Show DSL methods\n"\
-              " specifications for builds commands in ruby scripts\n"
+                        "for developers mode. Show DSL methods\n"\
+                        " specifications for builds commands in ruby scripts\n"
           end
         end
 
+        # Mixin
+        # Command option
         module Format
           def self.included(base)
             base.option ['--format', '-f'], 'ascii|csv', 'output format',
-              default: :ascii do |s|
-                fail ArgumentError, "Invalid format `#{s}'" unless %w{csv ascii}.include? s
-                s.to_sym
+                        default: :ascii do |s|
+              fail ArgumentError, "Invalid format `#{s}'" unless\
+                %w[csv ascii].include? s
+              s.to_sym
             end
           end
         end
       end
 
+      # @api private
+      # rubocop:disable Style/ClassAndModuleCamelCase
       module Parameter
+        # Mixin
+        # Command parameter
         module IB_PATH
           def self.included(base)
-            base.parameter 'IB_PATH',
-              "path to infobase like a strings"\
-              " 'tcp://srv/ref' or 'http[s]://host/path' or 'path/to/ib'",
-              attribute_name: :ib_path do |s|
-               s
+            base.parameter 'IB_PATH', 'path to infobase like a strings'\
+                            " 'tcp://srv/ref' or 'http[s]://host/path'"\
+                            " or 'path/to/ib'", attribute_name: :ib_path do |s|
+              s
             end
           end
         end
 
+        # Mixin
+        # Command parameter
         module IB_PATH_NAME
           def self.included(base)
             base.parameter 'IB_PATH | IB_NAME',
-              'PATH for file or NAME for server infobase',
-              attribute_name: :ib_path do |s|
+                           'PATH for file or NAME for server infobase',
+                           attribute_name: :ib_path do |s|
               s
             end
           end
         end
       end
+      # rubocop:enable Style/ClassAndModuleCamelCase
 
+      # Abstarct cli-help command
+      # @api private
       class Cli < SubCommand
         include Support::VersionValidator
         include Option::Version
@@ -405,13 +472,15 @@ module AssLauncher
         include Option::Verbose
         include ClientMode
 
+        # Reporter
+        # @api private
+        # rubocop:disable Metrics/ClassLength
         class Report
-
           USAGE_COLUMNS = [:usage,
                            :argument,
                            :parent,
                            :group,
-                           :desc]
+                           :desc].freeze
 
           DEVEL_COLUMNS = [:parameter,
                            :dsl_method,
@@ -420,8 +489,9 @@ module AssLauncher
                            :param_klass,
                            :group,
                            :require,
-                           :desc]
+                           :desc].freeze
 
+          # Report's row
           class Row
             include Support::AcceptedValuesGet
 
@@ -435,12 +505,15 @@ module AssLauncher
               fill
             end
 
+            # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity
+            # rubocop:disable Metrics/MethodLength
             def fill
               self.parameter = basic_usage
               self.dsl_method = dsl_method_get
               self.parent = param.parent
               self.require = param.binary_matcher.requirement
-              self.accepted_values = accepted_values_get.to_s.gsub(/(^\[|\]$)/, '')
+              self.accepted_values = accepted_values_get
+                .to_s.gsub(/(^\[|\]$)/, '')
               self.usage, self.argument = usage_full
               self.desc = param.desc
               self.param_klass = param.class.name.split('::').last
@@ -450,15 +523,19 @@ module AssLauncher
 
             def usage_full
               case param.class.name.split('::').last
-              when 'Switch' then ["#{basic_usage}(#{accepted_values_get.join('|')})"]
-              when 'Chose' then ["#{basic_usage}", "#{accepted_values_get.join(", ")}"]
-              when 'StringParam' then ["#{basic_usage}", "VALUE"]
-              when 'Path' then ["#{basic_usage}", "PATH"]
+              when 'Switch' then
+                ["#{basic_usage}(#{accepted_values_get.join('|')})"]
+              when 'Chose' then
+                [basic_usage, accepted_values_get.join(', ')]
+              when 'StringParam' then [basic_usage, 'VALUE']
+              when 'Path' then [basic_usage, 'PATH']
               when 'Flag' then [basic_usage]
-              when 'PathTwice' then ["#{basic_usage}", "PATH PATH"]
+              when 'PathTwice' then [basic_usage, 'PATH PATH']
               else basic_usage
               end
             end
+            # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity
+            # rubocop:enable Metrics/MethodLength
 
             def basic_usage
               return "  #{param.name}" if param.parent
@@ -474,13 +551,15 @@ module AssLauncher
             def to_csv(columns)
               r = ''
               columns.each do |col|
-                r << "\"#{self.send(col).to_s.gsub('"','\'')}\";"
+                r << "\"#{send(col).to_s.tr('"', '\'')}\";"
               end
-              r.gsub(/;$/,'')
+              r.gsub(/;$/, '')
             end
           end
 
-          attr_reader :client, :mode, :version, :query, :appiared_only, :dev_mode
+          attr_reader :client, :mode, :version, :query, :appiared_only,
+                      :dev_mode
+          # rubocop:disable Metrics/ParameterLists
           def initialize(client, mode, version, appiared_only, query, dev_mode)
             @client = client
             @mode = mode
@@ -489,6 +568,7 @@ module AssLauncher
             @query = query
             @dev_mode = dev_mode
           end
+          # rubocop:enable Metrics/ParameterLists
 
           def clients?(p)
             p.binary_matcher.clients.include? client
@@ -513,7 +593,8 @@ module AssLauncher
 
           def not_filtred?(p)
             return true unless query
-            coll_match?(:desc, p) || coll_match?(:parent, p) || coll_match?(:name, p)
+            coll_match?(:desc, p) || coll_match?(:parent, p) || \
+              coll_match?(:name, p)
           end
 
           def coll_match?(prop, p)
@@ -526,9 +607,9 @@ module AssLauncher
 
           def grouped_rows
             r = {}
-            groups.each do |gname, gdef|
-              r[gname] = rows.select {|row| row.group == gname}
-                .sort_by {|row| row.param.full_name}
+            groups.each do |gname, _|
+              r[gname] = rows.select { |row| row.group == gname }
+                .sort_by { |row| row.param.full_name }
             end
             r
           end
@@ -550,9 +631,10 @@ module AssLauncher
           end
 
           def execute
-            select_parameters.map do |p|
+            r = select_parameters.map do |p|
               Row.new(p)
-            end.sort_by {|row| row.param.full_name}
+            end
+            r.sort_by { |row| row.param.full_name }
           end
 
           def max_col_width(col, rows)
@@ -567,18 +649,19 @@ module AssLauncher
           end
 
           def eval_width(col, total, r, trim, rows)
-            [(term_width(trim) - r.values.inject(0) {|i,o| o += i})/total,
+            [(term_width(trim) - r.values.inject(0) { |i, o| o + i }) / total,
              max_col_width(col, rows)].min
           end
 
           def columns_width(columns, rows)
             total = columns.size + 1
-            columns.each_with_object(Hash.new) do |col, r|
+            columns.each_with_object({}) do |col, r|
               total -= 1
               if [:usage, :parameter, :dsl_method].include? col
                 r[col] = max_col_width(col, rows)
               else
-                r[col] = eval_width(col, total, r, 4 + (columns.size - 1) * 3, rows)
+                r[col] = eval_width(col, total, r,
+                                    4 + (columns.size - 1) * 3, rows)
               end
             end
           end
@@ -609,7 +692,7 @@ module AssLauncher
               align: 'center', bold: false, color: 'yellow', spacing: 0 if filter_header
 
             grouped_rows.each do |gname, rows|
-              next if rows.size == 0
+              next if rows.size.zero?
               table(border: true, encoding: :ascii) do
                 header title: "PARAMTERS GROUP: \"#{groups[gname][:desc]}\"",
                   bold: true
@@ -640,6 +723,7 @@ module AssLauncher
             r
           end
         end
+        # rubocop:enable Metrics/ClassLength
 
         def self.command_name
           'cli-help'
@@ -666,6 +750,8 @@ module AssLauncher
         end
       end
 
+      # Mixin
+      # @api private
       module ParseIbPath
         include AssLauncher::Api
         require 'uri'
@@ -683,6 +769,8 @@ module AssLauncher
         end
       end
 
+      # Abstarct run command
+      # @api private
       class Run < SubCommand
         include Option::Version
         include Option::DryRun
@@ -733,6 +821,8 @@ module AssLauncher
       end
     end
 
+    # @api private
+    # Root of all subcommands
     class Main < Clamp::Command
       module SubCommands
         class ShowVersion < Abstract::SubCommand

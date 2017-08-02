@@ -1,0 +1,20 @@
+Style/SignalException:
+  Enabled: false
+
+Layout/EndOfLine:
+  Enabled: false
+
+Metrics/AbcSize:
+  Max: 17
+
+Style/RegexpLiteral:
+  Enabled: false
+
+Style/PerlBackrefs:
+  Enabled: false
+
+Style/SymbolArray:
+  Enabled: false
+
+Layout/MultilineMethodCallIndentation:
+  Enabled: false
