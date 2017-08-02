@@ -49,10 +49,6 @@ module AssLauncher
       module VersionValidator
         include AssLauncher::Enterprise::CliDefsLoader
 
-        def version
-          @version || known_version.last
-        end
-
         def validate_version
           return known_version.sort.last if version.to_s.empty?
           unless known_version.include? version

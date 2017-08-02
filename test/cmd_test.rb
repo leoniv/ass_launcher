@@ -815,7 +815,7 @@ module AssLauncher::Cmd
       end
 
       it '#to_table smoky test' do
-        report = desc.new(:thick, :designer, Gem::Version.new('8.3.9'), true, %r{.*}i, true)
+        report = desc.new(:thick, :designer, Gem::Version.new('8.3.9'), nil, %r{.*}i, true)
         out = capture_stdout do
           report.to_table(desc.const_get(:DEVEL_COLUMNS))
         end
