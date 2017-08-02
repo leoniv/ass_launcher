@@ -184,17 +184,6 @@ module AssLauncher::Enterprise::CliDef
           switch_value: (Proc.new do |value|; ":#{value}" end)
       end
 
-      path '/CreateDistributive',
-        'создания комплекта поставки в указанном каталоге' do
-        path_exist '-File', 'имя файла описания комплекта поставки'
-        string '-Option','вариант поставки'
-        switch '-Make', 'создать',
-          switch_list: switch_list(
-          Setup: 'комплект поставки (используется по умолчанию)',
-          Files: 'файлы поставки'
-          )
-        path_exist '-digisign', 'файл с параметрами лицензирования'
-      end
       flag '/ResetMasterNode', 'сброс главного узла РИБ'
       flag '/CheckConfig',
         'централизованная проверка конфигурации' do
@@ -295,6 +284,18 @@ module AssLauncher::Enterprise::CliDef
         path '-f', 'дистрибутив включаемый в обновление (.cf файл)'
         string '-v', 'версия дистрибутива включаемого в обновление'
         path_exist '–digisign', 'файл с параметрами лицензирования'
+      end
+
+      path '/CreateDistributive',
+        'создания комплекта поставки в указанном каталоге' do
+        path_exist '-File', 'имя файла описания комплекта поставки'
+        string '-Option','вариант поставки'
+        switch '-Make', 'создать',
+          switch_list: switch_list(
+          Setup: 'комплект поставки (используется по умолчанию)',
+          Files: 'файлы поставки'
+          )
+        path_exist '-digisign', 'файл с параметрами лицензирования'
       end
     end
   end
