@@ -133,7 +133,6 @@ module AssLauncher
         end
       end
 
-      # @api private
       module BinaryWrapper
         include AssLauncher::Api
         include ClientMode
@@ -192,8 +191,6 @@ module AssLauncher
         end
       end
 
-      # @api private
-      # All +Clamp::Command+ option mixins
       module Option
         module SearchPath
           def self.included(base)
@@ -227,7 +224,7 @@ module AssLauncher
             base.option %w{--query -q}, 'REGEX',
               'regular expression based filter' do |s|
               begin
-                query = Regexp.new(s)
+                query = Regexp.new(s, Regexp::IGNORECASE)
               rescue RegexpError => e
                 fail ArgumentError, e.message
               end
@@ -422,15 +419,18 @@ module AssLauncher
         class Report
 
           USAGE_COLUMNS = [:usage,
-                           :parent,
                            :argument,
+                           :parent,
+                           :group,
                            :desc]
 
           DEVEL_COLUMNS = [:parameter,
-                           :parent,
-                           :klass,
+                           :dsl_method,
                            :accepted_values,
-                           :requiremet,
+                           :parent,
+                           :param_klass,
+                           :group,
+                           :require,
                            :desc]
 
           class Row
@@ -448,19 +448,21 @@ module AssLauncher
 
             def fill
               self.parameter = basic_usage
+              self.dsl_method = dsl_method_get
               self.parent = param.parent
-              self.requiremet = param.binary_matcher.requirement
+              self.require = param.binary_matcher.requirement
               self.accepted_values = accepted_values_get.to_s.gsub(/(^\[|\]$)/, '')
               self.usage, self.argument = usage_full
               self.desc = param.desc
-              self.klass = param.class
+              self.param_klass = param.class.name.split('::').last
+              self.group = param.group
             end
             private :fill
 
             def usage_full
               case param.class.name.split('::').last
               when 'Switch' then ["#{basic_usage}(#{accepted_values_get.join('|')})"]
-              when 'Chose' then ["#{basic_usage}", "#{accepted_values_get.join(', ')}"]
+              when 'Chose' then ["#{basic_usage}", "#{accepted_values_get.join(", ")}"]
               when 'StringParam' then ["#{basic_usage}", "VALUE"]
               when 'Path' then ["#{basic_usage}", "PATH"]
               when 'Flag' then [basic_usage]
@@ -474,6 +476,12 @@ module AssLauncher
               param.name
             end
 
+            def dsl_method_get
+              method = param.name.gsub(%r{^\s*(/|-)}, '_')
+              return "  #{method}" if param.parent
+              method
+            end
+
             def to_csv(columns)
               r = ''
               columns.each do |col|
@@ -483,13 +491,14 @@ module AssLauncher
             end
           end
 
-          attr_reader :client, :mode, :version, :query, :appiared_only
-          def initialize(client, mode, version, appiared_only, query)
+          attr_reader :client, :mode, :version, :query, :appiared_only, :dev_mode
+          def initialize(client, mode, version, appiared_only, query, dev_mode)
             @client = client
             @mode = mode
             @version = version
             @appiared_only = appiared_only
             @query = query
+            @dev_mode = dev_mode
           end
 
           def clients?(p)
@@ -522,17 +531,39 @@ module AssLauncher
             !(p.send(prop).to_s =~ query).nil?
           end
 
+          def groups
+            AssLauncher::Enterprise::Cli::CliSpec.cli_def.parameters_groups
+          end
+
+          def grouped_rows
+            r = {}
+            groups.each do |gname, gdef|
+              r[gname] = rows.select {|row| row.group == gname}
+                .sort_by {|row| row.param.full_name}
+            end
+            r
+          end
+
           def rows
             @rows ||= execute
           end
 
-          def execute
+          def select_parameters
             r = []
             AssLauncher::Enterprise::Cli::CliSpec
               .cli_def.parameters.parameters.each do |p|
-              r << Row.new(p) if match?(p) && not_filtred?(p)
+              if match?(p) && not_filtred?(p)
+                r << p
+                r << p.parent if p.parent && !r.include?(p.parent)
+              end
             end
             r
+          end
+
+          def execute
+            select_parameters.map do |p|
+              Row.new(p)
+            end.sort_by {|row| row.param.full_name}
           end
 
           def max_col_width(col)
@@ -541,19 +572,74 @@ module AssLauncher
             end.max, col.to_s.length].max
           end
 
-          def tp_options(columns)
-            r = []
-            columns.each do |col|
-              co = {}
-              co[col] = {width: [180/columns.size, max_col_width(col)].min}
-              r << co
+          require 'io/console'
+          def term_width(trim = 0)
+            IO.console.winsize[1] - trim
+          end
+
+          def eval_width(col, total, r, trim)
+            [(term_width(trim) - r.values.inject(0) {|i,o| o += i})/total,
+             max_col_width(col)].min
+          end
+
+          def columns_width(columns)
+            total = columns.size + 1
+            columns.each_with_object(Hash.new) do |col, r|
+              total -= 1
+              if [:usage, :parameter, :dsl_method].include? col
+                r[col] = max_col_width(col)
+              else
+                r[col] = eval_width(col, total, r, 4 + (columns.size - 1) * 3)
+              end
             end
-            r
+          end
+
+          def main_header
+            if dev_mode
+              r = "DSL METHODS"
+            else
+              r = "CLI PARAMTERS"
+            end
+            r << " AVAILABLE FOR: \"#{client}\" CLIENT V#{version}"
+            r << " IN \"#{mode}\" RUNING MODE" if client == :thick
+            r.upcase
+          end
+
+          def filter_header
+            "FILTERED BY: #{query}" if query
           end
 
           def to_table(columns)
-            require 'table_print'
-            TablePrint::Printer.new(rows, tp_options(columns)).table_print
+            require 'command_line_reporter'
+            extend CommandLineReporter
+
+            header title: main_header, width: main_header.length, rule: true,
+              align: 'center', bold: true, spacing: 0
+
+            header title: filter_header, width: filter_header.length, rule: true,
+              align: 'center', bold: false, color: 'yellow', spacing: 0 if filter_header
+
+            grouped_rows.each do |gname, rows|
+              next if rows.size == 0
+              header title: "PARAMTERS GROUP: \"#{groups[gname][:desc]}\"",
+                bold: true
+
+              table(border: true, encoding: :ascii) do
+                row header: true do
+                  columns_width(columns).each do |col, width|
+                    column(col.upcase, width:  width)
+                  end
+                end
+                rows.each do |row_|
+                  row do
+                    columns.each do |col|
+                      column(row_.send(col))
+                    end
+                  end
+                end
+              end
+            end
+            nil
           end
 
           def to_csv(columns)
@@ -576,7 +662,7 @@ module AssLauncher
 
         def columns
           cols = dev_mode? ? Report::DEVEL_COLUMNS : Report::USAGE_COLUMNS
-          cols -= [:parent, :requiremet, :klass] if format == :ascii
+          cols -= [:parent, :parameter, :group, :require] if format == :ascii
           cols
         end
 
@@ -586,8 +672,8 @@ module AssLauncher
         end
 
         def execute
-          $stdout.puts formating Report
-                    .new(client, mode, validate_version, show_appiared_only?, query)
+          $stdout.puts formating Report.new(client, mode, validate_version,
+             show_appiared_only?, query, dev_mode?)
         end
       end
 

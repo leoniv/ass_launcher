@@ -28,7 +28,7 @@ Gem::Specification.new do |spec|
   spec.add_dependency "addressable", "= 2.4.0"
   spec.add_dependency "clamp"
   spec.add_dependency "colorize"
-  spec.add_dependency "table_print"
+  spec.add_dependency "command_line_reporter", '>=3.0'
 
   spec.add_development_dependency "bundler", "~> 1.10"
   spec.add_development_dependency "rake", "~> 10.0"
