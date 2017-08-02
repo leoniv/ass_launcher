@@ -283,7 +283,7 @@ module AssLauncher::Enterprise::CliDef
         path '-cfufile', 'создать обновление дистрибутива (.cfu файл)'
         path '-f', 'дистрибутив включаемый в обновление (.cf файл)'
         string '-v', 'версия дистрибутива включаемого в обновление'
-        path_exist '–digisign', 'файл с параметрами лицензирования'
+        path_exist '-digisign', 'файл с параметрами лицензирования'
       end
 
       path '/CreateDistributive',

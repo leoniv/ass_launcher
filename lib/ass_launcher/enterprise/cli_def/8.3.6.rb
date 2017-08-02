@@ -78,10 +78,10 @@ module AssLauncher::Enterprise::CliDef
     mode :designer do
       flag '/ConfigurationRepositoryBindCfg',
         'подключение неподключенной конфигурации к хранилищу' do
-        flag '–forceBindAlreadyBindedUser',
+        flag '-forceBindAlreadyBindedUser',
           'подключение будет выполнено даже в случае, если для данного'\
           ' пользователя уже есть конфигурация, связанная с данным хранилищем'
-        flag '–forceReplaceCfg',
+        flag '-forceReplaceCfg',
           'если конфигурация не пустая, текущая конфигурация'\
           ' будет заменена конфигурацией из хранилища'
       end
