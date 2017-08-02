@@ -31,7 +31,7 @@ module AssLauncher::Cmd
     OPTIONS = {
       search_path: [%w[--search-path -I], 'PATH', %r{specify.+installation path}],
       version: [%w[--version -v], 'VERSION', %r{specify.+Enterprise version}],
-      verbose: [%w[--verbose], :flag, %r{verbose}],
+      verbose: [%w[--verbose], :flag, %r{show more information}i],
       query: [%w[--query -q], 'REGEX', %r{regular.+filter}],
 #        infobase: [%w[--infobase, -i], 'IBPATH', %r{specify.+infobase path}, {required: true}],
       user: [%w[--user -u], 'NAME', %r{infobase user name}],
@@ -42,7 +42,10 @@ module AssLauncher::Cmd
       pattern: [%w[--pattern -P], 'PATH', %r{\.cf, \.dt files}],
       dbms: [%w[--dbms], "DB_TYPE", %r{db type}, {default: 'File'}],
       dbsrv: [%w[--dbsrv], "user:pass@dbsrv", %r{db server}],
-      esrv: [%w[--esrv], "user:pass@esrv", %r{enterprise server}]
+      esrv: [%w[--esrv], "user:pass@esrv", %r{enterprise server}],
+      show_appiared_only: [%w[--show-appiared-only -a], :flag, %r{show parameters which appiared in --version only}],
+      dev_mode: [%w[--dev-mode -d], :flag, %r{Show DSL methods}],
+      format: [%w[--format -f], 'ascii|csv', %r{output format}, {default: :ascii}]
     }
 
     OPTIONS_MATRIX = {
@@ -53,7 +56,7 @@ module AssLauncher::Cmd
       Thin: %i{},
       Web: %i{},
       MakeIb: %i{pattern dbms dbsrv esrv dry_run version search_path},
-      Cli: %i{version verbose query},
+      Cli: %i{version verbose query dev_mode show_appiared_only format},
       Uri: %i{user password raw},
       Run: %i{search_path version user password uc dry_run raw}
     }
@@ -219,7 +222,7 @@ module AssLauncher::Cmd
           it '#run' do
             inst = cmd_class(desc).new('')
             inst.run ['--query', '\s+']
-            inst.query.must_equal %r{\s+}
+            inst.query.must_equal %r{\s+}i
           end
 
           it '#run fail' do
@@ -379,6 +382,56 @@ module AssLauncher::Cmd
             inst.raw_param.must_equal [['/P1', 'VALUE1'], ['/P2', 'VALUE2']]
           end
         end
+        module ShowAppiaredOnly
+          extend Minitest::Spec::DSL
+          it '#run with --show-appiared-only' do
+            inst = cmd_class(desc).new('')
+            inst.run ['--show-appiared-only']
+            inst.show_appiared_only?.must_equal true
+          end
+
+          it '#run default' do
+            inst = cmd_class(desc).new('')
+            inst.run []
+            inst.show_appiared_only?.must_be_nil
+          end
+        end
+        module DevMode
+          extend Minitest::Spec::DSL
+          it '#run with --dev-mode' do
+            inst = cmd_class(desc).new('')
+            inst.run ['--dev-mode']
+            inst.dev_mode?.must_equal true
+          end
+
+          it '#run default' do
+            inst = cmd_class(desc).new('')
+            inst.run []
+            inst.dev_mode?.must_be_nil
+          end
+        end
+        module Format
+          extend Minitest::Spec::DSL
+          it '#run default' do
+            inst = cmd_class(desc).new('')
+            inst.run []
+            inst.format.must_equal :ascii
+          end
+
+          it '#run with --format' do
+            inst = cmd_class(desc).new('')
+            inst.run ['--format', 'csv']
+            inst.format.must_equal :csv
+          end
+
+          it '#run fail' do
+            inst = cmd_class(desc).new('')
+            e = proc {
+              inst.run ['--format', 'invalid']
+            }.must_raise Clamp::UsageError
+            e.message.must_match %r{Invalid format `invalid'}i
+          end
+        end
       end
 
       OPTIONS.each do |name, spec|
@@ -491,6 +544,23 @@ module AssLauncher::Cmd
           .with('command dryrun').returns('command dryrun')
         cmd.expects(:puts).with('command dryrun')
         cmd.run_enterprise(:command)
+      end
+
+      it '#run_enterprise fail' do
+        comand = mock
+        comand.expects(:run).returns(comand)
+        comand.expects(:wait).returns(comand)
+        comand.expects(:result).returns(comand)
+        comand.expects(:verify!)
+          .raises(AssLauncher::Support::Shell::RunAssResult::RunAssError.new('assmessage'))
+        comand.expects(:process_holder).returns(comand)
+        comand.expects(:result).returns(comand)
+        comand.expects(:exitstatus).returns(100)
+        cmd.expects(:dry_run?).returns(false)
+
+        e = proc {
+          cmd.run_enterprise(comand)
+        }.must_raise Clamp::ExecutionError
       end
 
       describe 'Test with real 1C' do
@@ -661,23 +731,96 @@ module AssLauncher::Cmd
     end
 
     describe AssLauncher::Cmd::Abstract::Cli do
+      include Support::CaptureStdout
+
       def cmd
         @cmd ||= self.class.desc.new('ass-launcher designer cli-help')
       end
 
-      it '#run' do
+      it '#run format :ascii as default' do
         report = mock
-        report.expects(:execute).with($stdout, true).returns(:report)
+        report.expects(:to_table).with(:columns).returns(:report)
         AssLauncher::Cmd::Abstract::Cli::Report.expects(:new)
-          .with(:thick, :designer, Gem::Version.new('1.2.3'), %r{.+})
+          .with(:thick, :designer, Gem::Version.new('8.3.8'), true, %r{.+}i, true)
           .returns(report)
-        cmd.run(['--version', '1.2.3', '--verbose', '--query', '.+'])
-          .must_equal :report
+        cmd.expects(:columns).returns(:columns)
+        out = capture_stdout do
+          cmd.run(['--version', '8.3.8', '--verbose', '--query', '.+', '--dev-mode', '-a'])
+        end
+        out.must_equal :report.to_s + "\n"
+      end
+
+      it '#run format :csv' do
+        report = mock
+        report.expects(:to_csv).with(:columns).returns(:report)
+        AssLauncher::Cmd::Abstract::Cli::Report.expects(:new)
+          .with(:thick, :designer, Gem::Version.new('8.3.8'), true, %r{.+}i, true)
+          .returns(report)
+        cmd.expects(:columns).returns(:columns)
+        out = capture_stdout do
+          cmd.run(['--version', '8.3.8', '--verbose', '--format', 'csv', '--query', '.+', '--dev-mode', '-a'])
+
+        end
+        out.must_equal :report.to_s + "\n"
+      end
+
+      it '#run fail if invalid version' do
+        e = proc {
+          cmd.run(['--version', '1.2.3', '--verbose', '--query', '.+'])
+        }.must_raise Clamp::UsageError
+        e.message.must_match %r{Unknown 1C:Enterprise v1\.2\.3}i
+      end
+
+      it '#columns when --verbose --dev-mode' do
+        cmd.parse ['--verbose', '--dev-mode']
+        cmd.columns.must_equal [:parameter, :dsl_method, :accepted_values,
+                                :parent, :param_klass, :group, :require, :desc]
+      end
+
+      it '#columns when --dev-mode' do
+        cmd.parse ['--dev-mode']
+        cmd.columns.must_equal [:dsl_method, :accepted_values,
+                                :param_klass, :desc]
+      end
+
+      it '#columns when --verbose not dev_mode?' do
+        cmd.parse ['--verbose']
+        cmd.columns.must_equal [:usage, :argument, :parent, :group, :desc]
+      end
+
+      it '#columns when not dev_mode?' do
+        cmd.parse []
+        cmd.columns.must_equal [:usage, :argument, :desc]
       end
     end
 
     describe AssLauncher::Cmd::Abstract::Cli::Report do
+      include Support::CaptureStdout
+      def desc
+        self.class.desc
+      end
 
+      it 'constants' do
+        desc.const_get(:USAGE_COLUMNS)
+          .must_equal [:usage, :argument, :parent, :group, :desc]
+
+        desc.const_get(:DEVEL_COLUMNS)
+          .must_equal [:parameter, :dsl_method, :accepted_values, :parent,
+                       :param_klass, :group, :require, :desc]
+      end
+
+      it '#to_csv smoky test' do
+        report = desc.new(:thick, :designer, Gem::Version.new('8.3.9'), true, %r{.*}i, true)
+        report.to_csv(desc.const_get(:DEVEL_COLUMNS)).must_match %r{#{desc.const_get(:DEVEL_COLUMNS).join(';')}}
+      end
+
+      it '#to_table smoky test' do
+        report = desc.new(:thick, :designer, Gem::Version.new('8.3.9'), true, %r{.*}i, true)
+        out = capture_stdout do
+          report.to_table(desc.const_get(:DEVEL_COLUMNS))
+        end
+        out.must_match %r{DSL METHODS AVAILABLE FOR: "THICK" CLIENT V8\.3\.9 IN "DESIGNER" RUNING MODE}
+      end
     end
 
     describe 'Examples' do
@@ -945,6 +1088,66 @@ module AssLauncher::Cmd
                      'http://host/ib']
           end
           ColorizedString[out].uncolorize.must_equal "http://host/ib?P1=V1&P2=V2&Flag&DisableStartupMessages&N=user&P=pass\n"
+        end
+      end
+
+      describe AssLauncher::Cmd::Main::SubCommands::Designer::SubCommands::Cli do
+        include Support::CaptureStdout
+
+        def cmd
+          @cmd ||= self.class.desc.new('ass-launcher designer cli-help')
+        end
+
+        it '#execute' do
+          out = capture_stdout do
+            cmd.run ['-q', 'no_result_qery']
+          end
+          out.must_match %r{CLI PARAMETERS AVAILABLE FOR: "THICK" CLIENT V\d+\.\d+\.\d+ IN "DESIGNER" RUNING MODE}
+        end
+      end
+
+      describe AssLauncher::Cmd::Main::SubCommands::Web::SubCommands::Cli do
+        include Support::CaptureStdout
+
+        def cmd
+          @cmd ||= self.class.desc.new('ass-launcher web cli-help')
+        end
+
+        it '#execute' do
+          out = capture_stdout do
+            cmd.run ['-q', 'no_result_qery']
+          end
+          out.must_match %r{CLI PARAMETERS AVAILABLE FOR: "WEB" CLIENT V\d+\.\d+\.\d+}
+        end
+      end
+
+      describe AssLauncher::Cmd::Main::SubCommands::Thick::SubCommands::Cli do
+        include Support::CaptureStdout
+
+        def cmd
+          @cmd ||= self.class.desc.new('ass-launcher thick cli-help')
+        end
+
+        it '#execute' do
+          out = capture_stdout do
+            cmd.run ['-q', 'no_result_qery']
+          end
+          out.must_match %r{CLI PARAMETERS AVAILABLE FOR: "THICK" CLIENT V\d+\.\d+\.\d+ IN "ENTERPRISE" RUNING MODE}
+        end
+      end
+
+      describe AssLauncher::Cmd::Main::SubCommands::Thin::SubCommands::Cli do
+        include Support::CaptureStdout
+
+        def cmd
+          @cmd ||= self.class.desc.new('ass-launcher thin cli-help')
+        end
+
+        it '#execute' do
+          out = capture_stdout do
+            cmd.run ['-q', 'no_result_qery']
+          end
+          out.must_match %r{CLI PARAMETERS AVAILABLE FOR: "THIN" CLIENT V\d+\.\d+\.\d+}
         end
       end
     end

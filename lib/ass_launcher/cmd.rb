@@ -98,6 +98,7 @@ module AssLauncher
 
         extend Declaration
 
+        # :nocov:
         def self.command_name
           fail 'Abstract'
         end
@@ -105,6 +106,7 @@ module AssLauncher
         def self._banner
           fail 'Abstract'
         end
+        # :nocov:
       end
 
       module ClientMode
@@ -350,14 +352,14 @@ module AssLauncher
 
         module ShowAppiaredOnly
           def self.included(base)
-            base.option ['-a', '--show-appiared-only'], :flag,
+            base.option ['--show-appiared-only', '-a'], :flag,
               'show parameters which appiared in --version only'
           end
         end
 
         module DevMode
           def self.included(base)
-            base.option ['-d', '--dev-mode'], :flag,
+            base.option ['--dev-mode', '-d'], :flag,
               "for developers mode. Show DSL methods\n"\
               " specifications for builds commands in ruby scripts\n"
           end
@@ -365,9 +367,9 @@ module AssLauncher
 
         module Format
           def self.included(base)
-            base.option ['-f', '--format'], 'ascii|csv', 'output format',
+            base.option ['--format', '-f'], 'ascii|csv', 'output format',
               default: :ascii do |s|
-                fail ArgumentError, "Inavlid format `#{s}'" unless %w{csv ascii}.include? s
+                fail ArgumentError, "Invalid format `#{s}'" unless %w{csv ascii}.include? s
                 s.to_sym
             end
           end
@@ -390,16 +392,6 @@ module AssLauncher
           def self.included(base)
             base.parameter 'IB_PATH | IB_NAME',
               'PATH for file or NAME for server infobase',
-              attribute_name: :ib_path do |s|
-              s
-            end
-          end
-        end
-
-        module PARAM_NAME
-          def self.included(base)
-            base.parameter 'PARAM_NAME',
-              '1C:Enterprise parameter name',
               attribute_name: :ib_path do |s|
               s
             end
@@ -599,7 +591,7 @@ module AssLauncher
             if dev_mode
               r = "DSL METHODS"
             else
-              r = "CLI PARAMTERS"
+              r = "CLI PARAMETERS"
             end
             r << " AVAILABLE FOR: \"#{client}\" CLIENT V#{version}"
             r << " IN \"#{mode}\" RUNING MODE" if client == :thick
@@ -654,11 +646,11 @@ module AssLauncher
         end
 
         def self.command_name
-          'cli-report'
+          'cli-help'
         end
 
         def self._banner
-          '1C:Enterprise CLI parameters report'
+          'show help for 1C:Enterprise CLI parameters'
         end
 
         def columns
