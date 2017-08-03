@@ -15,6 +15,8 @@ In `Linux` don't support `OLE` feature. Don't known why I told it ;)
 
 ## Quick start
 
+### Using `AssLauncher` as a library
+
 Add this line to your application's Gemfile:
 
 ```ruby
@@ -58,6 +60,21 @@ end
 
 main ARGV[0]
 ```
+
+### Command line utility `ass-launcher`
+
+From version `0.3.0` `AssLauncher` provides console tool `ass-launcher` wich has
+features:
+
+- make new 1C:Enterprise application instance (aka information base)
+- run 1C:Enterprise
+- show help about 1C:Enterprise CLI parameters
+- and some more
+
+For more info about `ass-launcher` execute:
+
+    $ass-launcer --help
+
 
 ## Usage
 
