@@ -73,7 +73,7 @@ features:
 
 For more info about `ass-launcher` execute:
 
-    $ass-launcer --help
+    $ass-launcher --help
 
 
 ## Usage
