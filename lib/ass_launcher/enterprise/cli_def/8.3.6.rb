@@ -53,23 +53,23 @@ module AssLauncher::Enterprise::CliDef
       end
       flag '/DumpDBCfgList', 'вывод расширений конфигурации' do
         string '-Extension', 'обработка расширения с указанным именем'
-        flag '-AllExtensions', 'удаление всех расширений'
+        flag '-AllExtensions', 'обработка всех расширений'
       end
       change '/CheckModules' do
         string '-Extension', 'обработка расширения с указанным именем'
-        flag '-AllExtensions', 'удаление всех расширений'
+        flag '-AllExtensions', 'обработка всех расширений'
       end
       change '/CheckConfig' do
         string '-Extension', 'обработка расширения с указанным именем'
-        flag '-AllExtensions', 'удаление всех расширений'
+        flag '-AllExtensions', 'обработка всех расширений'
       end
       change '/LoadConfigFromFiles' do
         string '-Extension', 'обработка расширения с указанным именем'
-        flag '-AllExtensions', 'удаление всех расширений'
+        flag '-AllExtensions', 'обработка всех расширений'
       end
       change '/DumpConfigToFiles' do
         string '-Extension', 'обработка расширения с указанным именем'
-        flag '-AllExtensions', 'удаление всех расширений'
+        flag '-AllExtensions', 'обработка всех расширений'
       end
     end
   end
