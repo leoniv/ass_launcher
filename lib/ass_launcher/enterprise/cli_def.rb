@@ -35,6 +35,9 @@ module AssLauncher
       define_group :repository,
                    'Работа с хранилищем конфигурации', 50
 
+      define_group :agent_mode,
+                   'Режим агента конфигуратора', 55
+
       define_group :distribution,
                    'Cоздание файлов поставки и обновления', 60
 
