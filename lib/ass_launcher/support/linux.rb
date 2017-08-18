@@ -35,14 +35,14 @@ module AssLauncher
         # (see Rpm.version)
         def self.version(file)
           pkg = pkg(file)
-          out = `apt-cache policy #{pkg} | grep -i installed:`
-          v = out.strip.split(':')[1].strip.gsub('-', '.')
-          Gem::Version.new(v)
+          return if pkg.to_s.empty?
+          out = `dpkg-query --showformat '${Version}' --show #{pkg}`.strip
+          Gem::Version.new(out)
         end
 
         # (see Rpm.version)
         def self.pkg(file)
-          `dpkg -S #{file}`.strip.split(':')[0]
+          out = `dpkg -S #{file}`.strip.split(': ')[0]
         end
 
         # (see Rpm.manager?)
