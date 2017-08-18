@@ -242,6 +242,7 @@ class COMConnectorTest < Minitest::Test
   end
 
   def test_initialize_fail
+    cls.any_instance.expects(:linux?).returns(false).at_least_once
     cls.any_instance.expects(:x32_arch?).returns(false)
     e = assert_raises RuntimeError do
       cls.new('> 0')
