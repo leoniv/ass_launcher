@@ -108,8 +108,8 @@ class LinuxiDebTest < Minitest::Test
     @pkg_command = "dpkg -S #{@file_path}"
     @pkg_name = 'packge-name'
     @pkg_command_returns = "#{@pkg_name}: #{@file_path}\n"
-    @pkg_version_command = "apt-cache policy #{@pkg_name} | grep -i installed:"
-    @pkg_version_returns = "  Installed: 8.3.6-2421"
+    @pkg_version_command = "dpkg-query --showformat '${Version}' --show #{@pkg_name}"
+    @pkg_version_returns = "8.3.6-2421"
     @pkg_version_result = Gem::Version.new('8.3.6.2421')
   end
 
