@@ -37,7 +37,7 @@ module AssLauncher
           pkg = pkg(file)
           return if pkg.to_s.empty?
           out = `dpkg-query --showformat '${Version}' --show #{pkg}`.strip
-          Gem::Version.new(out)
+          Gem::Version.new(out.gsub('-', '.'))
         end
 
         # (see Rpm.version)
