@@ -667,29 +667,30 @@ module AssLauncher::Cmd
           actual = cmd.make_command
 
           actual.args.pop # pop temp /UOT file name like a "H:/tmp/ass_out..."
-          actual.args.must_equal [ (mode == 'designer' ? 'DESIGNER' : 'ENTERPRISE'),
+          expected = [ (mode == 'designer' ? 'DESIGNER' : 'ENTERPRISE'),
             "/P1", "V1",
             "/P2", "V2",
             "/S", "host/ib",
             "/N", "user",
             "/P", "password",
-            "/UC", "uc",
-            "/AppAutoCheckVersion-", "",
-            "/DisableStartupDialogs", "",
+            "/UC", "uc"]
+          expected += ["/AppAutoCheckVersion-", ""] if cmd.binary_wrapper.version > Gem::Version.new('8.3.8.0')
+          expected += ["/DisableStartupDialogs", "",
             "/DisableStartupMessages", "",
             "/OUT"]
+          actual.args.must_equal expected
         end
 
         %w{thick-designer thick-enterprise thin}.each do |client|
           it "#make_command for #{client}" do
             client, mode = *client.split('-')
-            cmd.expects(:client).twice.returns(client.to_sym)
-            cmd.expects(:mode).returns(mode.to_sym) if client == 'thick'
-            cmd.expects(:user).returns('user')
-            cmd.expects(:password).returns('password')
-            cmd.expects(:uc).returns('uc')
-            cmd.expects(:raw_param).returns(['/P1', 'V1', '/P2', 'V2'])
-            cmd.expects(:ib_path).twice.returns('tcp://host/ib')
+            cmd.expects(:client).returns(client.to_sym).at_least_once
+            cmd.expects(:mode).returns(mode.to_sym).at_least_once if client == 'thick'
+            cmd.expects(:user).returns('user').at_least_once
+            cmd.expects(:password).returns('password').at_least_once
+            cmd.expects(:uc).returns('uc').at_least_once
+            cmd.expects(:raw_param).returns(['/P1', 'V1', '/P2', 'V2']).at_least_once
+            cmd.expects(:ib_path).twice.returns('tcp://host/ib').at_least_once
 
             make_command_test(client, mode)
           end
