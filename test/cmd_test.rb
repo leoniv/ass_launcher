@@ -964,7 +964,7 @@ module AssLauncher::Cmd
             cmd.run [ '--pattern', __FILE__,
                       '--dry-run', 'tmp/fake.ib']
           end
-          out.must_match %r{1cv8(\.exe)? CREATEINFOBASE File='tmp\\fake.ib'}
+          out.must_match %r{1cv8(\.exe)? CREATEINFOBASE File='tmp(\\|/)fake.ib'}
           out.must_match %r{/UseTemplate .*/cmd_test\.rb}
           out.must_match %r{/DisableStartupDialogs  /DisableStartupMessages  /OUT \S+}
         end
@@ -996,7 +996,7 @@ module AssLauncher::Cmd
               'tcp://host/ib']
           end
 
-          out.must_match %r{1cv8(\.exe)? DESIGNER /P1 'V1' /P2 'V2' /S 'host/ib' /N 'user' /P 'secret' /UC 'uc-code' /AppAutoCheckVersion-  /DisableStartupDialogs  /DisableStartupMessages}
+          out.must_match %r{1cv8(\.exe)? DESIGNER /P1 'V1' /P2 'V2' /S 'host/ib' /N 'user' /P 'secret' /UC 'uc-code'( /AppAutoCheckVersion-)? /DisableStartupDialogs  /DisableStartupMessages}i
         end
       end
 
@@ -1026,7 +1026,7 @@ module AssLauncher::Cmd
               'tcp://host/ib']
           end
 
-          out.must_match %r{1cv8(\.exe)? ENTERPRISE /P1 'V1' /P2 'V2' /S 'host/ib' /N 'user' /P 'secret' /UC 'uc-code' /AppAutoCheckVersion-  /DisableStartupDialogs  /DisableStartupMessages}
+          out.must_match %r{1cv8(\.exe)? ENTERPRISE /P1 'V1' /P2 'V2' /S 'host/ib' /N 'user' /P 'secret' /UC 'uc-code'( /AppAutoCheckVersion-)? /DisableStartupDialogs  /DisableStartupMessages}i
         end
       end
 
