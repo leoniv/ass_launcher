@@ -48,7 +48,7 @@ class DslHelpersTest < Minitest::Test
 
   def test_current_parent
     dh = dsl_helpered
-    assert_equal nil, dh.send(:current_parent)
+    assert_nil dh.send(:current_parent)
     dh.send(:parents_stack).unshift :a
     dh.send(:parents_stack).unshift :b
     dh.send(:parents_stack).unshift :c

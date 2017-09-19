@@ -114,7 +114,7 @@ class RunAssResultTest < Minitest::Test
 
   def test_expected_assout=()
     inst = cls.new('','','','')
-    assert_equal nil, inst.expected_assout = nil
+    assert_nil inst.expected_assout = nil
     assert_raises ArgumentError do
       inst.expected_assout = 'bad regex'
     end

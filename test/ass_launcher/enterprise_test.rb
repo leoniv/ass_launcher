@@ -127,10 +127,10 @@ class EnterpriseTest < Minitest::Test
 
   def test_binaries_on_other
     { AssLauncher::Enterprise::BinaryWrapper::ThinClient => nil,
-      AssLauncher::Enterprise::BinaryWrapper::ThickClient => nil }.each do |klass, bin_name|
+      AssLauncher::Enterprise::BinaryWrapper::ThickClient => nil }.each do |klass|
       mod.expects(:windows_or_cygwin?).returns(false)
       mod.expects(:linux?).returns(false)
-      assert_equal bin_name, mod.binaries(klass)
+      assert_nil mod.binaries(klass)
     end
   end
 
