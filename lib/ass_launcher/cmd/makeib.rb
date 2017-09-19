@@ -48,9 +48,21 @@ module AssLauncher
           end
 
           def execute
+            _verify_required_option_ unless dbms =~ %r{^File$}i
             cmd = run_enterprise(make_command)
             puts Colorize.green(cmd.process_holder.result.assout) unless\
               dry_run?
+          end
+
+          def _verify_required_option_
+            %w{esrv dbsrv}.each do |oname|
+              next unless send(oname).to_s.empty?
+              opt = self.class.recognised_options.find do |o|
+                o.attribute_name == oname
+              end
+               signal_usage_error Clamp
+                 .message(:option_required, :option => opt.switches.first)
+            end
           end
         end
       end

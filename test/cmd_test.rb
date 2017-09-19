@@ -93,6 +93,17 @@ module AssLauncher::Cmd
           end
           fake.string
         end
+
+        def capture_stderr(&block)
+          original_stderr = $stderr
+          $stderr = fake = StringIO.new
+          begin
+            yield
+          ensure
+            $stderr = original_stderr
+          end
+          fake.string
+        end
       end
     end
 
@@ -967,6 +978,26 @@ module AssLauncher::Cmd
           out.must_match %r{1cv8(\.exe)? CREATEINFOBASE File='tmp(\\|/)fake.ib'}
           out.must_match %r{/UseTemplate .*/cmd_test\.rb}
           out.must_match %r{/DisableStartupDialogs  /DisableStartupMessages  /OUT \S+}
+        end
+
+        it 'server infobase --dbsrv is require' do
+          skip '1C not found' if thicks.size == 0
+          e = proc do
+            cmd.run ['--dbms', 'MSSQLServer',
+                     '--esrv', 'user:epas@host',
+                     '--dry-run', 'tmp_ib']
+          end.must_raise Clamp::UsageError
+          e.message.must_match %r{'--dbsrv' is required}
+        end
+
+        it 'server infobase --esrv is require' do
+          skip '1C not found' if thicks.size == 0
+          e = proc do
+            cmd.run ['--dbms', 'MSSQLServer',
+                     '--dbsrv', 'user:pass@host',
+                     '--dry-run', 'tmp_ib']
+          end.must_raise Clamp::UsageError
+          e.message.must_match %r{'--esrv' is required}
         end
       end
 
