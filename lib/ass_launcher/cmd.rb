@@ -198,8 +198,7 @@ module AssLauncher
             begin
               cmd.run.wait.result.verify!
             rescue AssLauncher::Support::Shell::RunAssResult::RunAssError => e
-              raise Clamp::ExecutionError.new(e.message, invocation_path,
-                cmd.process_holder.result.exitstatus)
+              raise Clamp::ExecutionError.new(e.message, invocation_path, 1)
             end
           end
           cmd

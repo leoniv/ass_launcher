@@ -564,9 +564,6 @@ module AssLauncher::Cmd
         comand.expects(:result).returns(comand)
         comand.expects(:verify!)
           .raises(AssLauncher::Support::Shell::RunAssResult::RunAssError.new('assmessage'))
-        comand.expects(:process_holder).returns(comand)
-        comand.expects(:result).returns(comand)
-        comand.expects(:exitstatus).returns(100)
         cmd.expects(:dry_run?).returns(false)
 
         e = proc {
