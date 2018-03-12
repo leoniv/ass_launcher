@@ -63,6 +63,7 @@ module AssLauncher
       l
     end
   end
+
   module Support
     # Shell utils for run 1C:Enterprise binary
     module Shell
@@ -194,6 +195,9 @@ module AssLauncher
                            encode_out(err), ass_out_file.read)
         end
 
+        # @todo It's stub returns +out+ directly
+        #   but may be require encoding out
+        #   encoding must executed in try block
         def encode_out(out)
           out
         end
@@ -377,7 +381,13 @@ module AssLauncher
           @file = Tempfile.new('ass_out')
           @file.close
           @path = platform.path(@file.path)
-          @encoding = encoding || Encoding::CP1251
+          @encoding = encoding || detect_ass_encoding
+        end
+
+        # @todo It's stub returns the CP1251 encoding
+        #   but requires to detect 1C out encoding automatically
+        def detect_ass_encoding
+          Encoding::CP1251
         end
 
         def to_s
@@ -391,9 +401,16 @@ module AssLauncher
             s.encode! Encoding::UTF_8, encoding unless linux?
           ensure
             @file.close
-            @file.unlink
+            try_unlink
           end
           s.to_s
+        end
+
+        # File can be busy
+        def try_unlink
+          @file.unlink if @file
+        rescue Errno::EBUSY
+          # NOP
         end
       end
     end

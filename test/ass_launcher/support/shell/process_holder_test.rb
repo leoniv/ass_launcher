@@ -129,7 +129,6 @@ class ProcessHolderTest < Minitest::Test
     assert_instance_of StandardError, inst.result
   end
 
-
   def test_exitststus
     popen3_thread = mock
     popen3_thread.expects(:value).returns('100')

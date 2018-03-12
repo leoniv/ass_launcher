@@ -194,6 +194,16 @@ class AssOutFileTest < Minitest::Test
     assert_kind_of AssLauncher::Support::Platforms::PathnameExt, inst.path
   end
 
+  def test_smoky
+    inst = cls.new
+    File.open(inst.path, 'w') do |f|
+      f.write('message')
+    end
+    assert File.exist?(inst.path)
+    assert_equal 'message', inst.read
+    refute File.exist?(inst.path)
+  end
+
   def test_to_s
     inst = cls.new
     inst.path.expects(:to_s).returns('path')
@@ -223,6 +233,18 @@ class AssOutFileTest < Minitest::Test
     assert_raises NoMethodError do
       inst.read
     end
+  end
+
+  def test_read_good_if_file_busy
+    mock_file = StringIO.new('message')
+    mock_file.expects(:open)
+    mock_file.expects(:close).twice
+    mock_file.expects(:path).returns('.')
+    mock_file.expects(:unlink).raises(Errno::EBUSY)
+    Tempfile.expects(:new).returns(mock_file)
+    inst = cls.new
+    inst.expects(:linux?).returns(true)
+    assert_equal 'message', inst.read
   end
 end
 

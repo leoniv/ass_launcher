@@ -152,10 +152,9 @@ module AssLauncher
               @result = command.exit_handling(exitstatus,\
                                               stdout.read,\
                                               stderr.read)
-            rescue StandardError => e
-              @result = e
+            ensure
+              self.class.send(:unreg_process, self)
             end
-            self.class.send(:unreg_process, self)
           end
         end
         private :wait_process_in_thread
