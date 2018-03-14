@@ -24,6 +24,25 @@ class TestServerDescr < Minitest::Test
 end
 
 class TestConnectionString < Minitest::Test
+  module SharedTests
+    module CommonFields
+      def inst
+        @inst ||= Class.new(cls) do
+          def initialize; end
+        end.new
+      end
+
+      def test_common_fields
+        expected = %w{Usr Pwd LicDstr prmod Locale Zn Uc}
+        assert_equal expected,
+          AssLauncher::Support::ConnectionString::COMMON_FIELDS
+        expected.each do |f|
+          assert_respond_to inst, "#{f.downcase}".to_sym
+          assert_respond_to inst, "#{f.downcase}=".to_sym
+        end
+      end
+    end
+  end
 
   class FakeConnStr
     def self.fields
@@ -198,6 +217,8 @@ class TestConnectionString < Minitest::Test
 end
 
 class TestConnectionStringServer < Minitest::Test
+  include TestConnectionString::SharedTests::CommonFields
+
   def cls
     AssLauncher::Support::ConnectionString::Server
   end
@@ -295,8 +316,14 @@ class TestConnectionStringServer < Minitest::Test
 
       end
     end.new
-    mock.expects(:to_s).returns(:to_s)
+    mock.expects(:to_s).with(mock.fields - %w{Usr Pwd}).returns(:to_s)
     assert_equal :to_s, mock.createinfobase_cmd
+  end
+
+  def test_createinfobase_cmd_smoky
+    inst = cls.new(srvr: 'host', ref: 'ref', usr: 'usr', pwd: 'pwd')
+    assert_equal 'Srvr="host";Ref="ref";Usr="usr";Pwd="pwd";', inst.to_s
+    assert_equal 'Srvr="host";Ref="ref";',  inst.createinfobase_cmd
   end
 
   def test_createinfobase_args
@@ -306,8 +333,14 @@ class TestConnectionStringServer < Minitest::Test
       end
     end.new
     mock.expects(:createinfobase_cmd)
-      .returns("Srvr=\"seg_2012_001\";Ref=\"tmp_ib\";DBMS=\"MSSQLServer\";DBSrvr=\"dbsrv:port\";DB=\"tmp_ib\";DBUID=\"user\";DBPwd=\"pass\";CrSQLDB=\"Y\";")
-    assert_equal ["Srvr='seg_2012_001';Ref='tmp_ib';DBMS='MSSQLServer';DBSrvr='dbsrv:port';DB='tmp_ib';DBUID='user';DBPwd='pass';CrSQLDB='Y';"], mock.createinfobase_args
+      .returns("Srvr=\"seg_2012_001\";"\
+               "Ref=\"tmp_ib\";DBMS=\"MSSQLServer\";"\
+               "DBSrvr=\"dbsrv:port\";DB=\"tmp_ib\";"\
+               "DBUID=\"user\";DBPwd=\"pass\";CrSQLDB=\"Y\";")
+    assert_equal ["Srvr='seg_2012_001';Ref='tmp_ib';"\
+                  "DBMS='MSSQLServer';DBSrvr='dbsrv:port';"\
+                  "DB='tmp_ib';DBUID='user';DBPwd='pass';CrSQLDB='Y';"],
+                  mock.createinfobase_args
   end
 
   def test_to_ole_string
@@ -324,6 +357,7 @@ class TestConnectionStringServer < Minitest::Test
 end
 
 class TestConnectionStringFile < Minitest::Test
+  include TestConnectionString::SharedTests::CommonFields
   def cls
     AssLauncher::Support::ConnectionString::File
   end
@@ -412,6 +446,7 @@ class TestConnectionStringFile < Minitest::Test
 end
 
 class TestConnectionStringHttp < Minitest::Test
+  include TestConnectionString::SharedTests::CommonFields
   def cls
     AssLauncher::Support::ConnectionString::Http
   end

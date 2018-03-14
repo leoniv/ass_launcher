@@ -18,7 +18,7 @@ module AssLauncher
       class Error < StandardError; end
       class ParseError < StandardError; end
       # Commonn connection string fields
-      COMMON_FIELDS = %w(Usr Pwd LicDstr prmod Locale Zn)
+      COMMON_FIELDS = %w(Usr Pwd LicDstr prmod Locale Zn Uc)
       # Fields for server-infobase
       SERVER_FIELDS = %w(Srvr Ref)
       # Fields for file-infobase
@@ -268,7 +268,7 @@ module AssLauncher
         # :createinfibase runmode
         # @todo validte createinfibase params
         def createinfobase_cmd
-          to_s
+          to_s(fields - %w{Usr Pwd})
         end
 
         # Build string suitable for Ole objects connecting.
