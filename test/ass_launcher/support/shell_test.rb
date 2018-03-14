@@ -236,8 +236,9 @@ class AssOutFileTest < Minitest::Test
   end
 
   def test_read_good_if_file_busy
-    mock_file = StringIO.new('message')
+    mock_file = mock
     mock_file.expects(:open)
+    mock_file.expects(:read).returns('message')
     mock_file.expects(:close).twice
     mock_file.expects(:path).returns('.')
     mock_file.expects(:unlink).raises(Errno::EBUSY)

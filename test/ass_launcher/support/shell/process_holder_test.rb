@@ -125,8 +125,10 @@ class ProcessHolderTest < Minitest::Test
     inst = cls.new(command)
     inst.expects(:popen3_thread).returns(popen3_thread)
     inst.expects(:exitstatus).returns(:exitstatus)
-    assert_instance_of Thread, inst.send(:wait_process_in_thread, out, err).join
-    assert_instance_of StandardError, inst.result
+
+    assert_raises StandardError do
+      assert_instance_of Thread, inst.send(:wait_process_in_thread, out, err).join
+    end
   end
 
   def test_exitststus
