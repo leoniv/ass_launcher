@@ -288,6 +288,51 @@ class TestConnectionStringServer < Minitest::Test
     end
   end
 
+  def test_dbpagesize
+    mock = Class.new(cls) do
+      def initialize
+      end
+    end.new
+    %w{4k , 8k, 16k, 32k, 64k}.each do |v|
+      mock.dbpagesize = v
+      assert_equal v.to_s, mock.dbpagesize
+    end
+
+  end
+
+  def test_dbpagesize_fail
+    mock = Class.new(cls) do
+      def initialize
+      end
+    end.new
+    assert_raises ArgumentError do
+      mock.dbpagesize = 'Invalid value'
+    end
+  end
+
+  def test_dbformat
+    mock = Class.new(cls) do
+      def initialize
+      end
+    end.new
+
+    %w{8.2.14 8.3.8}.each do |v|
+      mock.dbformat = v
+      assert_equal v, mock.dbformat
+    end
+  end
+
+  def test_dbformat_fail
+    mock = Class.new(cls) do
+      def initialize
+      end
+    end.new
+    assert_raises ArgumentError do
+      mock.dbformat = 'Bad format'
+    end
+
+  end
+
   def test_to_args_private
     inst = cls.new({srvr:'host:port',ref:'ib'})
     assert_equal ['/S', 'host:port/ib'], inst.send(:to_args_private)

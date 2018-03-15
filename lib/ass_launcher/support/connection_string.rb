@@ -31,9 +31,17 @@ module AssLauncher
       # Fields for makes server-infobase
       IB_MAKER_FIELDS = %w(DBMS DBSrvr DB
                            DBUID DBPwd SQLYOffs
-                           CrSQLDB SchJobDn SUsr SPwd)
+                           CrSQLDB SchJobDn SUsr SPwd
+                           DBFormat DBPageSize)
       # Values for DBMS field
       DBMS_VALUES = %w(MSSQLServer PostgreSQL IBMDB2 OracleDatabase)
+
+      # Values for DBPageSize
+      DB_PAGE_SIZE_VALUES = %w{4k , 8k, 16k, 32k, 64k}
+
+      # Values for DBFormat
+      DB_FORMAT_VALUES = %w{8.2.14 8.3.8}
+
 
       # Analyzes connect string and build suitable class
       # @param connstr (see parse)
@@ -280,6 +288,16 @@ module AssLauncher
         # :createinfibase runmode
         def createinfobase_args
           [createinfobase_cmd.gsub(%r{=\s*"},"='").gsub(%r{"\s*;},"';")]
+        end
+
+        # (see DB_PAGE_SIZE_VALUES)
+        def dbpagesize=(value)
+          @dbpagesize = valid_value(value, DB_PAGE_SIZE_VALUES)
+        end
+
+        # (see DB_FORMAT_VALUES)
+        def dbformat=(value)
+          @dbformat = valid_value(value, DB_FORMAT_VALUES)
         end
 
         # (see DBMS_VALUES)
