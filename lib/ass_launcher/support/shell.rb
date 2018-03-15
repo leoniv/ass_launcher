@@ -103,8 +103,8 @@ module AssLauncher
         private :process_holder=
         private :ass_out_file
         DEFAULT_OPTIONS = { silent_mode: true,
-                            capture_assout: true
-        }
+                            capture_assout: true,
+                            disable_auto_check_version: true}.freeze
         # @param cmd [String] path to 1C binary
         # @param args [Array] arguments for 1C binary
         # @option options [String] :assout_encoding encoding for assoutput file.
@@ -116,12 +116,13 @@ module AssLauncher
         #  Default true
         # @raise [ArgumentError] when +capture_assout: true+ and +args+
         #  include +/OUT+ parameter
+        # @api private
         def initialize(cmd, args = [], options = {})
           @options = DEFAULT_OPTIONS.merge(options).freeze
           @cmd = cmd
           @args = args
           validate_args
-          @args += _silent_mode
+          @args += (_silent_mode + _disable_auto_check_version)
           @ass_out_file = _ass_out_file
         end
 
@@ -159,6 +160,15 @@ module AssLauncher
           return process_holder if running?
           ProcessHolder.run(self, options)
         end
+
+        def _disable_auto_check_version
+          if options[:disable_auto_check_version]
+            ['/AppAutoCheckVersion-', '']
+          else
+            []
+          end
+        end
+        private :_disable_auto_check_version
 
         def _silent_mode
           if options[:silent_mode]

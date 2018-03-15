@@ -261,10 +261,24 @@ class TestCommand < Minitest::Test
     args = [:arg1]
     inst = cls.new(:cmd, args, options)
     assert_equal :cmd, inst.cmd
-    assert_equal [:arg1, :silent_mode], inst.args
+    assert_equal [:arg1, :silent_mode, '/AppAutoCheckVersion-', ''],
+      inst.args
     assert_equal :assout_file, inst.send(:ass_out_file)
-    assert_equal({capture_assout: true, silent_mode: true},\
-      inst.options)
+    assert_equal({capture_assout: true, silent_mode: true,
+                  disable_auto_check_version: true}, inst.options)
+  end
+
+  def test_disable_auto_check_version
+    inst = Class.new(cls) do
+      def initialize
+
+      end
+    end.new
+    inst.expects(:options).returns({disable_auto_check_version: false})
+    assert_equal [], inst.send(:_disable_auto_check_version)
+    inst.expects(:options).returns({disable_auto_check_version: true})
+    assert_equal ['/AppAutoCheckVersion-', ''],
+      inst.send(:_disable_auto_check_version)
   end
 
   def test_silent_mode
