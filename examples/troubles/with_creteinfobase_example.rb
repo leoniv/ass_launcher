@@ -91,6 +91,8 @@ module Examples
       end
 
       it "Fails if connection string double quoted" do
+        skip 'It fixed from 1C:Enterprise 8.3.10'
+
         conns = "File=\"#{infobasedir}\""
 
         # Path like C:\tempdir\infobase
@@ -151,6 +153,7 @@ module Examples
         conns = "File=\'#{infobasedir}\'"
 
         it 'Fails CREATEINFOBASE' do
+          skip 'It fixed from 1C:Enterprise 8.3.10'
           skip 'Not actual in Linux' if PLATFORM::LINUX
 
           command = CLIENTS::THICK.command :createinfobase,
@@ -245,6 +248,8 @@ module Examples
 
       describe 'Using double quoted connection string' do
         it "Fails if connection string double quoted" do
+          skip 'It fixed from 1C:Enterprise 8.3.10'
+
           conns = "File=\"#{infobasedir}\""
           Pathname.new(infobasedir).relative?.must_equal true
 
@@ -288,6 +293,8 @@ module Examples
 
       describe 'Using single quoted connection' do
         it 'Fails CREATEINFOBASE' do
+          skip 'It fixed from 1C:Enterprise 8.3.10'
+
           extend AssLauncher::Api
 
           File.exists?(root).must_equal true

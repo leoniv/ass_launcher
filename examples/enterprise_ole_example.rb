@@ -215,9 +215,9 @@ module Examples
 
           ruby_obj = Object.new
 
-          skip 'It Segmentation fault in:'\
-          ' ruby 2.0.0p645 (2015-04-13 revision 50299)'\
-          ' [i386-cygwin]' if RUBY_VERSION == '2.0.0'
+          skip "It usually Segmentation fault in ruby:\n"\
+          " 2.0.0p645 (2015-04-13 revision 50299) [i386-cygwin]\n"\
+          " 2.3.6p384 (2017-12-14 revision 9808) [i386-cygwin]"
 
           # Call OLE server
           ole_server.add(1, ruby_obj)

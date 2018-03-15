@@ -2,7 +2,7 @@ $LOAD_PATH.unshift File.expand_path('../../lib', __FILE__)
 require 'ass_launcher'
 
 module Examples
-  MIN_PLATFORM_VERSION = '8.3.8'
+  MIN_PLATFORM_VERSION = '8.3.10'
 
   PLATFORM_VER = "~> #{MIN_PLATFORM_VERSION}"
   OLE_V8 = '83'
