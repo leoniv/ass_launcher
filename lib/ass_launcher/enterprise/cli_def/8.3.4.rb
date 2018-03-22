@@ -17,7 +17,8 @@ module AssLauncher::Enterprise::CliDef
     mode :designer do
       flag '/ConfigurationRepositoryCreate',
         'создание хранилища конфигурации' do
-        flag '-AllowConfigurationChanges', ''
+        flag '-AllowConfigurationChanges', 'включет возможность изменения'\
+          ' конфигурации находящейся на поддержке'
         chose '-ChangesAllowedRule',
           'устанавливает правило поддержки для объектов для которых'\
           ' изменения разрешены поставщиком',
