@@ -41,7 +41,7 @@ module AssLauncher
       sp = []
       sp << AssLauncher.config.search_path
       if windows_or_cygwin?
-        sp += platform.env[/\Aprogram\s*files.*/i].uniq.map { |pf| "#{pf}/1c*" }
+        sp += platform.env[/\Aprogram\s*(files.*|W6432)/i].uniq.map { |pf| "#{pf}/1c*" }
       elsif linux?
         sp += %w(/opt/1C /opt/1c)
       end
