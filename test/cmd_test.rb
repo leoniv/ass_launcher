@@ -828,7 +828,7 @@ module AssLauncher::Cmd
         out = capture_stdout do
           report.to_table(desc.const_get(:DEVEL_COLUMNS))
         end
-        out.must_match %r{DSL METHODS AVAILABLE FOR: "THICK" CLIENT V8\.3\.9 IN "DESIGNER" RUNING MODE}
+        out.must_match %r{DSL METHODS AVAILABLE FOR: "THICK" CLIENT V8\.3\.9 IN "DESIGNER" RUNNING MODE}
       end
     end
 
@@ -1131,7 +1131,7 @@ module AssLauncher::Cmd
           out = capture_stdout do
             cmd.run ['-q', 'no_result_qery']
           end
-          out.must_match %r{CLI PARAMETERS AVAILABLE FOR: "THICK" CLIENT V\d+\.\d+\.\d+ IN "DESIGNER" RUNING MODE}
+          out.must_match %r{CLI PARAMETERS AVAILABLE FOR: "THICK" CLIENT V\d+\.\d+\.\d+ IN "DESIGNER" RUNNING MODE}
         end
       end
 
@@ -1161,7 +1161,7 @@ module AssLauncher::Cmd
           out = capture_stdout do
             cmd.run ['-q', 'no_result_qery']
           end
-          out.must_match %r{CLI PARAMETERS AVAILABLE FOR: "THICK" CLIENT V\d+\.\d+\.\d+ IN "ENTERPRISE" RUNING MODE}
+          out.must_match %r{CLI PARAMETERS AVAILABLE FOR: "THICK" CLIENT V\d+\.\d+\.\d+ IN "ENTERPRISE" RUNNING MODE}
         end
       end
 

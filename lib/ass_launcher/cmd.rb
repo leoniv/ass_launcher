@@ -673,7 +673,7 @@ module AssLauncher
               r = 'CLI PARAMETERS'
             end
             r << " AVAILABLE FOR: \"#{client}\" CLIENT V#{version}"
-            r << " IN \"#{mode}\" RUNING MODE" if client == :thick
+            r << " IN \"#{mode}\" RUNNING MODE" if client == :thick
             r.upcase
           end
           # rubocop:enable Style/ConditionalAssignment
