@@ -76,8 +76,8 @@ module AssLauncher
           # Register Ole server
           def reg
             return true if registred?
-            fail "Platform version `#{requirement}' not instaled." unless\
-              instaled?
+            fail "Platform version `#{requirement}' not instaled"\
+              " for #{arch} Ruby." unless instaled?
             reg_server
           end
 
@@ -124,6 +124,21 @@ module AssLauncher
             fail 'Abstract method call'
           end
           protected :clsids
+
+          # Ruby for x32 architectures
+          X32_ARCHS = ['i386-mingw32', 'i386-cygwin']
+
+          def arch
+            RbConfig::CONFIG['arch']
+          end
+
+          def x32_arch?
+            X32_ARCHS.include? arch
+          end
+
+          def ruby_x86_64?
+            !x32_arch?
+          end
         end
 
         # Wrapper for v8x.COMConnector inproc OLE server
@@ -132,22 +147,12 @@ module AssLauncher
         class COMConnector < AbstractAssOleBinary
           require 'English'
           BINARY = 'comcntr.dll'
-          # Ruby for x32 architectures
-          X32_ARCHS = ['i386-mingw32', 'i386-cygwin']
 
           # (see AbstractAssOleBinary#initialize)
           def initialize(requirement)
             super requirement
-            fail "v8x.COMConnector unavailable for #{arch} Ruby" unless\
+            fail "v8x.COMConnector is unstable in #{arch} Ruby" unless\
               x32_arch?
-          end
-
-          def arch
-            RbConfig::CONFIG['arch']
-          end
-
-          def x32_arch?
-            X32_ARCHS.include? arch
           end
 
           def binary
@@ -169,7 +174,9 @@ module AssLauncher
           private :clsids
 
           def _binary_wrapper
-            Enterprise.thick_clients(requirement.to_s).sort.last
+            Enterprise.thick_clients(requirement.to_s).select do |bw|
+              bw.x86_64? == ruby_x86_64?
+            end.sort.last
           end
           private :_binary_wrapper
 
@@ -218,7 +225,9 @@ module AssLauncher
           private :prog_id
 
           def _binary_wrapper
-            Enterprise.thick_clients(requirement.to_s).sort.last
+            Enterprise.thick_clients(requirement.to_s).select do |bw|
+              bw.x86_64? == ruby_x86_64?
+            end.sort.last
           end
           private :_binary_wrapper
 
@@ -260,7 +269,9 @@ module AssLauncher
           private :prog_id
 
           def _binary_wrapper
-            Enterprise.thin_clients(requirement.to_s).sort.last
+            Enterprise.thin_clients(requirement.to_s).select do |bw|
+              bw.x86_64? == ruby_x86_64?
+            end.sort.last
           end
           private :_binary_wrapper
 

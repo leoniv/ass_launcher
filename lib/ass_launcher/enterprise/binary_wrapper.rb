@@ -17,6 +17,11 @@ module AssLauncher
     class BinaryWrapper
       include AssLauncher::Support::Platforms
       attr_reader :path
+      V64_FILES = %w{version64.dat version64.txt}
+      # @api public
+      X86_64 = 'x86_64'
+      # @api public
+      I386 = 'i386'
 
       def initialize(binpath)
         @path = platform.path(binpath).realpath
@@ -42,11 +47,16 @@ module AssLauncher
       end
 
       # Define arch on 1C platform.
-      # @note Arch of platform  actual for Linux. In windows return i386
       # @api public
-      # @return [String]
+      # @return [String] {X86_64} or {I386}
       def arch
-        @arch ||= extract_arch(path.to_s)
+        @arch ||= extract_arch
+      end
+
+      # True if {#arch} == {X86_64}
+      # @api public
+      def x86_64?
+        arch == X86_64
       end
 
       # Extract version from path
@@ -59,24 +69,36 @@ module AssLauncher
         return AssLauncher::Support::Linux.get_pkg_version(realpath) if\
           platform.linux?
         extracted = realpath.to_s.split('/')[-3]
-        extracted =~ /(\d+\.\d+\.?\d*\.?\d*)/i
-        extracted = (Regexp.last_match(1).to_s.split('.')\
-                     + [0, 0, 0, 0])[0, 4].join('.')
-        Gem::Version.new(extracted)
+        Gem::Version.new v8(extracted)
       end
       private :extract_version
 
+      def v8(extracted)
+        return '8.1.0.0' if extracted =~ %r{1cv81}i
+        extracted =~ /(\d+\.\d+\.?\d*\.?\d*)/i
+        (Regexp.last_match(1).to_s.split('.') + [0, 0, 0, 0])[0, 4].join('.')
+      end
+      private :v8
+
       # Extract arch from path
       # @note (see #extract_version)
-      def extract_arch(realpath)
+      def extract_arch
         if linux?
-          extracted = realpath.to_s.split('/')[-2]
+          extracted = path.to_s.split('/')[-2]
         else
-          extracted = 'i386'
+          extracted =  version64? ? X86_64 : I386
         end
         extracted
       end
       private :extract_arch
+
+      def version64?
+        V64_FILES.each do |f|
+          return true if File.exists?(File.join(path.dirname, f))
+        end
+        false
+      end
+      private :version64?
 
       # Compare wrappers on version for sortable
       # @param other [BinaryWrapper]

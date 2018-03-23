@@ -870,11 +870,14 @@ module AssLauncher
           end
 
           def list(clients)
-            " - v#{clients.map(&:version).sort.reverse.join("\n - v")}"
+            " - v#{clients.map do |cl|
+              "#{cl.version} (#{cl.arch})"
+            end.sort.reverse.join("\n - v")}"
           end
 
           # rubocop:disable Metrics/AbcSize
           def execute
+            puts Colorize.red "Ruby arch: #{RbConfig::CONFIG['arch']}"
             puts Colorize.yellow '1C:Enterprise installations was searching in:'
             puts Colorize
               .green " - #{AssLauncher::Enterprise.search_paths.join("\n - ")}"

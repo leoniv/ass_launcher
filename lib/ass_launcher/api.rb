@@ -14,6 +14,24 @@ module AssLauncher
       AssLauncher::Enterprise.thick_clients(requiremet).sort
     end
 
+    # Return sorted array of instaled x86_64 1C binary wrappers
+    # @param (see thicks)
+    # @return (see thicks)
+    def thicks_x86_64(requiremet = '>=0')
+      thicks(requiremet).select do |bw|
+        bw.x86_64?
+      end
+    end
+
+    # Return sorted array of instaled i386 1C binary wrappers
+    # @param (see thicks)
+    # @return (see thicks)
+    def thicks_i386(requiremet = '>=0')
+      thicks(requiremet).select do |bw|
+        !bw.x86_64?
+      end
+    end
+
     # Return sorted array of instaled 1C binary wrappers
     # @example
     #  inclide AssLauncher::Api
@@ -24,6 +42,24 @@ module AssLauncher
     # @return [Array<AssLauncher::Enterprise::BinaryWrapper::ThinClient>]
     def thins(requiremet = '>= 0')
       AssLauncher::Enterprise.thin_clients(requiremet).sort
+    end
+
+    # Return sorted array of instaled x86_64 1C binary wrappers
+    # @param (see thins)
+    # @return (see thins)
+    def thins_x86_64(requiremet = '>=0')
+      thins(requiremet).select do |bw|
+        bw.x86_64?
+      end
+    end
+
+    # Return sorted array of instaled i386 1C binary wrappers
+    # @param (see thins)
+    # @return (see thins)
+    def thins_i386(requiremet = '>=0')
+      thins(requiremet).select do |bw|
+        !bw.x86_64?
+      end
     end
 
     # (see AssLauncher::Support::ConnectionString.new)
