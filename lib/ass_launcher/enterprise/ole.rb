@@ -69,8 +69,7 @@ module AssLauncher
 
         def __cs__(conn_str)
           return conn_str.to_ole_string if conn_str.respond_to? :to_ole_string
-          AssLauncher::Support::ConnectionString
-            .new(conn_str.to_s).to_ole_string
+          conn_str.to_s
         end
         protected :__cs__
 

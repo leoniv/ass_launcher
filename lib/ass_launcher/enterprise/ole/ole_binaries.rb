@@ -2,7 +2,16 @@
 require 'ass_launcher/enterprise/ole/win32ole'
 #
 module AssLauncher
-  #
+  class Configuration
+    # Forcing to use inproc x86_64 1C Ole server in x86_64 Ruby.
+    attr_writer :use_x86_64_ole
+
+    # Forcing to use inproc x86_64 1C Ole server in x86_64 Ruby.
+    def use_x86_64_ole?
+      @use_x86_64_ole ||= false
+    end
+  end
+
   module Enterprise
     #
     module Ole
@@ -76,8 +85,8 @@ module AssLauncher
           # Register Ole server
           def reg
             return true if registred?
-            fail "Platform version `#{requirement}' not instaled"\
-              " for #{arch} Ruby." unless instaled?
+            fail "Platform version `#{requirement}' not instaled." unless\
+              instaled?
             reg_server
           end
 
@@ -124,9 +133,28 @@ module AssLauncher
             fail 'Abstract method call'
           end
           protected :clsids
+        end
 
+        # Wrapper for v8x.COMConnector inproc OLE server
+        # @note It work not correct. If old version ole object is loded in
+        # memory new registred version will be ignored.
+        class COMConnector < AbstractAssOleBinary
+          require 'English'
+          BINARY = 'comcntr.dll'
           # Ruby for x32 architectures
           X32_ARCHS = ['i386-mingw32', 'i386-cygwin']
+
+          # (see AbstractAssOleBinary#initialize)
+          def initialize(requirement)
+            super requirement
+            fail unstable if ruby_x86_64? && !AssLauncher.config.use_x86_64_ole?
+          end
+
+          def unstable
+            "v8x.COMConnector is unstable in #{arch} Ruby.\n"\
+            "Set `AssLauncher.config.use_x86_64_ole' for bypass this failure."
+          end
+          private :unstable
 
           def arch
             RbConfig::CONFIG['arch']
@@ -138,21 +166,6 @@ module AssLauncher
 
           def ruby_x86_64?
             !x32_arch?
-          end
-        end
-
-        # Wrapper for v8x.COMConnector inproc OLE server
-        # @note It work not correct. If old version ole object is loded in
-        # memory new registred version will be ignored.
-        class COMConnector < AbstractAssOleBinary
-          require 'English'
-          BINARY = 'comcntr.dll'
-
-          # (see AbstractAssOleBinary#initialize)
-          def initialize(requirement)
-            super requirement
-            fail "v8x.COMConnector is unstable in #{arch} Ruby" unless\
-              x32_arch?
           end
 
           def binary
@@ -225,9 +238,7 @@ module AssLauncher
           private :prog_id
 
           def _binary_wrapper
-            Enterprise.thick_clients(requirement.to_s).select do |bw|
-              bw.x86_64? == ruby_x86_64?
-            end.sort.last
+            Enterprise.thick_clients(requirement.to_s).sort.last
           end
           private :_binary_wrapper
 
@@ -269,9 +280,7 @@ module AssLauncher
           private :prog_id
 
           def _binary_wrapper
-            Enterprise.thin_clients(requirement.to_s).select do |bw|
-              bw.x86_64? == ruby_x86_64?
-            end.sort.last
+            Enterprise.thin_clients(requirement.to_s).sort.last
           end
           private :_binary_wrapper
 
