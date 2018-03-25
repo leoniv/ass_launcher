@@ -147,7 +147,11 @@ module AssLauncher
           # (see AbstractAssOleBinary#initialize)
           def initialize(requirement)
             super requirement
-            fail unstable if ruby_x86_64? && !AssLauncher.config.use_x86_64_ole?
+            fail unstable if failure_unstable?
+          end
+
+          def failure_unstable?
+            ruby_x86_64? && !AssLauncher.config.use_x86_64_ole?
           end
 
           def unstable

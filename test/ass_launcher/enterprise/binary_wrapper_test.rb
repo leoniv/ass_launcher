@@ -26,49 +26,105 @@ class BinaryWrapperTest < Minitest::Test
     assert_equal :version, inst.version, 'return @version value'
   end
 
-  def test_arch
-    path = mock
-    path.expects(:to_s).returns(:path)
-    inst = inst_
-    inst.expects(:path).returns(path)
-    inst.expects(:extract_arch).with(:path).returns(:arch)
-    assert_equal :arch, inst.arch, 'expects call :extract_arch'
-    assert_equal :arch, inst.arch, 'return @arch value'
+  def test_platform
+    assert cls.include? AssLauncher::Support::Platforms
   end
 
   def test_extract_version_in_windows
-    windows = mock
-    windows.expects(:linux?).returns(false).twice
     inst = inst_
-    inst.expects(:platform).returns(windows).twice
+    inst.expects(:linux?).returns(false)
+    inst.expects(:v8).with('1.2.3.4').returns('1.2.3.4')
     assert_equal Gem::Version.new('1.2.3.4'),
       inst.send(:extract_version, 'bla/bla/1cv8/1.2.3.4/bin/1cv8.exe')
-    assert_equal Gem::Version.new('0'),
-      inst.send(:extract_version, 'path/have/not/include/version/1cv8.exe')
   end
 
   def test_extract_version_in_linux
-    linux = mock
-    linux.expects(:linux?).returns(true)
     inst = inst_
-    inst.expects(:platform).returns(linux)
+    inst.expects(:linux?).returns(true)
     AssLauncher::Support::Linux.expects(:get_pkg_version)\
       .with(:path).returns(:version)
     assert_equal :version, inst.send(:extract_version, :path)
   end
 
-  def test_extract_arch_in_linux
+  def test_v8
     inst = inst_
-    inst.expects(:linux?).returns(true)
-    assert_equal 'amd64',
-      inst.send(:extract_arch,'/opt/1C/v8.3/amd64/1cv8')
+    assert_equal '8.1.0.0', inst.send(:v8, '1cv81')
+    assert_equal '8.2.3.4', inst.send(:v8, '8.2.3.4')
+    assert_equal '8.2.3.0', inst.send(:v8, '8.2.3.x')
+    assert_equal '8.2.0.0', inst.send(:v8, '8.2.x.x')
+    assert_equal '0.0.0.0', inst.send(:v8, '8.x.x.x')
+    assert_equal '0.0.0.0', inst.send(:v8, 'x.x.x.x')
+    assert_equal '0.0.0.0', inst.send(:v8, 'fake')
   end
 
-  def test_extract_arch_in_windows
+  def test_arch
+    inst = inst_
+    inst.expects(:extract_arch).returns(:arch)
+    assert_equal :arch, inst.arch, 'expects call :extract_arch'
+  end
+
+  def test_extract_arch_in_linux
+    inst = inst_
+    inst.expects(:path).returns('/opt/1C/v8.3/amd64/1cv8')
+    inst.expects(:linux?).returns(true)
+    assert_equal 'amd64', inst.send(:extract_arch)
+  end
+
+  def test_extract_arch_in_windows_i386
     inst = inst_
     inst.expects(:linux?).returns(false)
-    assert_equal 'i386',
-      inst.send(:extract_arch,'/opt/1C/v8.3/amd64/1cv8')
+    inst.expects(:version64?).returns(false)
+    assert_equal 'i386', inst.send(:extract_arch)
+  end
+
+  def test_extract_arch_in_windows_x86_64
+    inst = inst_
+    inst.expects(:linux?).returns(false)
+    inst.expects(:version64?).returns(true)
+    assert_equal 'x86_64', inst.send(:extract_arch)
+  end
+
+  def test_version64_txt_true
+    inst = inst_
+    inst.expects(:version64_exist?).with('version64.dat').returns(false)
+    inst.expects(:version64_exist?).with('version64.txt').returns(true)
+    assert inst.send(:version64?)
+  end
+
+  def test_version64_dat_true
+    inst = inst_
+    inst.expects(:version64_exist?).with('version64.dat').returns(true)
+    inst.expects(:version64_exist?).with('version64.txt').never
+    assert inst.send(:version64?)
+  end
+
+  def test_version64_false
+    inst = inst_
+    inst.expects(:version64_exist?).with('version64.dat').returns(false)
+    inst.expects(:version64_exist?).with('version64.txt').returns(false)
+    refute inst.send(:version64?)
+  end
+
+  def test_version64_exist
+    inst = inst_
+    path = mock
+    path.stubs(dirname: 'fake_dir')
+    inst.expects(:path).returns(path)
+    File.expects(:exist?).with('fake_dir/fake_file').returns(:exists)
+    assert_equal :exists, inst.send(:version64_exist?, 'fake_file')
+  end
+
+  def test_version64_exist_smoky
+    inst = inst_
+    path = mock
+    path.stubs(dirname: 'fake_dir')
+    inst.expects(:path).returns(path)
+    refute inst.send(:version64_exist?, 'fake_file')
+  end
+
+  def test_v64_files
+    assert_equal %w{version64.dat version64.txt},
+      AssLauncher::Enterprise::BinaryWrapper::V64_FILES
   end
 
   def test_more_less

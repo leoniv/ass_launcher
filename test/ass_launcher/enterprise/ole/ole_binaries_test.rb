@@ -212,15 +212,6 @@ module LikeAssOleBinaryTest
     inst.expects(:v8x).returns(@v8x)
     assert_equal @prog_id, inst.send(:prog_id)
   end
-
-  def test__binary_wrapper
-    inst = inst_stub
-    inst.expects(:requirement).returns(:requirement)
-    AssLauncher::Enterprise.expects(@binary_wrapper)
-      .with(:requirement.to_s)
-      .returns([1,3,2])
-    assert_equal 3, inst.send(:_binary_wrapper)
-  end
 end
 
 class COMConnectorTest < Minitest::Test
@@ -243,11 +234,30 @@ class COMConnectorTest < Minitest::Test
 
   def test_initialize_fail
     cls.any_instance.expects(:linux?).returns(false).at_least_once
-    cls.any_instance.expects(:x32_arch?).returns(false)
+    cls.any_instance.expects(:failure_unstable?).returns(true)
     e = assert_raises RuntimeError do
       cls.new('> 0')
     end
-    assert_match %r{v8x\.COMConnector unavailable}, e.message
+    assert_match %r{v8x\.COMConnector is unstable}, e.message
+  end
+
+  def test_failure_unstable_false
+    inst = inst_stub
+    inst.expects(:ruby_x86_64).returns(false)
+    refute inst.failure_unstable?
+    fail 'FIXME'
+  end
+
+  def test_failure_unstable_true
+    fail 'FIXME'
+  end
+
+  def test_rubuy_x86_64
+    inst = inst_stub
+    inst.expects(:x32_arch?).returns(true)
+    refute inst.ruby_x86_64?
+    inst.expects(:x32_arch?).returns(false)
+    assert inst.ruby_x86_64?
   end
 
   def reg_unreg_server_inst(mode, key)
@@ -336,6 +346,52 @@ class COMConnectorTest < Minitest::Test
     inst.expects(:arch).returns('x86_64-cygwin')
     refute inst.x32_arch?
   end
+
+  def binary_wrapper_class_stub
+    Class.new(AssLauncher::Enterprise::BinaryWrapper::ThickClient) do
+      def initialize(v, arch)
+        @arch = arch
+        @version = Gem::Version.new(v)
+      end
+    end
+  end
+
+  def binary_wrapper_stub(v, arch)
+    binary_wrapper_class_stub.new(v, arch)
+  end
+
+  def bws
+    {:'0' => 'x86_64', :'1' => 'x86_64', :'2' => 'i386', :'3' => 'x86_64'}
+      .map do |v_arch|
+      binary_wrapper_stub(v_arch[0], v_arch[1])
+    end
+  end
+
+  def test__binary_wrapper_i386
+    inst = inst_stub
+    inst.expects(:ruby_x86_64?).returns(false).times(4)
+    inst.expects(:requirement).returns(:requirement)
+    AssLauncher::Enterprise.expects(@binary_wrapper)
+      .with(:requirement.to_s).returns(bws)
+
+    actual =  inst.send(:_binary_wrapper)
+
+    assert_equal Gem::Version.new(2), actual.version
+    refute actual.x86_64?
+  end
+
+  def test__binary_wrapper_x86_64
+    inst = inst_stub
+    inst.expects(:ruby_x86_64?).returns(true).times(4)
+    inst.expects(:requirement).returns(:requirement)
+    AssLauncher::Enterprise.expects(@binary_wrapper)
+      .with(:requirement.to_s).returns(bws)
+
+    actual =  inst.send(:_binary_wrapper)
+
+    assert_equal Gem::Version.new(3), actual.version
+    assert actual.x86_64?
+  end
 end
 
 module LikeAssOleBinaryAppliactionTest
@@ -350,6 +406,17 @@ module LikeAssOleBinaryAppliactionTest
     inst = inst_stub
     inst.expects(:binary_wrapper).returns(binary_wrapper)
     assert_equal :success, inst.send(:run_as_enterprise, @run_as_enterprise_args.last)
+  end
+
+  def test__binary_wrapper
+    bws = [0, 1, 2]
+
+    inst = inst_stub
+    inst.expects(:requirement).returns(:requirement)
+    AssLauncher::Enterprise.expects(@binary_wrapper)
+      .with(:requirement.to_s)
+      .returns(bws)
+    assert_equal 2, inst.send(:_binary_wrapper)
   end
 end
 

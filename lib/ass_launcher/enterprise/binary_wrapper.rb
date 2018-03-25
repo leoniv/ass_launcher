@@ -67,7 +67,7 @@ module AssLauncher
       #    +/opt/1C/v8.3/i386/1cv8+
       def extract_version(realpath)
         return AssLauncher::Support::Linux.get_pkg_version(realpath) if\
-          platform.linux?
+          linux?
         extracted = realpath.to_s.split('/')[-3]
         Gem::Version.new v8(extracted)
       end
@@ -94,11 +94,16 @@ module AssLauncher
 
       def version64?
         V64_FILES.each do |f|
-          return true if File.exists?(File.join(path.dirname, f))
+          return true if version64_exist?(f)
         end
         false
       end
       private :version64?
+
+      def version64_exist?(file)
+        File.exist?(File.join(path.dirname, file))
+      end
+      private :version64_exist?
 
       # Compare wrappers on version for sortable
       # @param other [BinaryWrapper]
