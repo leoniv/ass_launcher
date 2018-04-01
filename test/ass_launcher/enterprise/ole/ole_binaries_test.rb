@@ -219,9 +219,15 @@ class COMConnectorTest < Minitest::Test
   include LikeAssOleBinaryTest
 
   def inst_stub(version = '0')
-    cls.any_instance.expects(:linux?).returns(false)
-    cls.any_instance.expects(:x32_arch?).returns(true)
-    cls.new(version)
+    Class.new(cls) do
+      def linux?
+        false
+      end
+
+      def x32_arch?
+        true
+      end
+    end.new(version)
   end
 
   def setup
@@ -241,15 +247,28 @@ class COMConnectorTest < Minitest::Test
     assert_match %r{v8x\.COMConnector is unstable}, e.message
   end
 
+  def test_failure_unstable_in_i386_false
+    inst = inst_stub
+    inst.expects(:ruby_x86_64?).returns(false)
+    refute inst.failure_unstable?
+  end
+
   def test_failure_unstable_false
     inst = inst_stub
-    inst.expects(:ruby_x86_64).returns(false)
+    inst.expects(:ruby_x86_64?).returns(true)
+    AssLauncher.configure do |conf|
+      conf.use_x86_64_ole = true
+    end
     refute inst.failure_unstable?
-    fail 'FIXME'
   end
 
   def test_failure_unstable_true
-    fail 'FIXME'
+    inst = inst_stub
+    inst.expects(:ruby_x86_64?).returns(true)
+    AssLauncher.configure do |conf|
+      conf.use_x86_64_ole = false
+    end
+    assert inst.failure_unstable?
   end
 
   def test_rubuy_x86_64

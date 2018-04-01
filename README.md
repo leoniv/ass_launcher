@@ -76,6 +76,27 @@ For more info about `ass-launcher` execute:
     $ass-launcher --help
 
 
+## x86_64 1C:Enterprise for Windows
+
+From `v8.3.9` 1C provides x86_64 arch platform for Windows.
+
+For choosing which arch of 1C binary you need
+`AssLauncher::Enterprise::BinaryWrapper` has `arch` property and some helpers
+in `AssLauncher::Api` like a `*_i386` and `*_x86_64`.
+
+For 1C inproc OLE server aka `comcntr.dll`, arch of 1C binary selects
+automaticaly in depends of Ruby arch.
+
+But using of `x86_64` inproc OLE server is unstable and Ruby usually crashed.
+On default using of `x86_64` 1C OLE server is forbidden. For forcing to use
+`x86_64` OLE server set config flag `use_x86_64_ole`:
+
+```ruby
+  AssLauncher.configure do |conf|
+    conf.use_x86_64_ole = true
+  end
+```
+
 ## Usage
 
 ### Examples
