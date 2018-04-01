@@ -919,7 +919,7 @@ module AssLauncher
           def list(clients)
             " - v#{clients.map do |cl|
               "#{cl.version} (#{cl.arch})"
-            end.sort.reverse.join("\n - v")}"
+            end.join("\n - v")}"
           end
 
           # rubocop:disable Metrics/AbcSize
@@ -929,9 +929,9 @@ module AssLauncher
             puts Colorize
               .green " - #{AssLauncher::Enterprise.search_paths.join("\n - ")}"
             puts Colorize.yellow 'Thick client installations:'
-            puts Colorize.green list(thicks)
+            puts Colorize.green list(thicks.reverse)
             puts Colorize.yellow 'Thin client installations:'
-            puts Colorize.green list(thins)
+            puts Colorize.green list(thins.reverse)
           end
           # rubocop:enable Metrics/AbcSize
         end

@@ -1009,18 +1009,19 @@ module AssLauncher::Cmd
 
         it '#list' do
           clients = 3.times.map do |i|
-            stub(version: i, arch: 'arch')
+            stub(version: i, arch: 'arch', :<=> => i)
           end
+
           expected = " - v#{[2,1,0].map{|i| "#{i} (arch)"}.join("\n - v")}"
 
-          cmd.list(clients).must_equal expected
+          cmd.list(clients.reverse).must_equal expected
         end
 
         it '#run' do
-          cmd.expects(:thicks).returns(:thicks)
-          cmd.expects(:thins).returns(:thins)
-          cmd.expects(:list).with(:thicks).returns('thicks')
-          cmd.expects(:list).with(:thins).returns('thins')
+          cmd.expects(:thicks).returns([:thicks])
+          cmd.expects(:thins).returns([:thins])
+          cmd.expects(:list).with([:thicks]).returns('thicks')
+          cmd.expects(:list).with([:thins]).returns('thins')
 
           out = capture_stdout do
             cmd.run ['--search-path', './tmp']
