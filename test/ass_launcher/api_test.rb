@@ -2,8 +2,34 @@ require 'test_helper'
 
 class ApiTest < Minitest::Test
 
+  def bw_cls_stubed
+    Class.new(AssLauncher::Enterprise::BinaryWrapper) do
+      def initialize; end
+    end
+  end
+
+  def bw_stub(arch)
+    r = mock
+    r.responds_like(bw_cls_stubed.new)
+    r.stubs(:arch => arch)
+    r
+
+  end
+
+  def i386_bw
+    r = bw_stub('i386')
+    r.stubs(:x86_64? => false)
+    r
+  end
+
+  def x86_64_bw
+    r = bw_stub('x86_64')
+    r.stubs(:x86_64? => true)
+    r
+  end
+
   def inst
-    Class.new do
+    @inst ||= Class.new do
       include AssLauncher::Api
     end.new
   end
@@ -15,11 +41,39 @@ class ApiTest < Minitest::Test
     assert_equal array, inst.thicks(:requiremet)
   end
 
+  def test_thicks_i386
+    inst.expects(:thicks).with(:requiremet)
+      .returns([i386_bw, i386_bw, x86_64_bw, x86_64_bw])
+    assert_equal 'i386', inst
+      .thicks_i386(:requiremet).map {|bw| bw.arch}.uniq[0]
+  end
+
+  def test_thicks_x86_64
+    inst.expects(:thicks).with(:requiremet)
+      .returns([i386_bw, i386_bw, x86_64_bw, x86_64_bw])
+    assert_equal 'x86_64', inst
+      .thicks_x86_64(:requiremet).map {|bw| bw.arch}.uniq[0]
+  end
+
   def test_thins
     array = mock()
     array.expects(:sort).returns(array)
     AssLauncher::Enterprise.expects(:thin_clients).with(:requiremet).returns(array)
     assert_equal array, inst.thins(:requiremet)
+  end
+
+  def test_thins_i386
+    inst.expects(:thins).with(:requiremet)
+      .returns([i386_bw, i386_bw, x86_64_bw, x86_64_bw])
+    assert_equal 'i386', inst
+      .thins_i386(:requiremet).map {|bw| bw.arch}.uniq[0]
+  end
+
+  def test_thins_x86_64
+    inst.expects(:thins).with(:requiremet)
+      .returns([i386_bw, i386_bw, x86_64_bw, x86_64_bw])
+    assert_equal 'x86_64', inst
+      .thins_x86_64(:requiremet).map {|bw| bw.arch}.uniq[0]
   end
 
   def test_cs
