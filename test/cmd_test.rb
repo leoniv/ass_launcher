@@ -45,7 +45,8 @@ module AssLauncher::Cmd
       esrv: [%w[--esrv], "user:pass@esrv", %r{enterprise server}],
       show_appiared_only: [%w[--show-appiared-only -a], :flag, %r{show parameters which appiared in --version only}],
       dev_mode: [%w[--dev-mode -d], :flag, %r{Show DSL methods}],
-      format: [%w[--format -f], 'ascii|csv', %r{output format}, {default: :ascii}]
+      format: [%w[--format -f], 'ascii|csv', %r{output format}, {default: :ascii}],
+      arch: [%w[--arch], 'ARCH', %r{specify x86_64 or i386 platform arch}i]
     }
 
     OPTIONS_MATRIX = {
@@ -55,10 +56,10 @@ module AssLauncher::Cmd
       Thick: %i{},
       Thin: %i{},
       Web: %i{},
-      MakeIb: %i{pattern dbms dbsrv esrv dry_run version search_path},
+      MakeIb: %i{pattern dbms dbsrv esrv dry_run version search_path arch},
       Cli: %i{version verbose query dev_mode show_appiared_only format},
       Uri: %i{user password raw},
-      Run: %i{search_path version user password uc dry_run raw}
+      Run: %i{search_path version user password uc dry_run raw arch}
     }
 
     PARAMTERS = {
@@ -443,6 +444,40 @@ module AssLauncher::Cmd
             e.message.must_match %r{Invalid format `invalid'}i
           end
         end
+        module Arch
+          extend Minitest::Spec::DSL
+
+          it '#run default' do
+            inst = cmd_class(desc).new('')
+            inst.run []
+            inst.arch.must_be_nil
+            inst.arch_any?.must_equal true
+          end
+
+          it '#run with i386' do
+            inst = cmd_class(desc).new('')
+            inst.run ['--arch', 'i386']
+            inst.arch.must_equal 'i386'
+            inst.arch_any?.must_equal false
+            inst.x86_64?.must_equal false
+          end
+
+          it '#run with x86_64' do
+            inst = cmd_class(desc).new('')
+            inst.run ['--arch', 'x86_64']
+            inst.arch.must_equal 'x86_64'
+            inst.arch_any?.must_equal false
+            inst.x86_64?.must_equal true
+          end
+
+          it '#run fail' do
+            inst = cmd_class(desc).new('')
+            e = proc {
+              inst.run ['--arch', 'invalid']
+            }.must_raise Clamp::UsageError
+            e.message.must_match %r{Invalid arch `invalid'.+x32_64|i386}i
+          end
+        end
       end
 
       OPTIONS.each do |name, spec|
@@ -475,9 +510,36 @@ module AssLauncher::Cmd
     end
 
     describe AssLauncher::Cmd::Abstract::BinaryWrapper do
+      def bw_cls_stubed
+        Class.new(AssLauncher::Enterprise::BinaryWrapper) do
+          def initialize; end
+        end
+      end
+
+      def bw_stub(arch)
+        r = mock
+        r.responds_like(bw_cls_stubed.new)
+        r.stubs(:arch => arch)
+        r
+
+      end
+
+      def i386_bw
+        r = bw_stub('i386')
+        r.stubs(:x86_64? => false)
+        r
+      end
+
+      def x86_64_bw
+        r = bw_stub('x86_64')
+        r.stubs(:x86_64? => true)
+        r
+      end
+
       def cmd
         @cmd ||= Class.new(Clamp::Command) do
           def initialize; end
+          include AssLauncher::Cmd::Abstract::Option::Arch
           include AssLauncher::Cmd::Abstract::BinaryWrapper
         end.new
       end
@@ -510,14 +572,66 @@ module AssLauncher::Cmd
       it '#binary_get :thick' do
         cmd.expects(:client).returns(:thick)
         cmd.expects(:vrequrement).returns(:vrequrement)
-        cmd.expects(:thicks).with(:vrequrement).returns([:wrapper])
+        cmd.expects(:thicks_get).with(:vrequrement).returns([:wrapper])
         cmd.send(:binary_get).must_equal :wrapper
+      end
+
+      describe '#thicks_get' do
+        it 'i386' do
+          cmd.expects(:thicks).with(:req)
+            .returns([i386_bw, i386_bw, x86_64_bw, x86_64_bw])
+          cmd.stubs(arch: 'i386')
+          cmd.send(:thicks_get, :req)
+            .map {|bw| bw.arch}.uniq.must_equal %w{i386}
+        end
+
+        it 'x86_64' do
+          cmd.expects(:thicks).with(:req)
+            .returns([i386_bw, i386_bw, x86_64_bw, x86_64_bw])
+          cmd.stubs(arch: 'x86_64')
+          cmd.send(:thicks_get, :req)
+            .map {|bw| bw.arch}.uniq.must_equal %w{x86_64}
+        end
+
+        it 'any arch' do
+          cmd.expects(:thicks).with(:req)
+            .returns([i386_bw, i386_bw, x86_64_bw, x86_64_bw])
+          cmd.stubs(arch: nil)
+          cmd.send(:thicks_get, :req)
+            .map {|bw| bw.arch}.uniq.sort.must_equal %w{i386 x86_64}
+        end
+      end
+
+      describe '#thins_get' do
+        it 'i386' do
+          cmd.expects(:thins).with(:req)
+            .returns([i386_bw, i386_bw, x86_64_bw, x86_64_bw])
+          cmd.stubs(arch: 'i386')
+          cmd.send(:thins_get, :req)
+            .map {|bw| bw.arch}.uniq.must_equal %w{i386}
+        end
+
+        it 'x86_64' do
+          cmd.expects(:thins).with(:req)
+            .returns([i386_bw, i386_bw, x86_64_bw, x86_64_bw])
+          cmd.stubs(arch: 'x86_64')
+          cmd.send(:thins_get, :req)
+            .map {|bw| bw.arch}.uniq.must_equal %w{x86_64}
+        end
+
+        it 'any arch' do
+          cmd.expects(:thins).with(:req)
+            .returns([i386_bw, i386_bw, x86_64_bw, x86_64_bw])
+          cmd.stubs(arch: nil)
+          cmd.send(:thins_get, :req)
+            .map {|bw| bw.arch}.uniq.sort.must_equal %w{i386 x86_64}
+        end
       end
 
       it '#binary_get :thin' do
         cmd.expects(:client).returns(:thin)
         cmd.expects(:vrequrement).returns(:vrequrement)
-        cmd.expects(:thins).with(:vrequrement).returns([:wrapper])
+        cmd.expects(:thins_get).with(:vrequrement).returns([:wrapper])
         cmd.send(:binary_get).must_equal :wrapper
       end
 
@@ -895,10 +1009,11 @@ module AssLauncher::Cmd
 
         it '#list' do
           clients = 3.times.map do |i|
-            stub(version: i)
+            stub(version: i, arch: 'arch')
           end
+          expected = " - v#{[2,1,0].map{|i| "#{i} (arch)"}.join("\n - v")}"
 
-          cmd.list(clients).must_equal " - v#{[2,1,0].join("\n - v")}"
+          cmd.list(clients).must_equal expected
         end
 
         it '#run' do
@@ -912,6 +1027,8 @@ module AssLauncher::Cmd
           end
 
           expected = ''
+          expected << colorize("Ruby arch: #{RbConfig::CONFIG['arch']}").red
+          expected << "\n"
           expected << colorize('1C:Enterprise installations was searching in:').yellow
           expected << "\n"
           expected << colorize(" - #{AssLauncher::Enterprise.search_paths

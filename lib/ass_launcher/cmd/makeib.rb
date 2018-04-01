@@ -12,6 +12,7 @@ module AssLauncher
           include Abstract::Option::Version
           include Abstract::Option::DryRun
           include Abstract::Option::SearchPath
+          include Abstract::Option::Arch
           include Abstract::BinaryWrapper
 
           def self.command_name

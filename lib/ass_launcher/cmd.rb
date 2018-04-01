@@ -148,6 +148,11 @@ module AssLauncher
         include AssLauncher::Api
         include ClientMode
 
+        def self.included(base)
+          fail "#{base} must include Option::Arch module before include"\
+            ' BinaryWrapper' unless base.include? Option::Arch
+        end
+
         def binary_wrapper
           binary_get || (fail Clamp::ExecutionError
             .new(not_inst_message, invocation_path, 1))
@@ -169,11 +174,25 @@ module AssLauncher
 
         def binary_get
           case client
-          when :thick then thicks(vrequrement).last
-          when :thin then thins(vrequrement).last
+          when :thick then thicks_get(vrequrement).last
+          when :thin then thins_get(vrequrement).last
           end
         end
         private :binary_get
+
+        def thicks_get(req)
+          thicks(req).select do |bw|
+            arch_any? || bw.arch == arch
+          end
+        end
+        private :thicks_get
+
+        def thins_get(req)
+          thins(req).select do |bw|
+            arch_any? || bw.arch == arch
+          end
+        end
+        private :thins_get
 
         # rubocop:disable all
         def dry_run(cmd)
@@ -426,6 +445,33 @@ module AssLauncher
                 %w[csv ascii].include? s
               s.to_sym
             end
+          end
+        end
+
+        # Mixin
+        # Command option
+        module Arch
+          def expected_archs
+            [AssLauncher::Enterprise::BinaryWrapper::X86_64,
+             AssLauncher::Enterprise::BinaryWrapper::I386]
+          end
+
+          def self.included(base)
+            base.option '--arch', 'ARCH',
+              'specify x86_64 or i386 platform arch' do |s|
+              fail ArgumentError, "Invalid arch `#{s}'."\
+                " Valid values #{expected_archs.join('|')}" unless\
+                expected_archs.include? s
+              s
+            end
+          end
+
+          def x86_64?
+            arch.to_s == AssLauncher::Enterprise::BinaryWrapper::X86_64
+          end
+
+          def arch_any?
+            arch.nil?
           end
         end
       end
@@ -785,6 +831,7 @@ module AssLauncher
         include Option::Password
         include Option::Uc
         include Option::Raw
+        include Option::Arch
         include BinaryWrapper
         include ParseIbPath
 
