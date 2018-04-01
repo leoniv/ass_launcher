@@ -5,6 +5,8 @@ module Examples
   MIN_PLATFORM_VERSION = '8.3.10'
 
   PLATFORM_VER = "~> #{MIN_PLATFORM_VERSION}"
+  PLATFORM_ARCH = 'i386'
+  fail "\nRuby i386 require!\n" if RbConfig::CONFIG['arch'] =~ %r{x86_64}
   OLE_V8 = '83'
 
   # Examples executing control
@@ -26,11 +28,11 @@ module Examples
 
   module CLIENTS
     extend AssLauncher::Api
-    THICK = thicks(Examples::PLATFORM_VER).last
-    fail "1C:Enterprise thick client  v.#{Examples::PLATFORM_VER} not found" if\
+    THICK = thicks_i386(Examples::PLATFORM_VER).last
+    fail "1C:Enterprise thick client i386 v.#{Examples::PLATFORM_VER} not found" if\
       THICK.nil?
-    THIN = thins(Examples::PLATFORM_VER).last
-    fail "1C:Enterprise thin client  v.#{Examples::PLATFORM_VER} not found" if\
+    THIN = thins_i386(Examples::PLATFORM_VER).last
+    fail "1C:Enterprise thin client i386 v.#{Examples::PLATFORM_VER} not found" if\
       THIN.nil?
     WEB = web_client('http://example.org', MIN_PLATFORM_VERSION)
   end

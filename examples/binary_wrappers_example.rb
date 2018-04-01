@@ -196,6 +196,7 @@ module Examples
                          "/L", "en",
                          "/DisableStartupDialogs", "",
                          "/DisableStartupMessages", "",
+                         "/AppAutoCheckVersion-", "",
                          "/OUT"]
         command_first.args.pop
         command_first.args.must_equal expected_args
