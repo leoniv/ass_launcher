@@ -23,19 +23,19 @@ Gem::Specification.new do |spec|
 
   spec.metadata      = {'known_enterprise_versions' => AssLauncher::KNOWN_ENTERPRISE_VERSIONS.get.join(', ')}
 
-  spec.add_dependency "inifile"
-  spec.add_dependency "methadone"
+  spec.add_dependency "inifile", "~> 3.0"
+  spec.add_dependency "methadone", "~> 1.9"
   spec.add_dependency "addressable", "= 2.4.0"
-  spec.add_dependency "clamp"
-  spec.add_dependency "colorize"
+  spec.add_dependency "clamp", "~> 1.2"
+  spec.add_dependency "colorize", "~> 0.8"
   spec.add_dependency "io-console", "~> 0.4.6"
-  spec.add_dependency "command_line_reporter", '>=3.0'
+  spec.add_dependency "command_line_reporter", '~> 3.0'
 
   spec.add_development_dependency "bundler", "~> 1.10"
   spec.add_development_dependency "rake", "~> 10.0"
-  spec.add_development_dependency "minitest"
-  spec.add_development_dependency "pry"
+  spec.add_development_dependency "minitest", "~> 5.11"
+  spec.add_development_dependency "pry", "~> 0.11"
   spec.add_development_dependency "mocha", "= 1.1.0"
-  spec.add_development_dependency "simplecov"
-  spec.add_development_dependency "coderay"
+  spec.add_development_dependency "simplecov", "~> 0.15"
+  spec.add_development_dependency "coderay", "~> 1.1"
 end
