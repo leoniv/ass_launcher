@@ -39,7 +39,7 @@ class EnterpriseTest < Minitest::Test
     AssLauncher.config.expects(:search_path).returns('asspath')
     mod.expects(:windows_or_cygwin?).returns(true)
     mod.expects(:platform).returns(mock_platform)
-    mock_env.expects(:"[]").with(/\Aprogram\s*files.*/i).returns(%w'path1 path2')
+    mock_env.expects(:"[]").with(/\Aprogram\s*(files.*|W6432)/i).returns(%w'path1 path2')
     assert_equal %w'asspath path1/1c* path2/1c*', mod.search_paths
   end
 
