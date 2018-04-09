@@ -98,13 +98,53 @@ For forcing to use `x86_64` OLE server set config flag `use_x86_64_ole`:
 
 ### Trouble with x86_64 inproc OLE server `v83.ComConnector`
 
-`x86_64` inproc OLE server is unstable now and Ruby usually crashed:
+`x86_64` inproc OLE server or Ruby `win32ole` is unstable now
+and Ruby usually crashed while handling connect error.
+
+Еxample for `x86_64` Ruby and 1C OLE server:
 
 ```
+$ruby -v
+ruby 2.3.6p384 (2017-12-14 revision 9808) [x86_64-cygwin]
+
+$pry
+
+RbConfig::CONFIG['arch'] #=> "x86_64-cygwin"
+
+require 'win32ole'
+
+inproc = WIN32OLE.new('V83.COMConnector')
+
+inproc.connect('invalid connection string')
+
 ....*** buffer overflow detected ***: terminated
-rake aborted!
-SignalException: SIGABRT
+Aborted (стек памяти сброшен на диск)
 ```
+
+The same example for `i386` Ruby and 1C OLE server working fine:
+
+```
+$ruby -v
+ruby 2.3.6p384 (2017-12-14 revision 9808) [i386-cygwin]
+
+$pry
+
+RbConfig::CONFIG['arch'] #=> "i386-cygwin"
+
+require 'win32ole'
+
+inproc = WIN32OLE.new('V83.COMConnector')
+
+inproc.connect('invalid connection string')
+
+WIN32OLERuntimeError: (in OLE method `connect': )
+    OLE error code:80004005 in V83.COMConnector.1
+      Неверные или отсутствующие параметры соединения с информационной базой
+    HRESULT error code:0x80020009
+      Exception occurred.
+from (pry):3:in `method_missing'
+```
+
 
 ### Trouble with x86_64 standalone OLE servers `v83c.Application` and `v83.Application`
 
