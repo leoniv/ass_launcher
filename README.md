@@ -87,7 +87,14 @@ in `AssLauncher::Api` like a `*_i386` and `*_x86_64`.
 For 1C inproc OLE server aka `comcntr.dll`, arch of 1C binary selects
 automaticaly in depends of Ruby arch.
 
-But using of `x86_64` inproc OLE server is unstable and Ruby usually crashed.
+But using of `x86_64` inproc OLE server is unstable and Ruby usually crashed:
+
+```
+....*** buffer overflow detected ***: terminated
+rake aborted!
+SignalException: SIGABRT
+```
+
 On default using of `x86_64` 1C OLE server is forbidden. For forcing to use
 `x86_64` OLE server set config flag `use_x86_64_ole`:
 
