@@ -84,10 +84,21 @@ For choosing which arch of 1C binary you need
 `AssLauncher::Enterprise::BinaryWrapper` has `arch` property and some helpers
 in `AssLauncher::Api` like a `*_i386` and `*_x86_64`.
 
-For 1C inproc OLE server aka `comcntr.dll`, arch of 1C binary selects
-automaticaly in depends of Ruby arch.
+For inproc OLE server `v83.ComConnector` aka `comcntr.dll`, arch of 1C
+binary selects automaticaly in depends of Ruby arch.
 
-But using of `x86_64` inproc OLE server is unstable and Ruby usually crashed:
+On default using of `x86_64` 1C OLE server is forbidden (see below trouble).
+For forcing to use `x86_64` OLE server set config flag `use_x86_64_ole`:
+
+```ruby
+  AssLauncher.configure do |conf|
+    conf.use_x86_64_ole = true
+  end
+```
+
+### Trouble with x86_64 inproc OLE server `v83.ComConnector`
+
+`x86_64` inproc OLE server is unstable now and Ruby usually crashed:
 
 ```
 ....*** buffer overflow detected ***: terminated
@@ -95,13 +106,27 @@ rake aborted!
 SignalException: SIGABRT
 ```
 
-On default using of `x86_64` 1C OLE server is forbidden. For forcing to use
-`x86_64` OLE server set config flag `use_x86_64_ole`:
+### Trouble with x86_64 standalone OLE servers `v83c.Application` and `v83.Application`
 
-```ruby
-  AssLauncher.configure do |conf|
-    conf.use_x86_64_ole = true
-  end
+On theory, architecture of standalone OLE server isn't important for using them
+in various Ruby architectures.
+
+But it only theory. While in the run [exaples](examples/) in the `i386` Ruby
+with `x86_64` standalone 1C OLE observes the unexpected behavior of 1C OLE
+servers like a errors while to connect to information base:
+
+```
+WIN32OLERuntimeError: (in OLE method `connect': )
+    OLE error code:0 in <Unknown>
+      <No Description>
+    HRESULT error code:0x80010108
+      The object invoked has disconnected from its clients.
+    /tmp/ass_launcher/lib/ass_launcher/enterprise/ole/win32ole.rb:87:in `method_missing'
+    /tmp/ass_launcher/lib/ass_launcher/enterprise/ole/win32ole.rb:87:in `call'
+    /tmp/ass_launcher/lib/ass_launcher/enterprise/ole/win32ole.rb:87:in `block in <class:WIN32OLE>'
+    /tmp/ass_launcher/lib/ass_launcher/enterprise/ole.rb:142:in `__try_open__'
+    /tmp/ass_launcher/lib/ass_launcher/enterprise/ole.rb:136:in `__open__'
+    /tmp/ass_launcher/examples/enterprise_ole_example.rb:131:in `block (4 levels) in <module:EnterpriseOle>'
 ```
 
 ## Usage
