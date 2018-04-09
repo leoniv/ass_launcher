@@ -201,6 +201,7 @@ module Examples
       designer.run.wait
 
       it 'Exitstatus == 0' do
+        skip 'It fixed from 1C:Enterprise 8.3.10'
         designer.process_holder.result.exitstatus.must_equal 0
       end
 

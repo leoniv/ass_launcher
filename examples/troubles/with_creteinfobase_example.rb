@@ -31,6 +31,7 @@ module Examples
         File.exists?(conns.file).must_equal false
 
         # But created infobase which we don't want
+        skip 'It fixed from 1C:Enterprise 8.3.10'
         command.process_holder.result.success?.must_equal true
         command.process_holder.result.assout =~\
           /Creation of infobase \("File\s?=\s?"([^"]+)/i
@@ -191,6 +192,7 @@ module Examples
             command.process_holder.result.assout.must_match(
               /Creation of infobase \("File=\\;.+\) completed successfully/i)
           else
+            skip 'It fixed from 1C:Enterprise 8.3.10'
             # Next runs test: found infobase files in root the file system
             command.process_holder.result.assout.must_match(
               /The Infobase specified already exists/i)
@@ -230,6 +232,7 @@ module Examples
           # Exit status and assout:
           if command.process_holder.result.exitstatus == 0
             # First run test: created new infobase in the current directory
+            skip 'It fixed from 1C:Enterprise 8.3.10'
             command.process_holder.result.assout.must_match(
               /Creation of infobase \("File='\.\.\\trouble_.+\) \S+ successfully/i)
           else
@@ -332,6 +335,7 @@ module Examples
             command.process_holder.result.assout.must_match(
               /Creation of infobase \("File=\\;.+\) completed successfully/i)
           else
+            skip 'It fixed from 1C:Enterprise 8.3.10'
             # Next runs test: found infobase files in root of the file system
             command.process_holder.result.assout.must_match(
               /The Infobase specified already exists/i)
