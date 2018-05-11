@@ -1,11 +1,6 @@
 # encoding: utf-8
 module AssLauncher::Enterprise::CliDef
   group :connection do
-    mode :enterprise, :designer do
-      path_exist '/F', 'путь к файловой информационной базе'
-      string '/S', 'адрес серверной информационной базы. Вид "host:port/ibname"'
-    end
-
     mode :enterprise do
       url '/WS', 'url соединения c базой опубликованной через web сервер', thin
       flag '/NoProxy', 'запретить использование прокси', thin
@@ -19,23 +14,7 @@ module AssLauncher::Enterprise::CliDef
   end
 
   group :authentication do
-    mode :enterprise, :designer, :webclient do
-      string '/N', 'имя пользователя информационной базы'
-      string '/P', 'пароль пользователя информационной базы'
-    end
-
-    mode :enterprise, :webclient do
-      switch '/WA',
-        'аутентификация средствами операционной системы. Если не указано'\
-        ' используется /WA+', thin, web,
-        switch_list: switch_list(
-          :+ => 'обязательное применение',
-          :- => 'запрет применения'
-        )
-    end
-
     mode :enterprise do
-      flag '/SAOnRestart', 'запрос пароля при перезапуске системы'
       switch '/WSA',
         'применение аутентификации пользователя на веб-сервере. Используется'\
         ' аутентификация средствами операционной системы',
@@ -52,56 +31,22 @@ module AssLauncher::Enterprise::CliDef
 
   group :debug do
     mode :enterprise, :webclient do
-      url '/DebuggerURL', 'url отладчика'
       flag '/DisplayPerformance',
         'показывать количество вызовов сервера и объем данных'
-    end
-
-    mode :enterprise do
-      flag '/Debug', 'запуск 1С:Предприятия в отладочном режиме'
     end
   end
 
   group :other do
-    mode :createinfobase do
-      path_exist '/UseTemplate', 'создание информационной базы на основе'\
-        ' дампа (.dt файл) или конфигурации (.cf файл)'
-      string '/AddInList', 'имя под которым надо добавить базу в'\
-        ' пользовательский файл .v8i'
-    end
-
-    mode :enterprise, :designer, :createinfobase do
-      path_exist('/Out', 'файл используемый 1С вместо stdout и stderr.'\
-                 ' Выводятся служебные сообщения и сообщения метода Сообщить()',
-                thick)
-      flag('/DisableStartupMessages', 'подавляет gui сообщения')
-    end
-
     mode :enterprise, :designer, :webclient do
-      string '/L', 'указывается код языка интерфейса платформы:'\
-        ' ru - Русский, en - Английский и т.д. Список см. в документации 1С'
       string '/Z', 'установка разделителей'
     end
 
     mode :enterprise, :webclient do
-      string '/C', 'передача строкового значения в экземпляр 1С приложения.'\
-        ' Значение доступно в глобальной переменной `ПараметрЗапуска`.'\
-        ' Использовать в строке двойные кавычки запрещено работает криво.',
-        value_validator: (Proc.new do |value|
-          fail ArgumentError,
-            'In /C parameter double quote char forbidden for use' if /"/ =~ value
-        end)
       string '/VL', 'код локализации сеанса'
       flag '/UsePrivilegedMode', 'запуск в режиме привилегированного сеанса'
       chose  '/O', 'определяет скорость соединения',
         thin, web,
         chose_list: chose_list(Normal: 'обычная', Low: 'низкая')
-      switch '/SLev', 'определяет уровень защищенности соединения с сервером',
-        thin, web,
-        switch_list: switch_list(:'0' => '',
-                                 :'1' => '',
-                                 :'2' => ''
-                                )
     end
 
     mode :enterprise, :designer do
@@ -109,19 +54,13 @@ module AssLauncher::Enterprise::CliDef
         'определяет режим поиска локального ключа защиты',
         switch_list: switch_list(:+ => 'поиск выполняется',
                                  :- => 'поиск не выполняется')
-      path_exist '/RunShortcut',
-        'позволяет запустить систему со списком баз из указанного файла v8i'
-
-      string '/UC', 'код для установки соединения с заблокированной базой'
     end
 
     mode :enterprise do
-      flag '/LogUI', 'логирование действий пользователя'
       flag '/RunModeOrdinaryApplication',
         'запуск толстого клиента в режиме обычного приложения', thick
       flag '/RunModeManagedApplication',
         'запуск толстого клиента в режиме управляемого приложения', thick
-      path_exist '/Execute', 'запуска внешней обработки в режиме 1С:Предприятие непосредственно после старта системы'
       flag '/ClearCache', 'очистка кэша клиент-серверных вызовов'
       flag '/itdi', 'режим интерфейса с использованием закладок'
     end
@@ -303,11 +242,9 @@ module AssLauncher::Enterprise::CliDef
   skip '/AppAutoCheckVersion'
   skip '/AppAutoCheckMode'
   skip '/IBName'
-  skip '/IBConnectionString'
   skip '/TComp'
   skip '/DisplayAllFunctions'
   skip '/SimulateServerCallDelay'
-  skip '/@'
   skip '/DumpConfigFiles'
   skip '/LoadConfigFiles'
   skip '/ConvertFiles'
