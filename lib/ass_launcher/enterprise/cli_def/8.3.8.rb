@@ -124,4 +124,18 @@ module AssLauncher::Enterprise::CliDef
       end
     end
   end
+
+  group :debug do
+    restrict '/Debug'
+    restrict '/DebuggerURL'
+
+    mode :enterprise, :webclient do
+      url '/DebuggerURL', 'url отладчика'
+      chose '/Debug', 'запуск в отладочном режиме', chose_list:\
+        chose_list(:'-http' =>  'отладка по протоколу HTTP',
+                   :'-tcp' => 'отладчика по протоколу TCP') do
+          flag '-attach', 'автоматическое подключение к отладчику'
+        end
+    end
+  end
 end
