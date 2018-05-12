@@ -86,6 +86,99 @@ module AssLauncher::Enterprise::CliDef
     end
   end
 
+  group :packge_mode do
+    mode :designer do
+      path '/DumpIB', 'выгрузка дампа информационной базы'
+      path_exist '/RestoreIB', 'загрузка информационной базы из дампа'
+      path '/DumpCfg', 'сохранение конфигурации в файл'
+      path_exist '/LoadCfg', 'загрузка конфигурации из файла'
+      flag '/UpdateDBCfg', 'обновление конфигурации базы данных' do
+        flag '-WarningsAsErrors',
+          'все предупредительные сообщения трактуются как ошибки'
+        flag '-Server', 'обновление будет выполняться на сервере'
+      end
+      path '/DumpDBCfg', 'сохранение конфигурации базы данных в файл'
+      flag '/RollbackCfg', 'возврат к конфигурации базы данных'
+      flag '/CheckModules', 'синт. контроль' do
+        flag '-ClientServer', 'в режиме клиентского приложения'
+        flag '-ExternalConnectionServer', 'проверка логической целостности'
+        flag '-Server', 'в режиме сервера'
+      end
+      path_exist '/UpdateCfg', 'обновление конфигурации находящейся на'\
+        ' поддержке из .cf или .cfu файла'
+      flag '/IBCheckAndRepair',
+        'выполнить тестирование и исправление информационной базы' do
+        flag '-ReIndex', 'реиндексация таблиц'
+        flag '-LogIntegrity', 'проверка логической целостности'
+        flag '-LogAndRefsIntegrity',
+          'проверка логической и ссылочной целостности'
+        flag '-RecalcTotals', 'пересчет итогов'
+        flag '-IBCompression', 'сжатие таблиц'
+        flag '-Rebuild', 'реструктуризация таблиц информационной базы'
+        flag '-TestOnly', 'только тестирование'
+        switch '-BadRef', 'действия для битых ссылок',
+          switch_list: switch_list(
+          Create: 'создавать объекты для битых ссылок',
+          Clear: 'очищать объекты от битых ссылок',
+          None: 'не изменять'
+          )
+        switch '-BadData', 'при частичной потере объектов',
+          switch_list: switch_list(
+          Create: 'создавать объекты',
+          Delete: 'удалять объекты'
+          )
+        flag '-UseStartPoint',
+          'использовать сохраненную точку возврата для продолжения тестирования'\
+          ' с места, на котором оно было прервано'
+        switch '-TimeLimit', 'ограничение максимального времени сеанса'\
+          ' тестирования. Строка формата hhh:mm',
+          value_validator: (Proc.new do |value|
+          fail ArgumentError,
+            "Use format hhh:mm for -TimeLimit parameter. Given: `#{value}'" if\
+            /\A\d{1,3}:\d{2}\z/ =~ value
+          end),
+          switch_value: (Proc.new do |value|; ":#{value}" end)
+      end
+      flag '/ResetMasterNode', 'сброс главного узла РИБ'
+      flag '/CheckConfig', 'централизованная проверка конфигурации' do
+        flag '-ClientServer', 'проверка работы в режиме клиент-сервер'
+        flag '-Client', 'проверка работы режиме клиент.'
+        flag '-ExternalConnection',
+          'синт. контроль модулей в режиме внешнего соединения,'\
+          ' выполняемого в файловом режиме'
+        flag '-ExternalConnectionServer',
+          'синт. контроль модулей в режиме внешнего соединения,'\
+          ' выполняемого в клиент-серверном режиме'
+        flag '-Server', 'синт. контроль модулей в режиме сервера 1С:Предприятия'
+        flag '-DistributiveModules',
+          'проверяется возможность генерации модулей без исходных текстов'
+        flag '-IncorrectReferences',
+          'поиск некорректных ссылок, поиск ссылок на удаленные объекты'
+        flag '-ConfigLogicalIntegrity', 'проверка логической целостности конфигурации'
+        flag '-UnreferenceProcedures', 'поиск неиспользуемых процедур и функций'
+        flag '-HandlersExistence',
+          'проверка существования назначенных обработчиков'
+        flag '-EmptyHandlers', 'поиск пустых обработчиков'
+      end
+    end
+  end
+
+  group :distribution do
+    mode :designer do
+      path '/CreateDistributive',
+        'создания комплекта поставки в указанном каталоге' do
+        path_exist '-File', 'имя файла описания комплекта поставки'
+        string '-Option','вариант поставки'
+        switch '-Make', 'создать',
+          switch_list: switch_list(
+          Setup: 'комплект поставки (используется по умолчанию)',
+          Files: 'файлы поставки'
+          )
+        path_exist '-digisign', 'файл с параметрами лицензирования'
+      end
+    end
+  end
+
   skip '/@'
   skip '/AU'
   skip '/IBConnectionString'
