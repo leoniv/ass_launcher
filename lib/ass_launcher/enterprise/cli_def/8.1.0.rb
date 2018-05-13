@@ -208,6 +208,44 @@ module AssLauncher::Enterprise::CliDef
           )
         path_exist '-digisign', 'файл с параметрами лицензирования'
       end
+      flag '/CreateDistributionFiles', 'создание файлов поставки и обновления' do
+        path '-cffile', 'создать дистрибутив (.cf файл)'
+        path '-cfufile', 'создать обновление дистрибутива (.cfu файл)'
+        path '-f', 'дистрибутив включаемый в обновление (.cf файл)'
+        string '-v', 'версия дистрибутива включаемого в обновление'
+        path_exist '-digisign', 'файл с параметрами лицензирования'
+      end
+    end
+  end
+
+  group :repository do
+    mode :designer do
+      path_exist '/ConfigurationRepositoryF', 'каталог хранилища'
+      string '/ConfigurationRepositoryN', 'имя пользователя хранилища'
+      string '/ConfigurationRepositoryP', 'пароль пользователя хранилища'
+      path '/ConfigurationRepositoryDumpCfg',
+        'сохранить конфигурацию из хранилища в файл' do
+        string '-v', 'номер версии хранилища'
+      end
+      path_exist '/ConfigurationRepositoryUpdateCfg',
+        'обновить конфигурацию хранилища из хранилища' do
+        string '-v', 'номер версии хранилища'
+        flag '-revised', 'получать захваченные объекты, если потребуется'
+        flag '-force',
+          'подтверждение получения новых или удаления существующих'\
+          ' объектов конфигурации'
+      end
+      flag '/ConfigurationRepositoryUnbindCfg',
+        'отключение конфигурации от хранилища' do
+        flag '-force', 'принудительное отключение от хранилища'
+      end
+      path_exist '/ConfigurationRepositoryReport',
+        'построение отчета по истории хранилища' do
+        string '-NBegin', 'номер версии начала отчета'
+        string '-NEnd', 'номер версии окончания отчета'
+        flag '-GroupByObject', 'с группировкой по объектам'
+        flag '-GroupByComment', 'с группировкой по комментарию'
+      end
     end
   end
 
@@ -216,6 +254,7 @@ module AssLauncher::Enterprise::CliDef
   skip '/IBConnectionString'
   skip '/RunEnterprise'
   skip '/DumpResult'
-
+  skip '/RegServer'
+  skip '/UnregServer'
 end
 
