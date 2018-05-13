@@ -1,6 +1,8 @@
 module AssLauncher::Enterprise::CliDef
   restrict '/MAUpdatePublication'
   restrict '/MAWriteFile'
+  skip '/AppArch'
+  skip '/SYSTEMWEBCLIENTSTAT'
 
   group :packge_mode do
     mode :designer do
