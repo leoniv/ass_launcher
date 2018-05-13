@@ -1,4 +1,7 @@
 module AssLauncher::Enterprise::CliDef
+  restrict '/MAUpdatePublication'
+  restrict '/MAWriteFile'
+
   group :packge_mode do
     mode :designer do
       change '/CheckConfig' do
@@ -56,6 +59,34 @@ module AssLauncher::Enterprise::CliDef
         path '-SecondFile', 'путь к файлу для типа :File'
         string '-SecondVersion', 'версия в хранилище, для типов'\
           ' *Repository'
+      end
+
+      flag '/MobileAppUpdatePublication', 'обновление публикации'\
+        ' мобильного приложения'
+      path '/MobileAppWriteFile', 'записывает xml файл мобильного'\
+        ' приложения'
+
+
+      change '/UpdateDBCfg' do
+        restrict '-Server'
+        chose '-Server', 'обновление будет выполняться на сервере',
+          chose_list: chose_list(
+            :'-v1' => '1-я версия механизма',
+            :'-v2' => '2-я версия механизма')
+      end
+    end
+  end
+
+  group :distribution do
+    mode :designer do
+      change '/CreateDistributionFiles' do
+        flag '-WarningsAsErrors', 'все предупредительные сообщения'\
+          ' трактуются как ошибки'
+      end
+
+      change '/CreateDistributive' do
+        flag '-WarningsAsErrors', 'все предупредительные сообщения'\
+          ' трактуются как ошибки'
       end
     end
   end
@@ -120,16 +151,6 @@ module AssLauncher::Enterprise::CliDef
 
       change '/ConfigurationRepositoryUpdateCfg' do
         string '-Extension', 'имя расширения'
-      end
-
-      change '/CreateDistributionFiles' do
-        flag '-WarningsAsErrors', 'все предупредительные сообщения'\
-          ' трактуются как ошибки'
-      end
-
-      change '/CreateDistributive' do
-        flag '-WarningsAsErrors', 'все предупредительные сообщения'\
-          ' трактуются как ошибки'
       end
     end
   end
