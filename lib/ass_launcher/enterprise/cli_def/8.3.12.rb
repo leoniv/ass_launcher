@@ -59,4 +59,78 @@ module AssLauncher::Enterprise::CliDef
       end
     end
   end
+
+  group :repository do
+    mode :designer do
+      change '/ConfigurationRepositoryAddUser' do
+        string '-Extension', 'имя расширения'
+      end
+
+      change '/ConfigurationRepositoryBindCfg' do
+        string '-Extension', 'имя расширения'
+      end
+
+      change '/ConfigurationRepositoryClearCache' do
+        string '-Extension', 'имя расширения'
+      end
+
+      change '/ConfigurationRepositoryClearGlobalCache' do
+        string '-Extension', 'имя расширения'
+      end
+
+      change '/ConfigurationRepositoryClearLocalCache' do
+        string '-Extension', 'имя расширения'
+      end
+
+      change '/ConfigurationRepositoryCommit' do
+        string '-Extension', 'имя расширения'
+      end
+
+      change '/ConfigurationRepositoryCreate' do
+        string '-Extension', 'имя расширения'
+      end
+
+      change '/ConfigurationRepositoryDumpCfg' do
+        string '-Extension', 'имя расширения'
+      end
+
+      change '/ConfigurationRepositoryLock' do
+        string '-Extension', 'имя расширения'
+      end
+
+      change '/ConfigurationRepositoryOptimizeData' do
+        string '-Extension', 'имя расширения'
+      end
+
+      change '/ConfigurationRepositoryReport' do
+        string '-Extension', 'имя расширения'
+      end
+
+      change '/ConfigurationRepositorySetLabel' do
+        string '-Extension', 'имя расширения'
+      end
+
+      change '/ConfigurationRepositoryUnbindCfg' do
+        string '-Extension', 'имя расширения'
+      end
+
+      change '/ConfigurationRepositoryUnlock' do
+        string '-Extension', 'имя расширения'
+      end
+
+      change '/ConfigurationRepositoryUpdateCfg' do
+        string '-Extension', 'имя расширения'
+      end
+
+      change '/CreateDistributionFiles' do
+        flag '-WarningsAsErrors', 'все предупредительные сообщения'\
+          ' трактуются как ошибки'
+      end
+
+      change '/CreateDistributive' do
+        flag '-WarningsAsErrors', 'все предупредительные сообщения'\
+          ' трактуются как ошибки'
+      end
+    end
+  end
 end

@@ -71,6 +71,16 @@ module AssLauncher::Enterprise::CliDef
         string '-Extension', 'обработка расширения с указанным именем'
         flag '-AllExtensions', 'обработка всех расширений'
       end
+      change '/LoadConfigFiles' do
+        flag '-Picture', 'загружать картинки'
+        flag '-Right', 'загружать роли'
+        string '-Extension', 'имя расширения'
+      end
+      change '/DumpConfigFiles' do
+        flag '-Picture', 'выгружать картинки'
+        flag '-Right', 'выгружать роли'
+        string '-Extension', 'имя расширения'
+      end
     end
   end
 
@@ -87,5 +97,4 @@ module AssLauncher::Enterprise::CliDef
       end
     end
   end
-
 end
