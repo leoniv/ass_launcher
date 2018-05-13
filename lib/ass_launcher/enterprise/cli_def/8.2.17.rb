@@ -102,24 +102,6 @@ module AssLauncher::Enterprise::CliDef
           'проверка обращений к методам и свойствам объектов "через точку"'\
           ' (для ограниченного набора типов)'
       end
-      string '/ReduceEventLogSize',
-        'сокращение журнала регистрации, дата в формате ГГГГ-ММ-ДД',
-        value_validator: (Proc.new do |value|
-            fail ArgumentError,
-              "Use format YYYY-MM-DD for /ReduceEventLogSize parameter. Given"\
-              " `#{value}'" if /\A\d{4}-\d{2}-\d{2}\z/ =~ value
-          end) do
-        path '-saveAs', 'файл для сохранения копии удаляемых записей'
-        flag '-KeepSplitting',
-          'требуется сохранить разделение на файлы по периодам'
-      end
-      path '/CreateTemplateListFile',
-        'создание файла шаблонов конфигураций в указанном файле' do
-        flag '-TemplatesSourcePath',
-          'путь для поиска файлов шаблонов конфигураций'
-      end
-      flag '/Visible',
-        'делает исполнение пакетной команды видимым пользователю'
     end
   end
 
@@ -172,11 +154,6 @@ module AssLauncher::Enterprise::CliDef
   skip '/TComp'
   skip '/DisplayAllFunctions'
   skip '/SimulateServerCallDelay'
-  skip '/DumpConfigFiles'
-  skip '/LoadConfigFiles'
-  skip '/ConvertFiles'
-  skip '/RunEnterprise'
-  skip '/DumpResult'
   skip '/RegServer '
   skip '/UnregServer'
   skip 'WebclientMode'

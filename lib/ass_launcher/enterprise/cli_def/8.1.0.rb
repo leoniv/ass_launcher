@@ -160,6 +160,38 @@ module AssLauncher::Enterprise::CliDef
           'проверка существования назначенных обработчиков'
         flag '-EmptyHandlers', 'поиск пустых обработчиков'
       end
+      string '/ReduceEventLogSize', 'сокращение журнала регистрации,'\
+        ' дата в формате ГГГГ-ММ-ДД', value_validator: (Proc.new do |value|
+            fail ArgumentError,
+              "Use format YYYY-MM-DD for /ReduceEventLogSize parameter. Given"\
+              " `#{value}'" if /\A\d{4}-\d{2}-\d{2}\z/ =~ value
+          end) do
+        path '-saveAs', 'файл для сохранения копии удаляемых записей'
+        flag '-KeepSplitting',
+          'требуется сохранить разделение на файлы по периодам'
+      end
+      path '/DumpConfigFiles', 'выгрузка свойств объектов МД'\
+        ' конфигурации в файлы' do
+        flag '-Module', 'выгружать тексты модулей'
+        flag '-Template', 'выгружать шаблоны'
+        flag '-Help', 'выгружать справочную информацияю'
+        flag '-AllWritable', 'выгружать только доступные на запись объекты'
+      end
+      path '/LoadConfigFiles', 'загрузка свойств объектов МД'\
+        ' конфигурации из файлов выгруженных командой /DumpConfigFiles' do
+        flag '-Module', 'загружать тексты модулей'
+        flag '-Template', 'загружать шаблоны'
+        flag '-Help', 'загружать справочную информацияю'
+        flag '-AllWritable', 'загружать только доступные на запись объекты'
+      end
+      path '/CreateTemplateListFile',
+        'создание файла шаблонов конфигураций в указанном файле' do
+        flag '-TemplatesSourcePath',
+          'путь для поиска файлов шаблонов конфигураций'
+      end
+      path '/ConvertFiles', 'конвертация бинарных файлов платформы'
+      flag '/Visible',
+        'делает исполнение пакетной команды видимым пользователю'
     end
   end
 
@@ -182,6 +214,8 @@ module AssLauncher::Enterprise::CliDef
   skip '/@'
   skip '/AU'
   skip '/IBConnectionString'
+  skip '/RunEnterprise'
+  skip '/DumpResult'
 
 end
 
