@@ -32,7 +32,7 @@ module AssLauncher::Enterprise::CliDef
             :File => 'файл конфигурации(расширения)'
           )
         chose '-SecondConfigurationType',
-          'тип первой конфигурации',
+          'тип второй конфигурации',
           chose_list:\
           chose_list(
             :MainConfiguration => 'основная конфигурация',
@@ -46,14 +46,16 @@ module AssLauncher::Enterprise::CliDef
             ' конфигурации из хранилища',
             :File => 'файл конфигурации(расширения)'
           )
-# FIXME: [-FirstName]
-# FIXME: [-FirstFile]
-# FIXME: [-FirstVersion]
-# FIXME:
-# FIXME: [-SecondName]
-# FIXME: [-SecondFile]
-# FIXME: [-SecondVersion]
-
+        string '-FirstName', 'имя конфигурации для типов'\
+          ' *Configuration'
+        path '-FirstFile', 'путь к файлу для типа :File'
+        string '-FirstVersion', 'версия в хранилище, для типов'\
+          ' *Repository'
+        string '-SecondName', 'имя конфигурации для типов'\
+          ' *Configuration'
+        path '-SecondFile', 'путь к файлу для типа :File'
+        string '-SecondVersion', 'версия в хранилище, для типов'\
+          ' *Repository'
       end
     end
   end
