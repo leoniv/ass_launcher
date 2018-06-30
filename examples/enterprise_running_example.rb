@@ -49,7 +49,7 @@ module Examples
           # will be passed to arguments builder instance
           connection_string "File=\"#{TMP::EMPTY_IB}\";"
           _L 'en'
-          _Debug
+          _Debug :'-tcp'
           _DebuggerUrl 'tcp://localhost'
         end
 

@@ -5,7 +5,7 @@ class V8iTest < Minitest::Test
   BOM = "\xEF\xBB\xBF"
 
   def setup
-    @tmp_dir = 'v8i_test.tmp'
+    @tmp_dir = "#{Dir.tmpdir}/v8i_test.tmp"
   end
 
   def teardown
