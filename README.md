@@ -35,6 +35,12 @@ Ruby.
 вариант установки cygwin [setup-x86.exe](https://www.cygwin.com/setup-x86.exe)
 - установленный в cygwin 32-х разрядный Ruby версии старше 2.0
 
+Стоит обратить внимание, что *AssLauncher* это низкоуровневый инструмент на базе
+которого созданы инструменты более высокого уровня которые объединены в так
+называемый [Ruby Powered Workflow](https://github.com/leoniv/ruby_powered_workflow)
+- стек утилит и методик разработки и сопровождения ПО для платформы 1С
+
+
 ## Подключение к проекту
 
 Стандартный способ с использованием менеджера зависимостей
@@ -63,5 +69,39 @@ $ gem install ass_launcher
 После установки в gem-а в систему станет доступна утилита `ass-launcer`
 
 ```
-$ ass-launcher help
+$ ass-launcher --help
 ```
+
+## Быстрый старт
+
+Для примера предлагается скрипт который выполняет дамп приложения (информационной
+базы).
+
+```ruby
+require 'ass_launcher'
+
+include AssLauncher::Api
+
+def main(dupm_path)
+  # Get wrapper for the thck client
+  thick_client = thicks('~> 8.3.8.0').last
+
+  # Fail if 1C:Enterprise installation not found
+  fail '1C:Enterprise not found' if thick_client.nil?
+
+  # Build designer command
+  designer = thick_client.command :designer do
+    _S 'enterprse_server/application_name'
+    dumpIB dupm_path
+  end
+
+  # Execute command
+  designer.run.wait
+
+  # Verify result
+  designer.process_holder.result.verify!
+end
+
+main ARGV[0]
+```
+
