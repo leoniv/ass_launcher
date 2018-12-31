@@ -6,7 +6,7 @@ _English version of README is [here](README.en.md)_
 # AssLauncher
 
 *AssLauncher* это обертка для платформы 1С:Предприятие v8 написанная на языке
-[Ruby](ruby-lang.org) как [gem](rubygems.org) пакет.
+[Ruby](https://ruby-lang.org) как [gem](https://rubygems.org) пакет.
 
 Зачем нужна такая обертка? Если коротко - для создания утилит на очень мощном,
 гибком, простом и лаконичном языке Ruby, предназначенных для автоматизации
