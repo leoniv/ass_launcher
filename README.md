@@ -81,25 +81,33 @@ $ ass-launcher --help
 ```ruby
 require 'ass_launcher'
 
+# Модуль предоставляет общий Api AssLauncher
 include AssLauncher::Api
 
 def main(dupm_path)
-  # Get wrapper for the thck client
+  # Получаем обертку для толстого клиента версии 8.3.8.+
   thick_client = thicks('~> 8.3.8.0').last
 
-  # Fail if 1C:Enterprise installation not found
-  fail '1C:Enterprise not found' if thick_client.nil?
+  # Если AssLauncher не смог найти исполняемый файл метод thicks вернет
+  #  пустой массив, а пустой_массив.last вернет nil
+  fail 'Установка платформы 1С v8.3.8 не найдена'\
+       ' выполните `ass-launcher env` для просмотра установленных'
+       ' версий платформы 1С' if thick_client.nil?
 
-  # Build designer command
+  # Создаем объект для запуска толстого клиента в режиме
+  #  "конфигуратора" с необходимыми параметрами запуска:
+  #   - _S - путь к серверной ИБ - параметр запуска /S
+  #   - dumpIB dump_path - выполнение пакетной команды - параметр /DumpIB
   designer = thick_client.command :designer do
     _S 'enterprse_server/application_name'
     dumpIB dupm_path
   end
 
-  # Execute command
+  # Запускам команду на исполнение и ждем завершения
   designer.run.wait
 
-  # Verify result
+  # Проверяем результат. Если работа конфигуратора завершится с ошибкой
+  #  verify! кинет исключение
   designer.process_holder.result.verify!
 end
 
