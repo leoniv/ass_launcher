@@ -1,7 +1,8 @@
 # Примеры использования *AssLauncher*
 
 В данном каталоге собраны примеры использования *AssLauncher* оформленные как
-исполняемые тесты. Примеры сгруппированы по фичам *AssLauncher*:
+исполняемые тесты в формате [Mintest::Spec](https://github.com/seattlerb/minitest).
+Примеры сгруппированы по фичам *AssLauncher*:
 
 - файл [binary_wrappers_example.rb](binary_wrappers_example.rb) - примеры для
 работы с различными видами клиентов платформы 1С
@@ -21,3 +22,14 @@
 - файл [webclient_example.rb](webclient_example.rb) - более подробный пример
 работы с web клиентом
 
+Для запуска примеров требуется установленная платформа 1С версии указанной
+в константе `MIN_PLATFORM_VERSION` объявленной в файле
+[example_helper.rb](example_helper.rb)
+
+Запуск примеров:
+
+    $ bundler exec rake run_examples
+
+Запуск с фильтром по имени спеки:
+
+    $ bundler exec rake run_examples TESTOPTS='--name=/здесь рег. выражение/i'
