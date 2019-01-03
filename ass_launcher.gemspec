@@ -21,8 +21,6 @@ Gem::Specification.new do |spec|
 
   spec.required_ruby_version = '~> 2.0'
 
-  spec.metadata      = {'known_enterprise_versions' => AssLauncher::KNOWN_ENTERPRISE_VERSIONS.get.join(', ')}
-
   spec.add_dependency "inifile", "~> 3.0"
   spec.add_dependency "methadone", "~> 1.9"
   spec.add_dependency "addressable", "= 2.4.0"
