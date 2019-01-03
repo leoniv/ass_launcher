@@ -1,7 +1,7 @@
 [![Code Climate](https://codeclimate.com/github/leoniv/ass_launcher/badges/gpa.svg)](https://codeclimate.com/github/leoniv/ass_launcher)
 [![Gem Version](https://badge.fury.io/rb/ass_launcher.svg)](https://badge.fury.io/rb/ass_launcher)
 
-_English version of README is [here](README.en.md)_
+_English version of README is [here](en.README.md)_
 
 # AssLauncher
 
@@ -18,10 +18,7 @@ _English version of README is [here](README.en.md)_
 на cmd для запуска платформы 1С, с той или иной целью, знают, что это занятие
 [еще более унылое](https://github.com/leoniv/v8_circles_of_hell/blob/master/articles/круг_первый_скриптинг.md)
 чем первое. И практически никто, кто писал такие скрипты, не
-пытался закладывать в них требование переносимости между машинами ибо "Хрена
-тут переносить? Надо писать другой скрипт для другой машины ведь на то он и
-скрипт." Однако когда зоопарк разрастается такой подход становится слишком
-дорогим.
+пытался закладывать в них требование переносимости между машинами.
 
 ## Назначение
 
