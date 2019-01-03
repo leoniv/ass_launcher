@@ -8,9 +8,9 @@ module Examples
     end
 
     # 1C:Enterprise provides three OLE servers:
-    # v8x.Application - thick client standalone OLE server
-    # v8xC.Application - thin client standalone OLE server
-    # v8x.ComConnector - inproc ole server for connect to:
+    # v8x.Application - thick client local OLE server
+    # v8xC.Application - thin client local OLE server
+    # v8x.ComConnector - in-process OLE server for connect to:
     #  - 1C:Enterprise application aka infobases
     #  - 1C:Enterprise server agent
     #  - 1C:Enterprise server working process
@@ -72,7 +72,7 @@ module Examples
     end
 
     describe 'Closing connection' do
-      describe 'For standalone server it working perfect' do
+      describe 'For local server it working perfect' do
         extend AssLauncher::Api
         thick_app = ole(:thick, PLATFORM_VER)
 
@@ -97,16 +97,16 @@ module Examples
         end
       end
 
-      describe 'For inproc server close connection working with restrictions' do
-        # 1C inproc OLE servers haven't method for closing connection!
+      describe 'For in-process server close connection working with restrictions' do
+        # 1C in-process OLE servers haven't method for closing connection!
         # Connection keep alive while live ruby process.
         #
-        # If in one ruby script we want to use inproc connection for some work
+        # If in one ruby script we want to use in-process connection for some work
         # do in the infobase and after them we want run other connection
         # or application or designer with flag of exclusive mode, in this case
-        # opened inproc connection doesn't give us to do it
+        # opened in-process connection doesn't give us to do it
         #
-        # AssLauncher provide feature for closing inproc connection  but
+        # AssLauncher provide feature for closing in-process connection  but
         # it working with restrictions.
         #
         # AssLauncher patching WIN32OLE and collect all ole objects which
@@ -116,14 +116,14 @@ module Examples
         # But it works not always. Connection keep alive while have any alive
         # WIN32OLE refs generated this connection
 
-        describe 'Case when inproc server connection realy closed' do
+        describe 'Case when in-process server connection realy closed' do
           extend AssLauncher::Api
 
-          # Get standalone ole server wrapper
+          # Get local ole server wrapper
           # It is service connector
           thick_app = ole(:thick, PLATFORM_VER)
 
-          # Get inproc ole server wrapper
+          # Get in-process ole server wrapper
           # It object under test
           external = ole(:external, PLATFORM_VER)
 
@@ -164,10 +164,10 @@ module Examples
       # AssLauncher automatically register needed server version
       # and returns suitable wrapper.
       #
-      # Registration version of ole server working correct only for standalone
+      # Registration version of ole server working correct only for local
       # servers such as Thin and Thick applications.
       #
-      # We don't get new version of inproc ole server until old version
+      # We don't get new version of in-process ole server until old version
       # is loaded in memory
 
       it "Fail if 1C:Enterprise version doesn't instaled" do
@@ -179,7 +179,7 @@ module Examples
         e.message.must_match %r{Platform version `~> 999' not instaled}
       end
 
-      describe 'Choosing version of standalone ole server working perfect' do
+      describe 'Choosing version of local ole server working perfect' do
         extend AssLauncher::Api
 
         thick_app = ole(:thick, PLATFORM_VER)

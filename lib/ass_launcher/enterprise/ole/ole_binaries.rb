@@ -3,10 +3,10 @@ require 'ass_launcher/enterprise/ole/win32ole'
 #
 module AssLauncher
   class Configuration
-    # Forcing to use inproc x86_64 1C Ole server in x86_64 Ruby.
+    # Forcing to use in-process x86_64 1C Ole server in x86_64 Ruby.
     attr_writer :use_x86_64_ole
 
-    # Forcing to use inproc x86_64 1C Ole server in x86_64 Ruby.
+    # Forcing to use in-process x86_64 1C Ole server in x86_64 Ruby.
     def use_x86_64_ole?
       @use_x86_64_ole ||= false
     end
@@ -135,7 +135,7 @@ module AssLauncher
           protected :clsids
         end
 
-        # Wrapper for v8x.COMConnector inproc OLE server
+        # Wrapper for v8x.COMConnector in-process OLE server
         # @note It work not correct. If old version ole object is loded in
         # memory new registred version will be ignored.
         class COMConnector < AbstractAssOleBinary

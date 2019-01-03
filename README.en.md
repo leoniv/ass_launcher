@@ -84,7 +84,7 @@ For choosing which arch of 1C binary you need
 `AssLauncher::Enterprise::BinaryWrapper` has `arch` property and some helpers
 in `AssLauncher::Api` like a `*_i386` and `*_x86_64`.
 
-For inproc OLE server `v83.ComConnector` aka `comcntr.dll`, arch of 1C
+For in-process OLE server `v83.ComConnector` aka `comcntr.dll`, arch of 1C
 binary selects automaticaly in depends of Ruby arch.
 
 On default using of `x86_64` 1C OLE server is forbidden (see below trouble).
@@ -96,9 +96,9 @@ For forcing to use `x86_64` OLE server set config flag `use_x86_64_ole`:
   end
 ```
 
-### Trouble with x86_64 inproc OLE server `v83.ComConnector`
+### Trouble with x86_64 in-process OLE server `v83.ComConnector`
 
-`x86_64` inproc OLE server or Ruby `win32ole` is unstable now
+`x86_64` in-process OLE server or Ruby `win32ole` is unstable now
 and Ruby usually crashed while handling connect error.
 
 Еxample for `x86_64` Ruby and 1C OLE server:
@@ -146,13 +146,13 @@ from (pry):3:in `method_missing'
 ```
 
 
-### Trouble with x86_64 standalone OLE servers `v83c.Application` and `v83.Application`
+### Trouble with x86_64 local OLE servers `v83c.Application` and `v83.Application`
 
-On theory, architecture of standalone OLE server isn't important for using them
+On theory, architecture of local OLE server isn't important for using them
 in various Ruby architectures.
 
 But it only theory. While in the run [exaples](examples/) in the `i386` Ruby
-with `x86_64` standalone 1C OLE observes the unexpected behavior of 1C OLE
+with `x86_64` local 1C OLE observes the unexpected behavior of 1C OLE
 servers like a errors while to connect to information base:
 
 ```
