@@ -56,8 +56,11 @@ _English version of README is [here](README.en.md)_
 
 *AssLauncher* проектировался как кросс-платформенный инструмент. Однако, та
 часть *AssLauncher*, которая относится к доступу к платформе 1С через OLE(Com)
-сервер, будет работать только в ОС Windows. Подробности про использование OLE
-фичи *AssLauncher* и связанные с этим проблемы описаны в соответствующем разделе.
+сервер предназначена только для Windows. Более того, в настоящее время, возможна
+работа только с 32х разрядными OLE серверами 1С из 32х разрядного Ruby.
+
+_Ниже будут описаны проблемы связанные с использованием 64x разрядных 1С OLE
+серверов._
 
 Рекомендуемое окружение:
 
@@ -170,12 +173,12 @@ main ARGV[0]
 
 С версии `8.3.9` 1С выпустила x86_64 дистрибутив платформы для Windows. Для
 выбора архитектуры платформы `AssLauncher::Enterprise::BinaryWrapper` имеет
-свойсво `arch` по которому можно фильтровать массив найденных установок
+свойство `arch` по которому можно фильтровать массив найденных установок
 платформы 1С. Однако для удобства в модуле `AssLauncher::Api` реализовано
-несколько хелперов с суфиксами `*_i386` и `*_x86_64` котрые возвращают уже
+несколько хелперов с суффиксами `*_i386` и `*_x86_64` которые возвращают уже
 отфильтрованный по архитектуре массив.
 
-Для inproc OLE сервера 1С `v83.ComConnector`, файл `comcntr.dll`, архитектура
+Для in-process OLE сервера 1С `v83.ComConnector`, файл `comcntr.dll`, архитектура
 бинарного файла сервера выбирается автоматически в зависимости от архитектуры
 Ruby.
 
@@ -187,4 +190,77 @@ Ruby.
   AssLauncher.configure do |conf|
     conf.use_x86_64_ole = true
   end
+```
+
+## Проблемы связанные с работой с OLE серверами 1С
+
+### Проблема с x86_64 in-process OLE сервером `v83.COMConnector`
+
+При использовании `x86_64` сервера `v83.COMConnector`, Ruby терпит крах при
+возникновении исключения во время вызова метода сервера `connect`:
+```
+$ruby -v
+ruby 2.3.6p384 (2017-12-14 revision 9808) [x86_64-cygwin]
+
+$pry
+
+RbConfig::CONFIG['arch'] #=> "x86_64-cygwin"
+
+require 'win32ole'
+
+inproc = WIN32OLE.new('V83.COMConnector')
+
+inproc.connect('invalid connection string')
+
+....*** buffer overflow detected ***: terminated
+Aborted (стек памяти сброшен на диск)
+```
+
+Тот же пример для `i386` сервера работает прекрасно:
+
+```
+$ruby -v
+ruby 2.3.6p384 (2017-12-14 revision 9808) [i386-cygwin]
+
+$pry
+
+RbConfig::CONFIG['arch'] #=> "i386-cygwin"
+
+require 'win32ole'
+
+inproc = WIN32OLE.new('V83.COMConnector')
+
+inproc.connect('invalid connection string')
+
+WIN32OLERuntimeError: (in OLE method `connect': )
+    OLE error code:80004005 in V83.COMConnector.1
+      Неверные или отсутствующие параметры соединения с информационной базой
+    HRESULT error code:0x80020009
+      Exception occurred.
+from (pry):3:in `method_missing'
+```
+
+### Проблемы с x86_64 local OLE серверами `v83c.Application` и `v83.Application`
+
+В теории архитектура local OLE сервера, в отличии от in-process сервера, не важна
+с точки зрения архитектуры клиента, т.е. Ruby, так как local OLE сервер
+выполняется в своем процессе.
+
+Однако это только в теории. Если запустить [examples/](examples) в `i386` Ruby
+но использовать `x86_64` серверы `v83.Application` наблюдается неожиданное
+поведение такое как неизвестная ошибка при установке соединения с информационной
+базой:
+
+```
+WIN32OLERuntimeError: (in OLE method `connect': )
+    OLE error code:0 in <Unknown>
+      <No Description>
+    HRESULT error code:0x80010108
+      The object invoked has disconnected from its clients.
+    /tmp/ass_launcher/lib/ass_launcher/enterprise/ole/win32ole.rb:87:in `method_missing'
+    /tmp/ass_launcher/lib/ass_launcher/enterprise/ole/win32ole.rb:87:in `call'
+    /tmp/ass_launcher/lib/ass_launcher/enterprise/ole/win32ole.rb:87:in `block in <class:WIN32OLE>'
+    /tmp/ass_launcher/lib/ass_launcher/enterprise/ole.rb:142:in `__try_open__'
+    /tmp/ass_launcher/lib/ass_launcher/enterprise/ole.rb:136:in `__open__'
+    /tmp/ass_launcher/examples/enterprise_ole_example.rb:131:in `block (4 levels) in <module:EnterpriseOle>'
 ```
