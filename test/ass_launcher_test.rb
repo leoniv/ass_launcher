@@ -2,7 +2,6 @@ require 'test_helper'
 
 class AssLauncherTest < Minitest::Test
   module KnownEnterpriseVersions
-    require 'ass_launcher/enterprise/cli_defs_loader'
     extend AssLauncher::Enterprise::CliDefsLoader
     def self.get
       defs_versions

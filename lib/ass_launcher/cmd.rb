@@ -749,7 +749,7 @@ module AssLauncher
 
                 row header: true do
                   columns_width(columns, rows).each do |col, width|
-                    column(col.upcase, width:  width)
+                    column(col.upcase, width:  [width, 1].max)
                   end
                 end
                 rows.each do |row_|
