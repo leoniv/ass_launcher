@@ -16,7 +16,7 @@ module AssLauncher
       # +-SomeParameter+ CLI parameter. DLS methods case insensitive.
       # Top level builder have method
       # {IncludeConnectionString#connection_string} for pass connection
-      # string and convert him into arguments array.
+      # string and convert connection string into arguments array.
       # @example
       #  client = AssLauncher::Enterprise.thick_clients('> 0').sort.last
       #  # Builds arguments for check configuration:

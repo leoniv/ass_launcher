@@ -102,7 +102,7 @@ module AssLauncher
         end
         alias_method :chose_list, :switch_list
 
-        # Define {Cli::Parameters::Path} parameter and him subparameters.
+        # Define {Cli::Parameters::Path} parameter and its subparameters.
         # Subparameters defines in the block.
         # @param name [String] name of 1C:Enterprise CLI parameter
         # @param desc [String] description of 1C:Enterprise CLI parameter for
@@ -136,13 +136,15 @@ module AssLauncher
                &block)
         end
 
+        # Define {Cli::Parameters::PathTwice} parameter and its subparameters.
+        # Subparameters defines in the block.
         # @return [Cli::Parameters::PathTwice]
         def path_twice(name, desc, *clients, **options, &block)
           new_param(Parameters::PathTwice, name, desc,
                     clients, **options, &block)
         end
 
-        # Define {Cli::Parameters::StringParam} parameter and him subparameters.
+        # Define {Cli::Parameters::StringParam} parameter and its subparameters.
         # Subparameters defines in the block.
         # @param (see #path)
         # @return [Cli::Parameters::StringParam]
@@ -151,7 +153,7 @@ module AssLauncher
                     clients, **options, &block)
         end
 
-        # Define {Cli::Parameters::Flag} parameter and him subparameters.
+        # Define {Cli::Parameters::Flag} parameter and its subparameters.
         # Subparameters defines in the block.
         # @param (see #path)
         # @return [Cli::Parameters::Flag]
@@ -160,7 +162,7 @@ module AssLauncher
                     clients, **options, &block)
         end
 
-        # Define {Cli::Parameters::Switch} parameter and him subparameters.
+        # Define {Cli::Parameters::Switch} parameter and its subparameters.
         # Subparameters defines in the block.
         # @note use helper {#switch_list} for build +:switch_list+ option
         # @param (see #path)
@@ -170,7 +172,7 @@ module AssLauncher
                     clients, options, &block)
         end
 
-        # Define {Cli::Parameters::Chose} parameter and him subparameters.
+        # Define {Cli::Parameters::Chose} parameter and its subparameters.
         # Subparameters defines in the block.
         # @note use helper {#chose_list} for build +:chose_list+ option
         # @param (see #path)

@@ -2,25 +2,25 @@
 module AssLauncher
   module Support
     module Shell
-      # Class for running {Command} in subprocess and controlling
-      # him.
-      # Process run command in the thread. Thread waiting for process exit
-      # and call {Command#exit_handling}
+      # Class for running {Command} in a spawned process and control its life
+      # cycle. {ProcessHolder} waits a spawned process in a separate thread and
+      # calls {Command#exit_handling} after its completion.
+      #
       # @example
-      #  # Run command and witing for exit
+      #  # Run command without waiting its ending
       #  ph = ProcessHolder.run(command, options)
       #
+      #  # Wait until command is executing and have got of execution result
       #  result = ph.wait.result
       #  raise 'bang!' unless result.sucsess?
       #
-      #  # Run command and kill process when nidet
-      #
+      #  # Or run command and kill process when it need
       #  ph = ProcessHolder.run(command, options)
       #
-      #  sleep 10 # for wakeup command
+      #  sleep 10 # waiting until process wakes up
       #
       #  if ! ph.alive?
-      #    raise 'command onexpected exit'
+      #    raise 'command unexpected exit'
       #  end
       #
       #  # doing something
