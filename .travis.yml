@@ -1,3 +1,7 @@
+env:
+  global:
+    - SIMPLECOV=Y
+    - CC_TEST_REPORTER_ID=3074d8c3cb0d49f626bee84a35dfc5be1946a7e6109ebac4496827f1d699491e
 language: ruby
 rvm:
   - 2.0.0
@@ -5,3 +9,11 @@ rvm:
   - 2.5.0
   - ruby-head
 before_install: gem install bundler -v 1.10.5
+before_script:
+  - curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
+  - chmod +x ./cc-test-reporter
+  - ./cc-test-reporter before-build
+script:
+  - bundle exec rake test
+after_script:
+  - ./cc-test-reporter after-build --exit-code $TRAVIS_TEST_RESULT

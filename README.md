@@ -1,4 +1,5 @@
 [![Code Climate](https://codeclimate.com/github/leoniv/ass_launcher/badges/gpa.svg)](https://codeclimate.com/github/leoniv/ass_launcher)
+[![Test Coverage](https://api.codeclimate.com/v1/badges/7e16ab92d89646ab2566/test_coverage)](https://codeclimate.com/github/leoniv/ass_launcher/test_coverage)
 [![Gem Version](https://badge.fury.io/rb/ass_launcher.svg)](https://badge.fury.io/rb/ass_launcher)
 [![Inline docs](http://inch-ci.org/github/leoniv/ass_launcher.png)](http://inch-ci.org/github/leoniv/ass_launcher)
 [![Build Status](https://travis-ci.org/leoniv/ass_launcher.svg?branch=master)](https://travis-ci.org/leoniv/ass_launcher)
