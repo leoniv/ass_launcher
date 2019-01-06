@@ -323,7 +323,7 @@ WIN32OLERuntimeError: (in OLE method `connect': )
 *AssLauncher* расположенные в каталоге [examples/](examples/).
 
 Запуск тестов. После клонирования репозитория запустите установку зависимостей
-`bin/setup` далее запустите тесты `rake test`. Так же вы можете запустить
+`bin/setup` далее запустите тесты `bundler exec rake`. Так же вы можете запустить
 `bin/console` и поиграть с AssLauncher в интерактивной оболочке
 [Pry](https://github.com/pry/pry)
 
