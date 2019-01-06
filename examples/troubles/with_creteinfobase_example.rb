@@ -28,7 +28,7 @@ module Examples
         command.run.wait
 
         # Infobase which we want not exists
-        File.exists?(conns.file).must_equal false
+        File.exist?(conns.file).must_equal false
 
         # But created infobase which we don't want
         skip 'It fixed from 1C:Enterprise 8.3.10'
@@ -38,7 +38,7 @@ module Examples
         created = Regexp.last_match[1]
         created.must_match(/InfoBase\D?/i)
 
-        File.exists?(created).must_equal true
+        File.exist?(created).must_equal true
       end
 
       it 'Creates infobase which we want' do
@@ -62,11 +62,11 @@ module Examples
           /Creation of infobase \("File\s?=\s?'([^']+)/i
         created = Regexp.last_match[1]
         command.args[1].must_include created
-        File.exists?(conns.file).must_equal true
+        File.exist?(conns.file).must_equal true
       end
 
       after do
-        FileUtils.rm_rf conns.file if File.exists? conns.file
+        FileUtils.rm_rf conns.file if File.exist? conns.file
       end
 
       describe 'Solution with AssLauncher' do
@@ -88,7 +88,7 @@ module Examples
         .path(infobasedir).win_string
 
       before do
-        FileUtils.rm_rf infobasedir if File.exists? infobasedir
+        FileUtils.rm_rf infobasedir if File.exist? infobasedir
       end
 
       it "Fails if connection string double quoted" do
@@ -132,11 +132,11 @@ module Examples
         created = Regexp.last_match[1]
 
         conns.file.must_equal created
-        File.exists?(conns.file).must_equal true
+        File.exist?(conns.file).must_equal true
       end
 
       after do
-        FileUtils.rm_rf infobasedir if File.exists? infobasedir
+        FileUtils.rm_rf infobasedir if File.exist? infobasedir
       end
     end
 
@@ -147,7 +147,7 @@ module Examples
                               'example_create_infobase_with_right_slashes.ib')
 
       before do
-        FileUtils.rm_rf infobasedir if File.exists? infobasedir
+        FileUtils.rm_rf infobasedir if File.exist? infobasedir
       end
 
       describe 'Using single quote in connection string' do
@@ -199,12 +199,12 @@ module Examples
           end
 
           # Realy infobase not exists
-          File.exists?(infobasedir).must_equal false
+          File.exist?(infobasedir).must_equal false
         end
       end
 
       after do
-        FileUtils.rm_rf infobasedir if File.exists? infobasedir
+        FileUtils.rm_rf infobasedir if File.exist? infobasedir
       end
     end
 
@@ -242,9 +242,9 @@ module Examples
           end
 
           # Realy infobase not exists
-          File.exists?(infobasedir).must_equal false
+          File.exist?(infobasedir).must_equal false
           # Infobase created in the current directory created
-          File.exists?(infobasedir.gsub('..','.')).must_equal true
+          File.exist?(infobasedir.gsub('..','.')).must_equal true
 
         end
       end
@@ -282,7 +282,7 @@ module Examples
       end
 
       after do
-        FileUtils.rm_rf infobasedir if File.exists? infobasedir
+        FileUtils.rm_rf infobasedir if File.exist? infobasedir
       end
     end
 
@@ -300,7 +300,7 @@ module Examples
 
           extend AssLauncher::Api
 
-          File.exists?(root).must_equal true
+          File.exist?(root).must_equal true
           conns = cs_file file: infobasedir
 
           command = CLIENTS::THICK.command :createinfobase,
@@ -316,7 +316,7 @@ module Examples
 
       describe 'Using double quoted connection string' do
         it 'Infobase is created not where you need' do
-          File.exists?(root).must_equal true
+          File.exist?(root).must_equal true
           conns = "File=\"#{infobasedir}\""
 
           command = CLIENTS::THICK.command :createinfobase,
@@ -342,16 +342,16 @@ module Examples
           end
 
           # Realy infobase not exists
-          File.exists?(infobasedir).must_equal false
+          File.exist?(infobasedir).must_equal false
         end
       end
 
       before do
-        FileUtils.rm_rf infobasedir if File.exists? infobasedir
+        FileUtils.rm_rf infobasedir if File.exist? infobasedir
       end
 
       after do
-        FileUtils.rm_rf infobasedir if File.exists? infobasedir
+        FileUtils.rm_rf infobasedir if File.exist? infobasedir
       end
     end
 
@@ -366,7 +366,7 @@ module Examples
       it 'Solution with ConnectionString::File' do
         extend AssLauncher::Api
 
-        File.exists?(root).must_equal true
+        File.exist?(root).must_equal true
         # ConnectionString::File converts connection string
         # for CREATEINFOBASE mode from double quoted:
         # 'File="pat";' to single quoted: "File='path';" string
@@ -384,12 +384,12 @@ module Examples
         created = Regexp.last_match[1]
 
         conns.file.must_equal created
-        File.exists?(conns.file).must_equal true
+        File.exist?(conns.file).must_equal true
       end
 
       describe 'Using double quoted connection string' do
         it 'Fails CREATEINFOBASE' do
-          File.exists?(root).must_equal true
+          File.exist?(root).must_equal true
           conns = "File=\"#{infobasedir}\""
 
           command = CLIENTS::THICK.command :createinfobase,
@@ -408,11 +408,11 @@ module Examples
       end
 
       before do
-        FileUtils.rm_rf infobasedir if File.exists? infobasedir
+        FileUtils.rm_rf infobasedir if File.exist? infobasedir
       end
 
       after do
-        FileUtils.rm_rf infobasedir if File.exists? infobasedir
+        FileUtils.rm_rf infobasedir if File.exist? infobasedir
       end
     end
   end

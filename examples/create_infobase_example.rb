@@ -38,7 +38,7 @@ module Examples
       end
 
       after do
-        FileUtils.rm_rf conns.file if File.exists?(conns.file)
+        FileUtils.rm_rf conns.file if File.exist?(conns.file)
       end
     end
   end

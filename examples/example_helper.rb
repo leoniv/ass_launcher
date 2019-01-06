@@ -53,7 +53,7 @@ module Examples
     end
 
     def exists?(name)
-      File.exists? ib_file_path(name)
+      File.exist? ib_file_path(name)
     end
 
     def ib_file_path(name)
@@ -103,7 +103,7 @@ module Examples
     module TmpIb
       extend IbMaker
       def self.rm(name)
-        FileUtils.rm_rf ibases[name] if File.exists? ibases[name]
+        FileUtils.rm_rf ibases[name] if File.exist? ibases[name]
       end
 
       def self.ibases_root

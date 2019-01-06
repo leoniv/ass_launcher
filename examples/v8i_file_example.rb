@@ -41,7 +41,7 @@ module Examples
           "ClientConnectionSpeed=Normal\r\n"\
           "App=Auto\r\n"\
           "\r\n"
-        FileUtils.rm_f v8i_file if File.exists? v8i_file
+        FileUtils.rm_f v8i_file if File.exist? v8i_file
       end
     end
 
