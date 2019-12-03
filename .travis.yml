@@ -1,7 +1,7 @@
 env:
   global:
     - SIMPLECOV=Y
-    - CC_TEST_REPORTER_ID=3074d8c3cb0d49f626bee84a35dfc5be1946a7e6109ebac4496827f1d699491e
+    - CC_TEST_REPORTER_ID=1e780df3089c8dc487505ce01b71111c7e41d660f06d6b4d85a964178b2f0655
 language: ruby
 rvm:
   - 2.0.0
